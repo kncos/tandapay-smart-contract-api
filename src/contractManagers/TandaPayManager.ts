@@ -15,7 +15,7 @@ export default class TandaPayManager {
         });
     }
 
-    async getSecretary(): Promise<any> {
+    async getSecretary() {
         return this.contractInstance.read.secretary();
     }
 }
