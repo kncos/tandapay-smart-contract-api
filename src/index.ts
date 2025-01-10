@@ -1,10 +1,6 @@
 import { createPublicClient, createTestClient, createWalletClient, formatEther, formatUnits, getContract, Hex, http, publicActions } from "viem";
 import { anvil, foundry, mainnet } from "viem/chains";
-import { makeHDWallet, makeWallet } from "./wallets.js";
 import { mnemonicToAccount } from "viem/accounts";
-import { TandaPayInfo } from "./_contracts/TandaPay.js"
-import { FaucetTokenInfo } from "./_contracts/FaucetToken.js";
-import TandaPayManager from "./contractManagers/TandaPayManager.js";
 
 const mnemonic_str: string = 'test test test test test test test test test test test junk';
 let accounts = Array.from({length: 3}, (_, index) => {
@@ -17,21 +13,8 @@ const client = createWalletClient({
     transport: http(),
 }).extend(publicActions);
 
-let payment_token_addr: Hex = '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512'
-let secretary_addr = accounts[0].address;
+console.log("done...");
 
-const tp_hash = await client.deployContract({
-    abi: TandaPayInfo.abi,
-    bytecode: TandaPayInfo.bytecode.object,
-    args: [payment_token_addr, secretary_addr],
-});
-
-const receipt = await client.waitForTransactionReceipt({ hash: tp_hash });
-
-if (receipt.contractAddress) {
-    const tp: TandaPayManager = new TandaPayManager(receipt.contractAddress, client);
-    console.log("secretary address123:", await tp.getSecretary())
-}
 // https://viem.sh/docs/contract/getContract#calling-methods
 
 // steps to deploy a TandaPay smart contract:
@@ -85,3 +68,4 @@ if (receipt.contractAddress) {
 // ---> *** with this idea, the base class could be used for just basic monitoring of the state of a
 // --->     TandaPay smart contract, on the chain, and the sub-classes can provide more fine grained control.
 // ---> ??? could i extend the regular ContractInstance class that already exists?
+

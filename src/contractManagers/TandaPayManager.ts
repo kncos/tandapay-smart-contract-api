@@ -1,5 +1,5 @@
 import { Client, getContract, GetContractReturnType, Hex, PublicClient, WalletClient } from "viem";
-import { TandaPayInfo } from "../_contracts/TandaPay.js";
+import { TandaPayInfo } from "../_contracts/TandaPay";
 
 type ContractClient = Client | { public: Client; wallet: Client };
 type TandaPayContractInstance = GetContractReturnType<typeof TandaPayInfo.abi, ContractClient>
@@ -15,7 +15,7 @@ export default class TandaPayManager {
         });
     }
 
-    async getSecretary(): Promise<Hex> {
-        return this.contractInstance.read.secretary()
+    async getSecretary(): Promise<any> {
+        return this.contractInstance.read.secretary();
     }
 }
