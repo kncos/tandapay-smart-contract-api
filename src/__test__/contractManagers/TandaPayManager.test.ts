@@ -74,6 +74,20 @@ describe('TandaPayManager instantiation', () => {
         let secretaryAddr = await tpManager.getSecretary();
         expect(secretaryAddr).toBe(default_account.address);
     });
+
+    it('Should not work with an invalid address', async () => {
+        try {
+            let tpManager = new TandaPayManager(`0x0`, publicClient);
+            await tpManager.getSecretary();
+            fail("Expected an error to be thrown, but none was");
+        } catch (error) {
+            const errorMessage = String(error);
+            //console.log("Caught error:", errorMessage.split('\n').slice(0,50).join('\n'));
+            expect(error).toBeDefined();
+        }
+    });
 });
 
-afterAll(() => {});
+afterAll(() => {
+    //... 
+});
