@@ -1,7 +1,7 @@
 import { Hex } from "viem";
-import { BaseWriteManager, WriteableClient } from "./BaseWriteManager";
+import { TandaPayWriteMethods, WriteableClient } from "./TandaPayWriteMethods";
 
-export default class MemberMethods<TClient extends WriteableClient> extends BaseWriteManager<TClient> {
+export default class MemberWriteMethods<TClient extends WriteableClient> extends TandaPayWriteMethods<TClient> {
     async joinCommunity() {
         this.simulate.joinToCommunity();
         this.write.joinToCommunity();

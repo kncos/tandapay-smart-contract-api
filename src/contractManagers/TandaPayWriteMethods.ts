@@ -6,7 +6,7 @@ import { TandaPayContract } from "./TandaPayManager";
 // client type that results in a writeable contract instance
 export type WriteableClient = Client & { chain: Chain; account: Account; };
 
-export class BaseWriteManager<TClient extends WriteableClient> {
+export class TandaPayWriteMethods<TClient extends WriteableClient> {
     protected contractInstance: TandaPayContract<TClient>;
 
     protected get simulate() {

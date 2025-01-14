@@ -1,7 +1,7 @@
 import { Hex } from "viem";
-import { BaseWriteManager, WriteableClient } from "./BaseWriteManager";
+import { TandaPayWriteMethods, WriteableClient } from "./TandaPayWriteMethods";
 
-export default class SecretaryWriteManager<TClient extends WriteableClient> extends BaseWriteManager<TClient> {
+export default class SecretaryWriteMethods<TClient extends WriteableClient> extends TandaPayWriteMethods<TClient> {
     // secretary methods
     async addMemberToCommunity(memberWalletAddress: Hex) {
         await this.simulate.addToCommunity([memberWalletAddress]);
