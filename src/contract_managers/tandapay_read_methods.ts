@@ -1,5 +1,5 @@
 import { Client, Hex } from "viem";
-import { TandaPayState } from "./types";
+import { ClaimInfo, MemberInfo, SubgroupInfo, TandaPayState } from "./types";
 import { TandaPayContract } from "./types"
 
 // TODO: Improve comments in this file. they were copy+pasted directly from a README in the smart contract source
@@ -18,7 +18,7 @@ export class TandaPayReadMethods<TClient extends Client> {
     // 1. getPaymentToken =>
     // Use case -- This function will return the current payment token (LUSD) address.
     // Arguments --- none required
-    getPaymentTokenAddress = async () => await this.read.getPaymentToken();
+    getPaymentTokenAddress = async (): Promise<Hex> => await this.read.getPaymentToken();
 
     // 2. getCurrentMemberId =>
     // Use case -- This function will return the current member Id. 
@@ -63,21 +63,33 @@ export class TandaPayReadMethods<TClient extends Client> {
     // 10. getCommunityState =>
     // Use case -- This function will return the current community state in number, 0 means it's in initialization state, 1 means default, 2 means fractured, and 3 means collapsed.
     // Arguments --- none required 
-    // TODO: decide whether TandaPayState custom type should be moved
     getCommunityState = async () => await this.read.getCommunityState() as TandaPayState; 
 
     // 11. getSubGroupIdToSubGroupInfo =>
     // Use case -- This function will return the SubGroup-related information.
     // Arguments --- The Caller will have to provide the SubGroup Id.
-    // TODO: make a custom type that matches this
-    getSubgroupInfo = async (subgroupId: bigint) => await this.read.getSubGroupIdToSubGroupInfo([subgroupId]);
+    //* Note that the type here is mapped to an internally named type. This  time, the types
+    //* returned by the smart contract had sane member names, so I left it how it was and it can
+    //* be mapped directly
+    getSubgroupInfo = async (subgroupId: bigint): Promise<SubgroupInfo> => await this.read.getSubGroupIdToSubGroupInfo([subgroupId]);
 
     // 12. getPeriodIdToClaimIdToClaimInfo =>
     // Use case -- This function will return the claim-related information.
     // Arguments --- The caller will have to provide the period Id and the Claim Id.
-    // TODO: make a custom type that matches this
-    getClaimInfo = async (periodId: bigint, claimId: bigint) => await this.read.getPeriodIdToClaimIdToClaimInfo([periodId, claimId])
-
+    getClaimInfo = async (periodId: bigint, claimId: bigint): Promise<ClaimInfo> => {
+        let claimInformation = await this.read.getPeriodIdToClaimIdToClaimInfo([periodId, claimId]);
+        // Mapping the object returned by the smart contract to an internal object in this code
+        // base that has better naming conventions and works with everything else. In theory, the
+        // actual type returned from the smart contract should never need to be used elsewhere.
+        return {
+            id: claimInformation.id,
+            amount: claimInformation.claimAmount,
+            isWhitelisted: claimInformation.isWhitelistd,
+            claimantWalletAddress: claimInformation.claimant,
+            claimantSubgroupId: claimInformation.SGId,
+            hasClaimantClaimedFunds: claimInformation.isClaimed,
+        };
+    }
     // 13. getPeriodIdToClaimIds =>
     // Use case -- This function will return the claim Ids of the period.
     // Arguments ---The caller will have to provide the period Id.
@@ -106,9 +118,28 @@ export class TandaPayReadMethods<TClient extends Client> {
     // 18. getMemberToMemberInfo =>
     // Use case -- This function will return the member's information
     // Arguments --- The caller will have to provide the member's wallet address and an expected period Id. 
-    // TODO: make a custom type for this
     // TODO: improve naming/clarity for this
-    getMemberInfoFromAddress = async (walletAddress: Hex, periodId: bigint) => await this.read.getMemberToMemberInfo([walletAddress, periodId])
+    getMemberInfo = async (memberWalletAddress: Hex, periodId: bigint): Promise<MemberInfo> => {
+        let memberInfo = await this.read.getMemberToMemberInfo([memberWalletAddress, periodId]);
+        // Mapping the object returned by the smart contract to an internal object in this code
+        // base that has better naming conventions and works with everything else. In theory, the
+        // actual type returned from the smart contract should never need to be used elsewhere.
+        return {
+            id: memberInfo.memberId,
+            subgroupId: memberInfo.associatedGroupId,
+            walletAddress: memberInfo.member,
+            communityEscrowAmount: memberInfo.cEscrowAmount,
+            savingsEscrowAmount: memberInfo.ISEscorwAmount,
+            pendingRefundAmount: memberInfo.pendingRefundAmount,
+            availableToWithdrawAmount: memberInfo.availableToWithdraw,
+            isEligibleForCoverageThisPeriod: memberInfo.eligibleForCoverageInPeriod,
+            isPremiumPaidThisPeriod: memberInfo.isPremiumPaid,
+            queuedRefundAmountThisPeriod: memberInfo.idToQuedRefundAmount,
+            // TODO: Convert to enum after figuring out mappings
+            memberStatus: memberInfo.status,
+            assignmentStatus: memberInfo.assignment,
+        };
+    }
 
     //! Docs weren't provided for following functions, i'll have to write them myself and inspect SC code to use
 
@@ -116,6 +147,9 @@ export class TandaPayReadMethods<TClient extends Client> {
     getSecretaryAddress = async () => await this.read.secretary();
 }
 
+// NOTE: saAmount refers to the amount required by the savings escrow
+// NOTE: ISEscorwAmount = amount in member's savings escrow
+// NOTE: CEscrowAmount = amount member will contribute to community escrow
 
 //? Any boxes checked below means the method has been used in a wrapper in the class above
 //* these were documented by MD
@@ -142,7 +176,7 @@ export class TandaPayReadMethods<TClient extends Client> {
 //TODO: figure out why these weren't documented, such as:
 //TODO: - if any of them were supposed to be private/internal use only
 //TODO: - if any of them are unused or have no utility to us here
-// - [ ] this.read.secretary
+// - [x] this.read.secretary
 // - [ ] this.read.getUpcomingSecretary
 // - [ ] this.read.getSecretarySuccessors
 // - [ ] this.read.getPeriodIdToPeriodInfo

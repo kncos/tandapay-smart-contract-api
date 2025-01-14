@@ -1,25 +1,42 @@
 import { Client, getContract, Hex } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
-import { TandaPayContract } from "./types";
+import { TandaPayRole, TandaPayContract, WriteableClient } from "./types";
+import { TandaPayReadMethods } from "./tandapay_read_methods";
+import MemberWriteMethods from "./member_write_methods";
+import SecretaryWriteMethods from "./secretary_write_methods";
 
+// this is tightly coupled to TandaPayManager, so it isn't going to types.ts
+export type TandaPayManagerOptions = {
+    clientRole?: TandaPayRole;
+};
 
-// IDEA:
-// - have member/secretary write methods be a member of this class
-// - have read methods be a member of this class
-// - the configuration can change depending on the client, so if a regular public client is passed, just
-//   read methods will be available, but if a walletclient is passed, it could make either member/secretary
-//   methods available
 export class TandaPayManager<TClient extends Client> {
     private contractInstance: TandaPayContract<TClient>;
-    private client: TClient;
 
-    constructor(contract_address: Hex, client: TClient) {
+    private readMethods: TandaPayReadMethods<TClient>
+    private memberWriteMethods?: TClient extends WriteableClient ? MemberWriteMethods<WriteableClient> : undefined;
+    private secretaryWriteMethods?: TClient extends WriteableClient ? SecretaryWriteMethods<WriteableClient> : undefined;
+
+    constructor(
+        contract_address: Hex, 
+        client: TClient, 
+        opts?: TClient extends WriteableClient ? TandaPayManagerOptions : Omit<TandaPayManagerOptions, 'clientRole'>
+    ) {
         this.contractInstance = getContract({
             address: contract_address,
             abi: TandaPayInfo.abi,
             client: client,
         });
 
-        this.client = client;
+        this.readMethods = new TandaPayReadMethods(this.contractInstance);
+        if (opts && 'clientRole' in opts) {
+            if (opts.clientRole === TandaPayRole.Secretary) {
+                this.memberWriteMethods = new MemberWriteMethods(this.contractInstance);
+                this.secretaryWriteMethods = new SecretaryWriteMethods(this.contractInstance);
+            }
+            else if (opts.clientRole === TandaPayRole.Member) {
+                this.memberWriteMethods = new MemberWriteMethods(this.contractInstance);
+            }
+        }
     }
 }

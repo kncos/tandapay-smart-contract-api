@@ -1,4 +1,4 @@
-import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient } from "viem";
+import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient, getContract } from "viem";
 import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
@@ -87,6 +87,9 @@ describe('TandaPayManager instantiation', () => {
 //            expect(error).toBeDefined();
 //        }
 //    });
+});
+
+describe('Here I simply run stuff to test it for experimentation purposes', () => {
 });
 
 describe('Secretary Actions work', () => {

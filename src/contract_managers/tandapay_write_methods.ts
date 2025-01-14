@@ -1,6 +1,6 @@
 import { TandaPayContract, WriteableClient } from "./types";
 
-export class TandaPayWriteMethods<TClient extends WriteableClient> {
+export abstract class TandaPayWriteMethods<TClient extends WriteableClient> {
     protected contractInstance: TandaPayContract<TClient>;
 
     protected get simulate() {
