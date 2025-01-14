@@ -1,9 +1,9 @@
 import { Client, Hex } from "viem";
-import { TandaPayContract, TandaPayState } from "./TandaPayManager";
+import { TandaPayState } from "./types";
+import { TandaPayContract } from "./types"
 
 // TODO: Improve comments in this file. they were copy+pasted directly from a README in the smart contract source
 // TODO: Implement wrappers for the manually collapsed methods and figure out how they work by reading SC source
-
 export class TandaPayReadMethods<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
 

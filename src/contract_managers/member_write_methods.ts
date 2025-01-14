@@ -1,5 +1,6 @@
 import { Hex } from "viem";
-import { TandaPayWriteMethods, WriteableClient } from "./TandaPayWriteMethods";
+import { TandaPayWriteMethods } from "./tandapay_write_methods";
+import { WriteableClient } from "./types";
 
 export default class MemberWriteMethods<TClient extends WriteableClient> extends TandaPayWriteMethods<TClient> {
     // 1.  joinToCommunity  =>

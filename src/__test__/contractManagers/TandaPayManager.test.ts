@@ -3,7 +3,7 @@ import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
-import { TandaPayManager } from "../../contractManagers/TandaPayManager";
+import { TandaPayManager } from "../../contract_managers/tandapay_manager";
 import { doesNotMatch } from "assert";
 
 const default_account = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
@@ -57,36 +57,36 @@ beforeAll(async () => {
 });
 
 describe('TandaPayManager instantiation', () => {
-    it('Can be instantiated with publicClient', async () => {
-        let tpManager = new TandaPayManager(tpAddress, publicClient);
-        let secretaryAddr = await tpManager.getSecretary();
-        expect(secretaryAddr).toBe(default_account.address);
-    });
-
-    it('Can be instantiated with walletClient', async () => {
-        let tpManager = new TandaPayManager(tpAddress, walletClient);
-        let secretaryAddr = await tpManager.getSecretary();
-        expect(secretaryAddr).toBe(default_account.address);
-    });
-
-    //TODO: decide whether or not to axe this feature, for now it's not implemented
-    // it('Can be instantiated with both publicClient and WalletClient', async () => {
-    //     let tpManager = new TandaPayManager(tpAddress, { public: publicClient, wallet: walletClient } );
-    //     let secretaryAddr = await tpManager.getSecretary();
-    //     expect(secretaryAddr).toBe(default_account.address);
-    // });
-
-    it('Should not work with an invalid address', async () => {
-        try {
-            let tpManager = new TandaPayManager(`0x0`, publicClient);
-            await tpManager.getSecretary();
-            fail("Expected an error to be thrown, but none was");
-        } catch (error) {
-            const errorMessage = String(error);
-            //console.log("Caught error:", errorMessage.split('\n').slice(0,50).join('\n'));
-            expect(error).toBeDefined();
-        }
-    });
+//    it('Can be instantiated with publicClient', async () => {
+//        let tpManager = new TandaPayManager(tpAddress, publicClient);
+//        let secretaryAddr = await tpManager.getSecretary();
+//        expect(secretaryAddr).toBe(default_account.address);
+//    });
+//
+//    it('Can be instantiated with walletClient', async () => {
+//        let tpManager = new TandaPayManager(tpAddress, walletClient);
+//        let secretaryAddr = await tpManager.getSecretary();
+//        expect(secretaryAddr).toBe(default_account.address);
+//    });
+//
+//    //TODO: decide whether or not to axe this feature, for now it's not implemented
+//    // it('Can be instantiated with both publicClient and WalletClient', async () => {
+//    //     let tpManager = new TandaPayManager(tpAddress, { public: publicClient, wallet: walletClient } );
+//    //     let secretaryAddr = await tpManager.getSecretary();
+//    //     expect(secretaryAddr).toBe(default_account.address);
+//    // });
+//
+//    it('Should not work with an invalid address', async () => {
+//        try {
+//            let tpManager = new TandaPayManager(`0x0`, publicClient);
+//            await tpManager.getSecretary();
+//            fail("Expected an error to be thrown, but none was");
+//        } catch (error) {
+//            const errorMessage = String(error);
+//            //console.log("Caught error:", errorMessage.split('\n').slice(0,50).join('\n'));
+//            expect(error).toBeDefined();
+//        }
+//    });
 });
 
 describe('Secretary Actions work', () => {

@@ -1,5 +1,6 @@
 import { Hex } from "viem";
-import { TandaPayWriteMethods, WriteableClient } from "./TandaPayWriteMethods";
+import { TandaPayWriteMethods } from "./tandapay_write_methods";
+import { WriteableClient } from "./types";
 
 // methods within the TandaPay smart contract that only the secretary may call
 export default class SecretaryWriteMethods<TClient extends WriteableClient> extends TandaPayWriteMethods<TClient> {
