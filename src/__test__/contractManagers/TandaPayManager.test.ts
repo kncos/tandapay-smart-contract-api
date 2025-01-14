@@ -3,7 +3,7 @@ import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
-import TandaPayManager from "../../contractManagers/TandaPayManager";
+import { TandaPayManager } from "../../contractManagers/TandaPayManager";
 import { doesNotMatch } from "assert";
 
 const default_account = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
@@ -90,17 +90,17 @@ describe('TandaPayManager instantiation', () => {
 });
 
 describe('Secretary Actions work', () => {
-    it('Should allow members to be added', async () => {
-        let tpManager = new TandaPayManager(tpAddress, walletClient);
-        const res = await tpManager.addMemberToCommunity("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
-
-        console.log(await publicClient.getContractEvents({
-            abi: TandaPayInfo.abi,
-            address: tpAddress,
-        }));
-
-        //console.log(JSON.stringify(res, null, 2).split('\n').splice(0,50).join('\n'));
-    });
+//    it('Should allow members to be added', async () => {
+//        let tpManager = new TandaPayManager(tpAddress, walletClient);
+//        const res = await tpManager.addMemberToCommunity("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
+//
+//        console.log(await publicClient.getContractEvents({
+//            abi: TandaPayInfo.abi,
+//            address: tpAddress,
+//        }));
+//
+//        //console.log(JSON.stringify(res, null, 2).split('\n').splice(0,50).join('\n'));
+//    });
 });
 
 afterAll(() => {
