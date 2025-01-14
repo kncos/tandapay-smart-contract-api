@@ -4,7 +4,6 @@ import { TandaPayContract, TandaPayState } from "./TandaPayManager";
 // TODO: Improve comments in this file. they were copy+pasted directly from a README in the smart contract source
 // TODO: Implement wrappers for the manually collapsed methods and figure out how they work by reading SC source
 
-
 export class TandaPayReadMethods<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
 
@@ -110,4 +109,48 @@ export class TandaPayReadMethods<TClient extends Client> {
     // TODO: make a custom type for this
     // TODO: improve naming/clarity for this
     getMemberInfoFromAddress = async (walletAddress: Hex, periodId: bigint) => await this.read.getMemberToMemberInfo([walletAddress, periodId])
+
+    //! Docs weren't provided for following functions, i'll have to write them myself and inspect SC code to use
+
+    // retrieves the address of the secretary
+    getSecretaryAddress = async () => await this.read.secretary();
 }
+
+
+//? Any boxes checked below means the method has been used in a wrapper in the class above
+//* these were documented by MD
+// - [x] this.read.getTotalCoverage
+// - [x] this.read.getSubGroupIdToSubGroupInfo
+// - [x] this.read.getPeriodIdWhiteListedClaims
+// - [x] this.read.getPeriodIdToDefectorsId
+// - [x] this.read.getPeriodIdToClaimIds
+// - [x] this.read.getPeriodIdToClaimIdToClaimInfo
+// - [x] this.read.getPeriodId
+// - [x] this.read.getPaymentToken
+// - [x] this.read.getMemberToMemberInfo
+// - [x] this.read.getMemberToMemberId
+// - [x] this.read.getCurrentSubGroupId
+// - [x] this.read.getCurrentMemberId
+// - [x] this.read.getCurrentClaimId
+// - [x] this.read.getCommunityState
+// - [x] this.read.getBasePremium
+// - [ ] this.read.getManuallyCollapsedPeriod
+// - [ ] this.read.getIsManuallyCollapsed
+// - [ ] this.read.getPeriodIdToManualCollapse
+
+//! these weren't documented by MD.
+//TODO: figure out why these weren't documented, such as:
+//TODO: - if any of them were supposed to be private/internal use only
+//TODO: - if any of them are unused or have no utility to us here
+// - [ ] this.read.secretary
+// - [ ] this.read.getUpcomingSecretary
+// - [ ] this.read.getSecretarySuccessors
+// - [ ] this.read.getPeriodIdToPeriodInfo
+// - [ ] this.read.getIsHandingOver
+// - [ ] this.read.getIsAllMemberNotPaidInPeriod
+// - [ ] this.read.getIsAMemberDefectedInPeriod
+// - [ ] this.read.getHandoverStartedAt
+// - [ ] this.read.getEmergencySecretaries
+// - [ ] this.read.getEmergencyHandoverStartedAt
+// - [ ] this.read.getEmergencyHandOverStartedPeriod
+// - [ ] this.read.EmergencyStartTime

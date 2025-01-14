@@ -37,10 +37,4 @@ export class TandaPayManager<TClient extends Client> {
 
         this.client = client;
     }
-
-    async getSecretary(): Promise<Hex> {
-        return this.contractInstance.read.secretary();
-    }
-
-    
 }
