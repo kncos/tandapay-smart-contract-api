@@ -4,6 +4,11 @@ import { TandaPayInfo } from "../_contracts/TandaPay";
 // client type that results in a writeable contract instance
 export type WriteableClient = Client & { chain: Chain; account: Account; };
 
+// method which can be used at runtime to determine if a client is a WriteableClient
+export function isWriteableClient(client: Client | WriteableClient): client is WriteableClient {
+    return 'chain' in client && 'account' in client;
+}
+
 // Generic type for contract instances for the TandaPay smart contract
 export type TandaPayContract<TClient extends Client>
     = GetContractReturnType<typeof TandaPayInfo.abi, TClient, Address>;
@@ -63,4 +68,3 @@ export enum TandaPayRole {
     Member,
     Secretary
 };
-

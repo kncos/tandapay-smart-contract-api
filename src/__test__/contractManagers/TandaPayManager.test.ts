@@ -1,10 +1,10 @@
-import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient, getContract } from "viem";
+import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient } from "viem";
 import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
-import { TandaPayManager } from "../../contract_managers/tandapay_manager";
-import { doesNotMatch } from "assert";
+import { createTandaPayManager, WriteableTandaPayManager } from "../../contract_managers/tandapay_manager";
+import { isWriteableClient, TandaPayRole } from "../../contract_managers/types";
 
 const default_account = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
 let publicClient: PublicClient;
@@ -56,56 +56,13 @@ beforeAll(async () => {
     tpAddress = tpReceipt.contractAddress;
 });
 
-describe('TandaPayManager instantiation', () => {
-//    it('Can be instantiated with publicClient', async () => {
-//        let tpManager = new TandaPayManager(tpAddress, publicClient);
-//        let secretaryAddr = await tpManager.getSecretary();
-//        expect(secretaryAddr).toBe(default_account.address);
-//    });
-//
-//    it('Can be instantiated with walletClient', async () => {
-//        let tpManager = new TandaPayManager(tpAddress, walletClient);
-//        let secretaryAddr = await tpManager.getSecretary();
-//        expect(secretaryAddr).toBe(default_account.address);
-//    });
-//
-//    //TODO: decide whether or not to axe this feature, for now it's not implemented
-//    // it('Can be instantiated with both publicClient and WalletClient', async () => {
-//    //     let tpManager = new TandaPayManager(tpAddress, { public: publicClient, wallet: walletClient } );
-//    //     let secretaryAddr = await tpManager.getSecretary();
-//    //     expect(secretaryAddr).toBe(default_account.address);
-//    // });
-//
-//    it('Should not work with an invalid address', async () => {
-//        try {
-//            let tpManager = new TandaPayManager(`0x0`, publicClient);
-//            await tpManager.getSecretary();
-//            fail("Expected an error to be thrown, but none was");
-//        } catch (error) {
-//            const errorMessage = String(error);
-//            //console.log("Caught error:", errorMessage.split('\n').slice(0,50).join('\n'));
-//            expect(error).toBeDefined();
-//        }
-//    });
-});
-
 describe('Here I simply run stuff to test it for experimentation purposes', () => {
-});
+    it('walletClient is a writeable client', async () => {
+        expect(isWriteableClient(walletClient)).toBe(true);
+    });
 
-describe('Secretary Actions work', () => {
-//    it('Should allow members to be added', async () => {
-//        let tpManager = new TandaPayManager(tpAddress, walletClient);
-//        const res = await tpManager.addMemberToCommunity("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
-//
-//        console.log(await publicClient.getContractEvents({
-//            abi: TandaPayInfo.abi,
-//            address: tpAddress,
-//        }));
-//
-//        //console.log(JSON.stringify(res, null, 2).split('\n').splice(0,50).join('\n'));
-//    });
-});
-
-afterAll(() => {
-    //... 
+    it('tp Manager created from walletClient is a Writeable TP Manager', () => {
+        let tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
+        expect(tpManager).toBeInstanceOf(WriteableTandaPayManager);
+    });
 });
