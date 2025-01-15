@@ -7,7 +7,7 @@ export type WriteableClient = Client & { chain: Chain; account: Account; };
 // method which can be used at runtime to determine if a client is a WriteableClient
 export function isWriteableClient(client: Client | WriteableClient): client is WriteableClient {
     return 'chain' in client && 'account' in client;
-}
+};
 
 // Generic type for contract instances for the TandaPay smart contract
 export type TandaPayContract<TClient extends Client>
@@ -56,7 +56,9 @@ export type MemberInfo = {
     // TODO: Convert to enum after figuring out mappings
     memberStatus: number;
     assignmentStatus: number;
-}// IDEA:
+};
+
+// IDEA:
 // - have member/secretary write methods be a member of this class
 // - have read methods be a member of this class
 // - the configuration can change depending on the client, so if a regular public client is passed, just
