@@ -6,7 +6,7 @@ export type WriteableClient = Client & { chain: Chain; account: Account; };
 
 // method which can be used at runtime to determine if a client is a WriteableClient
 export function isWriteableClient(client: Client | WriteableClient): client is WriteableClient {
-    return 'chain' in client && 'account' in client;
+    return ('chain' in client && client.chain !== undefined) && ('account' in client && (client.account !== undefined));
 };
 
 // Generic type for contract instances for the TandaPay smart contract
