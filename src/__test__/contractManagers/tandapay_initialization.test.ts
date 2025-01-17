@@ -5,6 +5,7 @@ import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
 import { createTandaPayManager, TandaPayManager, WriteableTandaPayManager } from "../../contract_managers/tandapay_manager";
 import { AssignmentStatus, isWriteableClient, TandaPayRole, TandaPayState, WriteableClient } from "../../contract_managers/types";
+import { deployFtkContract, deployTandaPayContract } from "./test_helpers.test";
 
 const secretaryAccount = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
 const additional_private_keys: Hex[] = [
@@ -59,35 +60,8 @@ beforeAll(async () => {
         transport: http(),
     });
 
-    // need to deploy the FaucetToken to be able to use TP
-    const ftkReceipt = await walletClient.deployContract({
-        abi: FaucetTokenInfo.abi,
-        bytecode: FaucetTokenInfo.bytecode.object as Hex,
-    }).then((hash) => {
-        return publicClient.waitForTransactionReceipt( {hash} );
-    });
-
-    if (!ftkReceipt || !ftkReceipt.contractAddress) {
-        throw new Error("failed to deploy FTK contract");
-    }
-
-    // get address of newly deployed faucet token
-    ftkAddress = ftkReceipt.contractAddress;
-
-    // deploy TandaPay contract using the faucet token contract address and secretary's wallet address
-    const tpReceipt = await walletClient.deployContract({
-        abi: TandaPayInfo.abi,
-        bytecode: TandaPayInfo.bytecode.object as Hex,
-        args: [ftkAddress, secretaryAccount.address],
-    }).then((hash) => {
-        return publicClient.waitForTransactionReceipt( {hash} );
-    });
-
-    if (!tpReceipt || !tpReceipt.contractAddress) {
-        throw new Error("failed to deploy TP contract");
-    }
-
-    tpAddress = tpReceipt.contractAddress;
+    ftkAddress = await deployFtkContract(secretaryAccount);
+    tpAddress = await deployTandaPayContract(secretaryAccount, ftkAddress);
 
     // here we'll make a TP manager for each member other than the default_account which is the secretary
     memberManagers = (() => {
@@ -113,8 +87,6 @@ beforeAll(async () => {
 
     // add all of the memberAddresses we just computed into the array with all addresses
     allAddresses.push(...memberAddressesNoSecretary);
-
-
 });
 
 describe('TandaPayManager creation', () => {

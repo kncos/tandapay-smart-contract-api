@@ -32,7 +32,7 @@ export const TEST_TRANSPORT: Transport = http();
 export type AccountClientManager<TClient extends WriteableClient> = {
     account: Account,
     client: TClient,
-    tpManager: WriteableTandaPayManager<TClient>,
+    tpManager?: WriteableTandaPayManager<TClient>,
 };
 
 export async function deployFtkContract(
@@ -72,7 +72,7 @@ export async function deployTandaPayContract(
         transport: TEST_TRANSPORT,
     }).extend(publicActions);
 
-    let secAddr = secretaryAddr ? secretaryAddr : (await client.getAddresses())[0];
+    let secAddr = secretaryAddr ? secretaryAddr : account.address;
 
     const tpReceipt = await client.deployContract({
         abi: TandaPayInfo.abi,
@@ -103,8 +103,8 @@ export function getFtkContract<TClient extends WriteableClient>(
 };
 
 export function getAccountClientManagers(
-    tpContractAddress: Hex,
     keys: Hex[] = PRIVATE_KEYS,
+    tpContractAddress?: Hex,
     default_role: TandaPayRole = TandaPayRole.Member,
     make_first_secretary: boolean = true,
 ): AccountClientManager<WriteableClient>[] {
@@ -120,16 +120,21 @@ export function getAccountClientManagers(
             chain: TEST_CHAIN,
             transport: TEST_TRANSPORT,
         });
-        // create a TandaPay manager
-        let tpManager = createTandaPayManager(
-            tpContractAddress,
-            client,
-            { clientRole: (sec ? TandaPayRole.Secretary : default_role) },
-        );
-        // set sec to false so we don't override the default after the 1st acc
-        sec = false;
-        // add to result
-        res.push({ account, client, tpManager });
+        
+        if (tpContractAddress) {
+            // create a TandaPay manager
+            let tpManager = createTandaPayManager(
+                tpContractAddress,
+                client,
+                { clientRole: (sec ? TandaPayRole.Secretary : default_role) },
+            );
+            // set sec to false so we don't override the default after the 1st acc
+            sec = false;
+            // add to result
+            res.push({ account, client, tpManager });
+        } else {
+            res.push({ account, client });
+        }
     }
 
     return res;
@@ -143,13 +148,26 @@ export async function distributeFtk<TClient extends WriteableClient>(
     for (let acm of accountClientManagers) {
         let c = getFtkContract(ftkContractAddr, acm.client);
         await c.write.faucet([BigInt(amountOfFtk * 10**18)]);
-        let bal = await c.read.balanceOf([acm.account.address]);
-        console.log(bal);
     }
 }
 
-//describe('test helpers work', () => {
-//    it('distributing FTK works', async () => {
-//        let acms = getAccountClientManagers();
-//    });
-//});
+describe('test helpers work', () => {
+    it('distributing FTK works', async () => {
+        // get a few ACMs
+        let acms = getAccountClientManagers();
+        // deploy FTK contract with the first one
+        let ftkAddr = await deployFtkContract(acms[0].account);
+        // iterate through and let each of them call the faucet method.
+        // we'll distribute 1.1 million FTK to each
+        await distributeFtk(ftkAddr, acms, 1100000);
+
+        for (let acm of acms) {
+            let c = getFtkContract(ftkAddr, acm.client);
+            let bal = await c.read.balanceOf([acm.account.address]);
+            // here, we expect them to have more than 1M Ftk. The reason
+            // for the discrepancy between 1.1M and 1M is just to avoid any
+            // issues with rounding or gas or anything like that
+            expect(bal).toBeGreaterThan(BigInt(1000000 * 10**18));
+        }
+    });
+});
