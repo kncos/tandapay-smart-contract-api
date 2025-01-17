@@ -145,6 +145,7 @@ export class TandaPayReadMethods<TClient extends Client> {
 
     // retrieves the address of the secretary
     getSecretaryAddress = async () => await this.read.secretary();
+    haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
 }
 
 // NOTE: saAmount refers to the amount required by the savings escrow
@@ -181,7 +182,7 @@ export class TandaPayReadMethods<TClient extends Client> {
 // - [ ] this.read.getSecretarySuccessors
 // - [ ] this.read.getPeriodIdToPeriodInfo
 // - [ ] this.read.getIsHandingOver
-// - [ ] this.read.getIsAllMemberNotPaidInPeriod
+// - [x] this.read.getIsAllMemberNotPaidInPeriod
 // - [ ] this.read.getIsAMemberDefectedInPeriod
 // - [ ] this.read.getHandoverStartedAt
 // - [ ] this.read.getEmergencySecretaries

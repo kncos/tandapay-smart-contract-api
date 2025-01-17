@@ -1,4 +1,4 @@
-import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient } from "viem";
+import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient, getContract, GetContractReturnType, Client, Address, formatUnits } from "viem";
 import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
@@ -198,6 +198,7 @@ describe('Can get to the TandaPay default state from initial deployment using tp
                 // we'll calculate what subgroup we're in, then add which of the 5 members we're on for this subgroup
                 let memberIndex = (i * 5) + j;
                 
+
                 // first, their status should just be that they've been aded by the secretary
                 let assignmentStatus = (await tpManager.read.getMemberInfo(allAddresses[memberIndex], 0n)).assignmentStatus;
                 expect(assignmentStatus).toBe(AssignmentStatus.AddedBySecretery);
@@ -225,11 +226,17 @@ describe('Can get to the TandaPay default state from initial deployment using tp
         // 2.) have divided the members into at least 3 subgroups, each of which have a member count between
         //     4 and 7 (inclusive). we have 5 members in each of our 3 subgroups
         // 3.) Finally, to go into the default state, we have to specify the total community coverage.
+        //! NOTE: It is possible to advance to the default period without the secretary defining successors. this is an SC bug?
+        //! NOTE: individuals dont pay premiums on the change from initialization -> default. So no coverage in 1st default period?
 
         const tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
-        await tpManager.write.secretary?.initiateDefaultState(1500n);
+        // here, we initialize the default state with a premium of $150
+        await tpManager.write.secretary?.initiateDefaultState(BigInt(150 * 10**18));
 
+        // we now expect that the community is in the default state
         let communityState = await tpManager.read.getCommunityState();
         expect(communityState).toBe(TandaPayState.Default);
     });
 });
+
+
