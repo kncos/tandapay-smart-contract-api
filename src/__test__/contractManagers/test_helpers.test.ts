@@ -103,13 +103,16 @@ export function getFtkContract<TClient extends WriteableClient>(
 };
 
 export function getAccountClientManagers(
-    keys: Hex[] = PRIVATE_KEYS,
+    keys?: Hex[],
     tpContractAddress?: Hex,
     default_role: TandaPayRole = TandaPayRole.Member,
     make_first_secretary: boolean = true,
 ): AccountClientManager<WriteableClient>[] {
     let sec = make_first_secretary;
     let res = []
+
+    if (!keys)
+        keys = PRIVATE_KEYS;
     
     for (let key of keys) {
         // create an account
@@ -147,7 +150,7 @@ export async function distributeFtk<TClient extends WriteableClient>(
 ) {
     for (let acm of accountClientManagers) {
         let c = getFtkContract(ftkContractAddr, acm.client);
-        await c.write.faucet([BigInt(amountOfFtk * 10**18)]);
+        await c.write.faucet([BigInt(amountOfFtk) * (10n ** 18n)]);
     }
 }
 
