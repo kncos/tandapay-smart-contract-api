@@ -70,10 +70,9 @@ export class TandaPayManager<TClient extends Client> {
 }
 
 /** Internal type. Return type of `write` getter inside of WriteableTandaPayManager */
-type WriteGetterType<TClient extends WriteableClient> = 
-    | { member: MemberWriteMethods<TClient>; secretary: SecretaryWriteMethods<TClient>; }
-    | { member: MemberWriteMethods<TClient>; }
-    | {};
+type WriteGetterType<TClient extends WriteableClient> = { member?: MemberWriteMethods<TClient>; secretary?: SecretaryWriteMethods<TClient>; };
+//    | { member: MemberWriteMethods<TClient>; }
+//    | {};
 
 /**
  * WriteableTandaPayManager enables both read and write interactions with an instance of a TandaPay smart contract.

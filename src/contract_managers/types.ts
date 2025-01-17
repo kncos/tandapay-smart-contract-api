@@ -55,7 +55,7 @@ export type MemberInfo = {
     queuedRefundAmountThisPeriod: bigint;
     // TODO: Convert to enum after figuring out mappings
     memberStatus: number;
-    assignmentStatus: number;
+    assignmentStatus: AssignmentStatus;
 };
 
 // IDEA:
@@ -66,7 +66,20 @@ export type MemberInfo = {
 //   methods available
 
 export enum TandaPayRole {
-    None,
+    None = 0,
     Member,
     Secretary
 };
+
+// TODO: rename identifiers to better names, these were copied directly from the solidity code
+export enum AssignmentStatus {
+    UnAssigned = 0,
+    AddedBySecretery,
+    AssignedToGroup,
+    ApprovedByMember,
+    ApprovedByGroupMember,
+    AssignmentSuccessfull,
+    CancelledByMember,
+    CancelledGMember 
+};
+

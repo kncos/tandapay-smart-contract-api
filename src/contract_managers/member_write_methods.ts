@@ -16,7 +16,7 @@ export default class MemberWriteMethods<TClient extends WriteableClient> extends
     // Arguments --- members will have to pass a boolean value of if they want to join or not.
     async approveSubgroupAssignment(approve: boolean = true) {
         await this.simulate.approveSubGroupAssignment([approve]);
-        await this.write.approveSubGroupAssignment([approve])
+        await this.write.approveSubGroupAssignment([approve]);
     }
 
     // 3. approveNewSubgroupMember  =>

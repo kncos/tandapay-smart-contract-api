@@ -1,5 +1,5 @@
 import { Client, Hex } from "viem";
-import { ClaimInfo, MemberInfo, SubgroupInfo, TandaPayState } from "./types";
+import { AssignmentStatus, ClaimInfo, MemberInfo, SubgroupInfo, TandaPayState } from "./types";
 import { TandaPayContract } from "./types"
 
 // TODO: Improve comments in this file. they were copy+pasted directly from a README in the smart contract source
@@ -137,7 +137,7 @@ export class TandaPayReadMethods<TClient extends Client> {
             queuedRefundAmountThisPeriod: memberInfo.idToQuedRefundAmount,
             // TODO: Convert to enum after figuring out mappings
             memberStatus: memberInfo.status,
-            assignmentStatus: memberInfo.assignment,
+            assignmentStatus: memberInfo.assignment as AssignmentStatus,
         };
     }
 
