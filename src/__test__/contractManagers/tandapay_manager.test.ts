@@ -4,7 +4,7 @@ import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
 import { createTandaPayManager, TandaPayManager, WriteableTandaPayManager } from "../../contract_managers/tandapay_manager";
-import { AssignmentStatus, isWriteableClient, TandaPayRole, WriteableClient } from "../../contract_managers/types";
+import { AssignmentStatus, isWriteableClient, TandaPayRole, TandaPayState, WriteableClient } from "../../contract_managers/types";
 
 const secretaryAccount = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
 const additional_private_keys: Hex[] = [
@@ -186,8 +186,6 @@ describe('Can get to the TandaPay default state from initial deployment using tp
     it('The secretary can create subgroups and assign each member to a subgroup', async () => {
         const tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
 
-        let logOutput: string[] = [];
-
         //* note that if the number of members changes in the future, this will need to change, but
         //* due to the nature of sub groups it's inconvenient to dynamically decide how each member is
         //* assigned to them for now. This solution should work, and later on if it doesn't, i'll change it
@@ -217,11 +215,21 @@ describe('Can get to the TandaPay default state from initial deployment using tp
                 await allManagers[memberIndex].write.member?.approveSubgroupAssignment();
                 assignmentStatus = (await tpManager.read.getMemberInfo(allAddresses[memberIndex], 0n)).assignmentStatus;
                 expect(assignmentStatus).toBe(AssignmentStatus.AssignmentSuccessfull);
-
-                
             }
         }
+    });
 
-        console.log(logOutput.join('\n'));
+    it('can go into the default state', async () => {
+        // The criteria to enter the default state in a TandaPay community is:
+        // 1.) added at least 12 members to the community (at this point, we have 15)
+        // 2.) have divided the members into at least 3 subgroups, each of which have a member count between
+        //     4 and 7 (inclusive). we have 5 members in each of our 3 subgroups
+        // 3.) Finally, to go into the default state, we have to specify the total community coverage.
+
+        const tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
+        await tpManager.write.secretary?.initiateDefaultState(1500n);
+
+        let communityState = await tpManager.read.getCommunityState();
+        expect(communityState).toBe(TandaPayState.Default);
     });
 });
