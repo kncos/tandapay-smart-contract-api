@@ -1,19 +1,5 @@
-import { createPublicClient, createTestClient, createWalletClient, formatEther, formatUnits, getContract, Hex, http, publicActions } from "viem";
-import { anvil, foundry, mainnet } from "viem/chains";
-import { mnemonicToAccount } from "viem/accounts";
 
-const mnemonic_str: string = 'test test test test test test test test test test test junk';
-let accounts = Array.from({length: 3}, (_, index) => {
-    return mnemonicToAccount(mnemonic_str, {accountIndex:0, addressIndex:index});
-});
-
-const client = createWalletClient({
-    account: accounts[0],
-    chain: anvil,
-    transport: http(),
-}).extend(publicActions);
-
-console.log("done...");
+console.log('Hello, world!');
 
 // https://viem.sh/docs/contract/getContract#calling-methods
 

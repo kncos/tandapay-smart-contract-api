@@ -29,16 +29,12 @@ export function createTandaPayManager<TClient extends Client | WriteableClient>(
     client: TClient,
     opts?: TandaPayManagerOptions
 ): TClient extends WriteableClient ? WriteableTandaPayManager<TClient> : TandaPayManager<TClient> {
-    //* This took a while to figure out. I had the following issue:
-    //* - returning WriteableTPM | TPM resulted in .extend not being available when this method was used
-    //* - returning using a ternary operator caused the `return` statements to have compile time errors
-    //* - `as any` seems to have fixed this, and it now has the intended behavior of when a publicClient is
-    //*   passed, only .read is available (and is the only method the IDE autocompletes), and when a walletClient
-    //*   (or other type of WriteableClient) is passed, .write and .extend are available
+    //* NOTE: originally, i was using `as any` here, but i was able to narrow the type hints by using `never` 
+    //* to indicate a condition that would never happen. Very based :)
     if (isWriteableClient(client)) {
-        return new WriteableTandaPayManager(contract_address, client, opts) as any;
+        return new WriteableTandaPayManager(contract_address, client, opts) as TClient extends WriteableClient ? WriteableTandaPayManager<TClient> : never;
     }
-    return new TandaPayManager(contract_address, client) as any;
+    return new TandaPayManager(contract_address, client) as TClient extends WriteableClient ? never : TandaPayManager<TClient>;
 }
 
 /** TandaPayManager enables readonly interactions with an instance of a TandaPay smart contract */

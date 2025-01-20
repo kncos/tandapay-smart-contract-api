@@ -77,7 +77,7 @@ export class TandaPayReadMethods<TClient extends Client> {
     // Use case -- This function will return the claim-related information.
     // Arguments --- The caller will have to provide the period Id and the Claim Id.
     getClaimInfo = async (periodId: bigint, claimId: bigint): Promise<ClaimInfo> => {
-        let claimInformation = await this.read.getPeriodIdToClaimIdToClaimInfo([periodId, claimId]);
+        const claimInformation = await this.read.getPeriodIdToClaimIdToClaimInfo([periodId, claimId]);
         // Mapping the object returned by the smart contract to an internal object in this code
         // base that has better naming conventions and works with everything else. In theory, the
         // actual type returned from the smart contract should never need to be used elsewhere.
@@ -120,7 +120,7 @@ export class TandaPayReadMethods<TClient extends Client> {
     // Arguments --- The caller will have to provide the member's wallet address and an expected period Id. 
     // TODO: improve naming/clarity for this
     getMemberInfo = async (memberWalletAddress: Hex, periodId: bigint): Promise<MemberInfo> => {
-        let memberInfo = await this.read.getMemberToMemberInfo([memberWalletAddress, periodId]);
+        const memberInfo = await this.read.getMemberToMemberInfo([memberWalletAddress, periodId]);
         // Mapping the object returned by the smart contract to an internal object in this code
         // base that has better naming conventions and works with everything else. In theory, the
         // actual type returned from the smart contract should never need to be used elsewhere.
@@ -158,19 +158,19 @@ export class TandaPayReadMethods<TClient extends Client> {
     // TODO: figure out if calculations regarding special circumstances, (e.g. new members) should go here
     calculatePremium = async (memberAddress: Hex) => {
         // get the base premium
-        let basePremium = await this.getBasePremium();
+        const basePremium = await this.getBasePremium();
         
         // get current period
-        let currentPeriod = await this.getCurrentPeriodId();
+        const currentPeriod = await this.getCurrentPeriodId();
         
         // get member's information
-        let memberInfo = await this.getMemberInfo(memberAddress, currentPeriod);
+        const memberInfo = await this.getMemberInfo(memberAddress, currentPeriod);
 
         // calculate how much they should have in their savings escrow 
-        let savingsObligation: bigint = basePremium + ((basePremium / 100n) * 20n);
+        const savingsObligation: bigint = basePremium + ((basePremium / 100n) * 20n);
         
         // determine if there is a savings shortfall which must be made up
-        let savingsShortfall = savingsObligation - memberInfo.savingsEscrowAmount;
+        const savingsShortfall = savingsObligation - memberInfo.savingsEscrowAmount;
         
         // calculate the premium owed as being the base premium, + whatever is required
         // to ensure that the member meets their savings escrow obligation

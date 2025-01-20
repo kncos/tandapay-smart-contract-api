@@ -23,7 +23,7 @@ beforeAll(async () => {
         await acms[0].tpManager?.write.secretary?.createSubGroup();
         // add 5 members to that subgroup
         for (let j = 0; j < 5; j++) {
-            let memberId = (i * 5) + j;
+            const memberId = (i * 5) + j;
             // secretary must add the member to the community
             await acms[0].tpManager?.write.secretary?.addMemberToCommunity(acms[memberId].account.address);
             // assign to subgroup. subgroup indices start at 1
@@ -56,14 +56,14 @@ describe('Moving into the default state', () => {
     // TODO: figure out how much premium is being charged to new members in the initialization state?
     //! SC error? It makes them pay their full premium, + their full savings requirement, in the very beginning, rather than splitting it
     it(`see what happens when members pay premiums`, async () => {
-        for (let acm of acms) {
-            let ftkContract = getFtkContract(ftkAddr, acm.client);
-            let maxPremiumAmount = 150n * (10n ** 18n);
+        for (const acm of acms) {
+            const ftkContract = getFtkContract(ftkAddr, acm.client);
+            const maxPremiumAmount = 150n * (10n ** 18n);
 
             await ftkContract.write.approve([tpAddr, maxPremiumAmount]);
-            let startBalance = await ftkContract.read.balanceOf([acm.account.address]);
+            const startBalance = await ftkContract.read.balanceOf([acm.account.address]);
             await acm.tpManager?.write.member?.payPremium();
-            let endBalance = await ftkContract.read.balanceOf([acm.account.address]);
+            const endBalance = await ftkContract.read.balanceOf([acm.account.address]);
 
             console.log(`start balance: ${formatUnits(startBalance, 18)}\nend balance: ${formatUnits(endBalance, 18)}\namt paid: ${formatUnits(startBalance-endBalance, 18)}`);
         }

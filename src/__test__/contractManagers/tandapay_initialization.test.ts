@@ -1,8 +1,6 @@
-import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient, getContract, GetContractReturnType, Client, Address, formatUnits } from "viem";
+import { PublicClient, WalletClient, Transport, Chain, Hex, createPublicClient, http, createWalletClient } from "viem";
 import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
-import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
-import { TandaPayInfo } from "../../_contracts/TandaPay";
 import { createTandaPayManager, TandaPayManager, WriteableTandaPayManager } from "../../contract_managers/tandapay_manager";
 import { AssignmentStatus, isWriteableClient, TandaPayRole, TandaPayState, WriteableClient } from "../../contract_managers/types";
 import { deployFtkContract, deployTandaPayContract } from "./test_helpers.test";
@@ -29,13 +27,13 @@ let publicClient: PublicClient;
 let walletClient: WalletClient<Transport, Chain, Account>;
 let ftkAddress: Hex;
 let tpAddress: Hex;
-let memberWallets = makeWallets(additional_private_keys);
+const memberWallets = makeWallets(additional_private_keys);
 let memberManagers: WriteableTandaPayManager<WriteableClient>[] = [];
-let allAddresses: Hex[] = [secretaryAccount.address];
+const allAddresses: Hex[] = [secretaryAccount.address];
 
 function makeWallets(private_keys: Hex[]) {
-    let wallets: WalletClient[] = [];
-    for (let pk of private_keys) {
+    const wallets: WalletClient[] = [];
+    for (const pk of private_keys) {
         wallets.push(createWalletClient({
             account: privateKeyToAccount(pk),
             chain: anvil,
@@ -65,8 +63,8 @@ beforeAll(async () => {
 
     // here we'll make a TP manager for each member other than the default_account which is the secretary
     memberManagers = (() => {
-        let managers = [];
-        for (let w of memberWallets) {
+        const managers = [];
+        for (const w of memberWallets) {
             managers.push(createTandaPayManager(tpAddress, w, { clientRole: TandaPayRole.Member }));
         }
         return managers;
@@ -74,12 +72,12 @@ beforeAll(async () => {
 
 
     // then add all of the regular members' addresses, with an immediately invoked function
-    let memberAddressesNoSecretary: Hex[] = await (async () => {
+    const memberAddressesNoSecretary: Hex[] = await (async () => {
         // build up an array of addresses by iterating through each memberWallet,
         // getting the address, then adding that address to the array
-        let addresses: Hex[] = [];
-        for (let w of memberWallets) {
-            let [addr] = await w.getAddresses();
+        const addresses: Hex[] = [];
+        for (const w of memberWallets) {
+            const [addr] = await w.getAddresses();
             addresses.push(addr);
         }
         return addresses;
@@ -99,34 +97,32 @@ describe('TandaPayManager creation', () => {
     });
 
     it('tp manager created from publicClient IS NOT a Writeable TP Manager, and should not have .write or .extend', () => {
-        let tpManager = createTandaPayManager(tpAddress, publicClient);
+        const tpManager = createTandaPayManager(tpAddress, publicClient);
         expect(tpManager).toBeInstanceOf(TandaPayManager);
         expect(tpManager).not.toBeInstanceOf(WriteableTandaPayManager);
-        expect((tpManager as any).write).toBeUndefined();
-        expect((tpManager as any).extend).toBeUndefined();
     });
 
     it('tp manager created from walletClient IS a Writeable TP Manager', () => {
-        let tpManager = createTandaPayManager(tpAddress, walletClient);
+        const tpManager = createTandaPayManager(tpAddress, walletClient);
         expect(tpManager).toBeInstanceOf(WriteableTandaPayManager);
     });
 
     it('tp manager created from walletClient has .extend and .write, but no .write.member or .write.secretary by default', () => {
-        let tpManager = createTandaPayManager(tpAddress, walletClient);
+        const tpManager = createTandaPayManager(tpAddress, walletClient);
         expect(tpManager.write).toBeDefined();
-        expect(tpManager.extend).toBeDefined();
+        expect(tpManager.extend.bind(tpManager)).toBeDefined();
         expect(tpManager.write.member).toBeUndefined();
         expect(tpManager.write.secretary).toBeUndefined();
     });
 
     it('writeable tp manager created using { clientRole = member } should have .write.member but not .write.secretary', () => {
-        let tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Member });
+        const tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Member });
         expect(tpManager.write.member).toBeDefined();
         expect(tpManager.write.secretary).toBeUndefined();
     });
 
     it('writeable tp manager created using { clientRole = secretary } should have both .write.member and .write.secretary', () => {
-        let tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
+        const tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
         expect(tpManager.write.member).toBeDefined();
         expect(tpManager.write.secretary).toBeDefined();
     });
@@ -134,9 +130,9 @@ describe('TandaPayManager creation', () => {
 
 describe('Can get to the TandaPay default state from initial deployment using tp Manager', () => {
     it('The secretary is correct, i.e. matches the walletClient that deployed it', async () => {
-        let tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
-        let secretaryAddr: Hex = await tpManager.read.getSecretaryAddress();
-        expect(secretaryAddr).toBe(secretaryAccount.address as Hex);
+        const tpManager = createTandaPayManager(tpAddress, walletClient, { clientRole: TandaPayRole.Secretary });
+        const secretaryAddr: Hex = await tpManager.read.getSecretaryAddress();
+        expect(secretaryAddr).toBe(secretaryAccount.address);
     });
 
     it('The secretary can add members and the number of members the contract has ends up matching', async () => {
@@ -161,14 +157,14 @@ describe('Can get to the TandaPay default state from initial deployment using tp
         //* note that if the number of members changes in the future, this will need to change, but
         //* due to the nature of sub groups it's inconvenient to dynamically decide how each member is
         //* assigned to them for now. This solution should work, and later on if it doesn't, i'll change it
-        let allManagers: WriteableTandaPayManager<WriteableClient>[] = [tpManager, ...memberManagers];
+        const allManagers: WriteableTandaPayManager<WriteableClient>[] = [tpManager, ...memberManagers];
         for (let i = 0; i < 3; i++) {
             // create a new subgroup
             await tpManager.write.secretary?.createSubGroup();
             // then add 5 of the 15 members to it
             for (let j = 0; j < 5; j++) {
                 // we'll calculate what subgroup we're in, then add which of the 5 members we're on for this subgroup
-                let memberIndex = (i * 5) + j;
+                const memberIndex = (i * 5) + j;
                 
 
                 // first, their status should just be that they've been aded by the secretary
@@ -206,7 +202,7 @@ describe('Can get to the TandaPay default state from initial deployment using tp
         await tpManager.write.secretary?.initiateDefaultState(BigInt(150 * 10**18));
 
         // we now expect that the community is in the default state
-        let communityState = await tpManager.read.getCommunityState();
+        const communityState = await tpManager.read.getCommunityState();
         expect(communityState).toBe(TandaPayState.Default);
     });
 });

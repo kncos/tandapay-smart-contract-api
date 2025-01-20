@@ -1,4 +1,4 @@
-import { Account, Address, Chain, Client, createPublicClient, createWalletClient, getContract, GetContractReturnType, Hex, http, publicActions, Transport, walletActions, WalletClient } from "viem";
+import { Account, Address, Chain, createWalletClient, getContract, GetContractReturnType, Hex, http, publicActions, Transport } from "viem";
 import { TandaPayRole, WriteableClient } from "../../contract_managers/types";
 import { FaucetTokenInfo } from "../../_contracts/FaucetToken";
 import { privateKeyToAccount } from "viem/accounts";
@@ -38,7 +38,7 @@ export type AccountClientManager<TClient extends WriteableClient> = {
 export async function deployFtkContract(
     account: Account,
 ): Promise<Hex> {
-    let client = createWalletClient({
+    const client = createWalletClient({
         account: account,
         chain: TEST_CHAIN,
         transport: TEST_TRANSPORT,
@@ -57,7 +57,7 @@ export async function deployFtkContract(
     }
 
     // get address of newly deployed faucet token
-    let ftkAddress = ftkReceipt.contractAddress;
+    const ftkAddress = ftkReceipt.contractAddress;
     return ftkAddress;
 }
 
@@ -66,13 +66,13 @@ export async function deployTandaPayContract(
     ftkTokenAddress: Hex,
     secretaryAddr?: Hex,
 ): Promise<Hex> {
-    let client = createWalletClient({
+    const client = createWalletClient({
         account: account, 
         chain: TEST_CHAIN,
         transport: TEST_TRANSPORT,
     }).extend(publicActions);
 
-    let secAddr = secretaryAddr ? secretaryAddr : account.address;
+    const secAddr = secretaryAddr ? secretaryAddr : account.address;
 
     const tpReceipt = await client.deployContract({
         abi: TandaPayInfo.abi,
@@ -87,7 +87,7 @@ export async function deployTandaPayContract(
     }
 
     // get address of newly deployed tandapay contract
-    let tpAddress = tpReceipt.contractAddress;
+    const tpAddress = tpReceipt.contractAddress;
     return tpAddress;
 }
 
@@ -109,16 +109,16 @@ export function getAccountClientManagers(
     make_first_secretary: boolean = true,
 ): AccountClientManager<WriteableClient>[] {
     let sec = make_first_secretary;
-    let res = []
+    const res = []
 
     if (!keys)
         keys = PRIVATE_KEYS;
     
-    for (let key of keys) {
+    for (const key of keys) {
         // create an account
-        let account = privateKeyToAccount(key);
+        const account = privateKeyToAccount(key);
         // create a wallet client
-        let client = createWalletClient({
+        const client = createWalletClient({
             account: account,
             chain: TEST_CHAIN,
             transport: TEST_TRANSPORT,
@@ -126,7 +126,7 @@ export function getAccountClientManagers(
         
         if (tpContractAddress) {
             // create a TandaPay manager
-            let tpManager = createTandaPayManager(
+            const tpManager = createTandaPayManager(
                 tpContractAddress,
                 client,
                 { clientRole: (sec ? TandaPayRole.Secretary : default_role) },
@@ -148,8 +148,8 @@ export async function distributeFtk<TClient extends WriteableClient>(
     accountClientManagers: AccountClientManager<TClient>[],
     amountOfFtk = 1000000,
 ) {
-    for (let acm of accountClientManagers) {
-        let c = getFtkContract(ftkContractAddr, acm.client);
+    for (const acm of accountClientManagers) {
+        const c = getFtkContract(ftkContractAddr, acm.client);
         await c.write.faucet([BigInt(amountOfFtk) * (10n ** 18n)]);
     }
 }
@@ -157,16 +157,16 @@ export async function distributeFtk<TClient extends WriteableClient>(
 describe('test helpers work', () => {
     it('distributing FTK works', async () => {
         // get a few ACMs
-        let acms = getAccountClientManagers();
+        const acms = getAccountClientManagers();
         // deploy FTK contract with the first one
-        let ftkAddr = await deployFtkContract(acms[0].account);
+        const ftkAddr = await deployFtkContract(acms[0].account);
         // iterate through and let each of them call the faucet method.
         // we'll distribute 1.1 million FTK to each
         await distributeFtk(ftkAddr, acms, 1100000);
 
-        for (let acm of acms) {
-            let c = getFtkContract(ftkAddr, acm.client);
-            let bal = await c.read.balanceOf([acm.account.address]);
+        for (const acm of acms) {
+            const c = getFtkContract(ftkAddr, acm.client);
+            const bal = await c.read.balanceOf([acm.account.address]);
             // here, we expect them to have more than 1M Ftk. The reason
             // for the discrepancy between 1.1M and 1M is just to avoid any
             // issues with rounding or gas or anything like that
