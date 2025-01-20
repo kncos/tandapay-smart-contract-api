@@ -146,6 +146,41 @@ export class TandaPayReadMethods<TClient extends Client> {
     // retrieves the address of the secretary
     getSecretaryAddress = async () => await this.read.secretary();
     haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
+
+    //! Methods below are custom methods added by me
+
+    /** this calculates the premium that the user will owe based on the base premium and their current savings account balance.
+     * A key assumption is made that this method is called only during the premium payment window, given that it uses their current
+     * savings account balance, and that could be subject to change otherwise.
+     * 
+     * WARN: this also doesn't factor in situations with new members, only normal premium payments
+     */
+    // TODO: figure out if calculations regarding special circumstances, (e.g. new members) should go here
+    calculatePremium = async (memberAddress: Hex) => {
+        // get the base premium
+        let basePremium = await this.getBasePremium();
+        
+        // get current period
+        let currentPeriod = await this.getCurrentPeriodId();
+        
+        // get member's information
+        let memberInfo = await this.getMemberInfo(memberAddress, currentPeriod);
+
+        // calculate how much they should have in their savings escrow 
+        let savingsObligation: bigint = basePremium + ((basePremium / 100n) * 20n);
+        
+        // determine if there is a savings shortfall which must be made up
+        let savingsShortfall = savingsObligation - memberInfo.savingsEscrowAmount;
+        
+        // calculate the premium owed as being the base premium, + whatever is required
+        // to ensure that the member meets their savings escrow obligation
+        let premiumOwed = basePremium;
+        if (savingsShortfall > 0n) {
+            premiumOwed += savingsShortfall;
+        }
+
+        return premiumOwed;
+    }
 }
 
 // NOTE: saAmount refers to the amount required by the savings escrow
