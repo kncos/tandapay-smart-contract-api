@@ -168,13 +168,13 @@ describe('Can get to the TandaPay default state from initial deployment using tp
                 
 
                 // first, their status should just be that they've been aded by the secretary
-                let assignmentStatus = (await tpManager.read.getMemberInfo(allAddresses[memberIndex], 0n)).assignmentStatus;
+                let assignmentStatus = (await tpManager.read.getMemberInfoFromAddress(allAddresses[memberIndex], 0n)).assignmentStatus;
                 expect(assignmentStatus).toBe(AssignmentStatus.AddedBySecretery);
 
                 // then, actually assign that member to the subgroup. we expect their status to change to
                 // AssignedToGroup, which means they've been assigned to a group by the secretary
                 await tpManager.write.secretary?.assignMemberToSubgroup(allAddresses[memberIndex], BigInt(i+1));
-                assignmentStatus = (await tpManager.read.getMemberInfo(allAddresses[memberIndex], 0n)).assignmentStatus;
+                assignmentStatus = (await tpManager.read.getMemberInfoFromAddress(allAddresses[memberIndex], 0n)).assignmentStatus;
                 expect(assignmentStatus).toBe(AssignmentStatus.AssignedToGroup);
 
                 // then, the member will approve their subgroup assignment. If they've reorged, at this point they'll
@@ -182,7 +182,7 @@ describe('Can get to the TandaPay default state from initial deployment using tp
                 // they will be "AssignmentSuccessful" and will be in part of a subgroup. Since reorging isn't possible
                 // at this stage, they will be successfully assigned
                 await allManagers[memberIndex].write.member?.approveSubgroupAssignment();
-                assignmentStatus = (await tpManager.read.getMemberInfo(allAddresses[memberIndex], 0n)).assignmentStatus;
+                assignmentStatus = (await tpManager.read.getMemberInfoFromAddress(allAddresses[memberIndex], 0n)).assignmentStatus;
                 expect(assignmentStatus).toBe(AssignmentStatus.AssignmentSuccessful);
             }
         }

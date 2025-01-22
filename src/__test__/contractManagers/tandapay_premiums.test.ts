@@ -59,28 +59,29 @@ describe('Moving into the default state', () => {
         const currentPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
    
         let i = 0;
-        let skip = false;
         for (let acm of acms) {
-            i += 1;
-            if (skip && i % 10 === 0)
-                continue;
 
             let ftkContract = getFtkContract(ftkAddr, acm.client);
-           
-            // they will owe 2.2x the base premium, i just multiply it by 3n here to exceed that
+
+            // we get currentPeriod + 1 because they're paying their premiums for the *upcoming* period
+            let hasPaid = (await acm.tpManager?.read.getMemberInfoFromAddress(acm.account.address, currentPeriod+1n))?.isPremiumPaidThisPeriod ?? fail("getMemberInfo returned undefined");
+            expect(hasPaid).toBe(false);
+
             await ftkContract.write.approve([tpAddr, base_premium * 3n]);
             await acm.tpManager?.write.member?.joinCommunity();
             await acm.tpManager?.write.member?.approveSubgroupAssignment();
             await acm.tpManager?.write.member?.payPremium();
+            
+            // we get currentPeriod + 1 because they're paying their premiums for the *upcoming* period
+            hasPaid = (await acm.tpManager?.read.getMemberInfoFromAddress(acm.account.address, currentPeriod+1n))?.isPremiumPaidThisPeriod ?? fail("getMemberInfo returned undefined");
+            expect(hasPaid).toBe(true);
         }
 
         await acms[0].tpManager?.write.secretary?.advancePeriod();
+        let newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
+        expect(newPeriod).toBe(currentPeriod+1n);
     });
 
-//    it(`get period info, advance to period 1 then period 2`, async () => {
-//        for (let acm of acms) {
-//            let ftkContract = getFtkContract(ftkAddr, acm.client);
-//
-//        }
-//    });
+
+    
 });

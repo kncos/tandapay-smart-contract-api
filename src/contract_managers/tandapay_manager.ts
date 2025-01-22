@@ -84,18 +84,6 @@ export class WriteableTandaPayManager<TClient extends WriteableClient> extends T
      * and likewise, if it has been extended with Secretary actions, you can say `myManager.write.secretary.someMethod(...)`.
      */
     get write(): WriteGetterType<TClient> {
-        //if (this.secretaryWriteMethods !== undefined && this.memberWriteMethods !== undefined) {
-        //    return {
-        //        member: this.memberWriteMethods,
-        //        secretary: this.secretaryWriteMethods,
-        //    };
-        //}
-        //else if (this.memberWriteMethods !== undefined) {
-        //    return {
-        //        member: this.memberWriteMethods,
-        //    }
-        //}
-        //return {};
         return {
             member: this.memberWriteMethods,
             secretary: this.secretaryWriteMethods,
