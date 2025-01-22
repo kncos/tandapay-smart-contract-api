@@ -146,7 +146,7 @@ describe('Can get to the TandaPay default state from initial deployment using tp
         }
 
         // getCurrentMemberID will essentially be the number of members in the TandaPay contract
-        const memberAddresses = await tpManager.read.getCurrentMemberId();
+        const memberAddresses = await tpManager.read.getCurrentMemberCount();
         // we expect it to be 1 + memberWallets.length, because we have the secretary + all the members
         expect(memberAddresses).toEqual(BigInt(15));
     });

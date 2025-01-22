@@ -44,6 +44,8 @@ export type SubgroupInfo = {
 export type ClaimInfo = {
     /** Claim ID */
     id: bigint;
+    /** Period ID the claim occurred in */
+    periodId: bigint;
     /** Amount of the claim */
     amount: bigint;
     /** Whether the claim was whitelisted by the secretary */

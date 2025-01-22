@@ -5,6 +5,9 @@ let ftkAddr: Hex;
 let tpAddr: Hex;
 let acms: ReturnType<typeof getAccountClientManagers>;
 
+const total_coverage: bigint = 150n * (10n * 18n);
+const base_premium: bigint = total_coverage / 15n;
+
 beforeAll(async () => {
     // deploy the ftk token and tandapay contracts
     acms = getAccountClientManagers();
@@ -28,13 +31,20 @@ beforeAll(async () => {
             await acms[0].tpManager?.write.secretary?.addMemberToCommunity(acms[memberId].account.address);
             // assign to subgroup. subgroup indices start at 1
             await acms[0].tpManager?.write.secretary?.assignMemberToSubgroup(acms[memberId].account.address, BigInt(i+1), false);
-            // have member accept assignment
-            await acms[memberId].tpManager?.write.member?.approveSubgroupAssignment(true);
+            // have member accept assignment (actually they need to do jointoCommunity first?)
+            // await acms[memberId].tpManager?.write.member?.approveSubgroupAssignment(true);
         }
     }
 
-    await acms[0].tpManager?.write.secretary?.initiateDefaultState(150n * (10n ** 18n));
+    await acms[0].tpManager?.write.secretary?.initiateDefaultState(total_coverage);
 });
+
+function getPrettyJson(object: Object) {
+    const replacer = (key: string, value: any) => {
+        return typeof value === "bigint" ? Number(value) : value;
+    }
+    return JSON.stringify(object, replacer, 2);
+}
 
 describe('Moving into the default state', () => {
     // NOTES:
@@ -44,21 +54,33 @@ describe('Moving into the default state', () => {
     // TODO: see if we can query the tp smart contract to find out an exact premium calculation, then use that, instead of approving way more
     // TODO: figure out how much premium is being charged to new members in the initialization state?
     //! SC error? It makes them pay their full premium, + their full savings requirement, in the very beginning, rather than splitting it
-    it(`see what happens when members pay premiums`, async () => {
+    it(`All members can pay their premiums, and we can advance to the next period`, async () => {
+        // get the current period to use it for checking if members have paid
+        const currentPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
+    
         for (let acm of acms) {
             let ftkContract = getFtkContract(ftkAddr, acm.client);
-            let maxPremiumAmount = 150n * (10n ** 18n);
-
-            await ftkContract.write.approve([tpAddr, maxPremiumAmount]);
-            let startBalance = await ftkContract.read.balanceOf([acm.account.address]);
+           
+            // they will owe 2.2x the base premium, i just multiply it by 3n here to exceed that
+            await ftkContract.write.approve([tpAddr, base_premium * 3n]);
+            await acm.tpManager?.write.member?.joinCommunity();
+            await acm.tpManager?.write.member?.approveSubgroupAssignment();
             await acm.tpManager?.write.member?.payPremium();
-            let endBalance = await ftkContract.read.balanceOf([acm.account.address]);
-
-            // console.log(`start balance: ${formatUnits(startBalance, 18)}\nend balance: ${formatUnits(endBalance, 18)}\namt paid: ${formatUnits(startBalance-endBalance, 18)}`);
         }
+
+        console.log(`cur period: ${currentPeriod}`);
+        await acms[0].tpManager?.write.secretary?.advancePeriod();
+        let paid1 = getPrettyJson(await acms[0].tpManager?.read.getMemberInfo(acms[0].account.address, currentPeriod) ?? fail("getMemberInfo returned undefined"));
+        let paid2 = getPrettyJson(await acms[0].tpManager?.read.getMemberInfo(acms[0].account.address, currentPeriod+1n) ?? fail("getMemberInfo returned undefined"));
+        let paid3 = getPrettyJson(await acms[0].tpManager?.read.getMemberInfo(acms[0].account.address, currentPeriod+2n) ?? fail("getMemberInfo returned undefined"));
+
+        console.log(paid1, paid2, paid3)
     });
 
-    it(`get period info, advance to period 1 then period 2`, async () => {
-        
-    });
+//    it(`get period info, advance to period 1 then period 2`, async () => {
+//        for (let acm of acms) {
+//            let ftkContract = getFtkContract(ftkAddr, acm.client);
+//
+//        }
+//    });
 });

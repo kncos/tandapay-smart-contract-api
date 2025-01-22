@@ -2,80 +2,72 @@ import { Client, Hex } from "viem";
 import { AssignmentStatus, ClaimInfo, MemberInfo, MemberStatus, PeriodInfo, SubgroupInfo, TandaPayState } from "./types";
 import { TandaPayContract } from "./types"
 
-// TODO: Improve comments in this file. they were copy+pasted directly from a README in the smart contract source
-// TODO: Implement wrappers for the manually collapsed methods and figure out how they work by reading SC source
+/**
+ * This class wraps all of the readonly methods for the TandaPay smart contract, providing better naming schemes,
+ * mapping raw data from the smart contract onto cleaner types, and providing quality of life functions that automate
+ * complex tasks involving multiple readonly method calls that might be useful in other areas of the code base
+ */
 export class TandaPayReadMethods<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
-
+    
     protected get read() {
         return this.contractInstance.read;
     }
 
+    /**
+     * @param contractInstance a TandaPay contract instance with .read functionality
+     */
     constructor(contractInstance: TandaPayContract<TClient>) {
         this.contractInstance = contractInstance;
     }
 
-    // 1. getPaymentToken =>
-    // Use case -- This function will return the current payment token (LUSD) address.
-    // Arguments --- none required
+    /** @returns A promise that resolves to the contract address of the payment token being used in this TandaPay instance, in hexadecimal string format. */
     getPaymentTokenAddress = async (): Promise<Hex> => await this.read.getPaymentToken();
 
-    // 2. getCurrentMemberId =>
-    // Use case -- This function will return the current member Id. 
-    // Arguments --- none required
-    getCurrentMemberId = async () => await this.read.getCurrentMemberId(); 
+    /** @returns A promise that resolves to the total number of members in the TandaPay community. */
+    getCurrentMemberCount = async () => await this.read.getCurrentMemberId(); 
 
-    // 3. getCurrentSubGroupId =>
-    // Use case -- This function will return the current SubGroup Id. 
-    // Arguments --- none required
-    getCurrentSubgroupId = async () => await this.read.getCurrentSubGroupId();
+    /** @returns A promise that resolves to the total number of subgroups in the TandaPay community. */
+    getCurrentSubgroupCount = async () => await this.read.getCurrentSubGroupId();
     
-    // 4. getCurrentClaimId =>
-    // Use case -- This function will return the current Claim Id. 
-    // Arguments --- none required 
+    /** @returns A promise that resolves to the total number of claims that have occurred in the TandaPay community. This will also be the ID of the next claim */
     getCurrentClaimId = async () => await this.read.getCurrentClaimId();
 
-    // 5. getPeriodId =>
-    // Use case -- This function will return the current Period Id.
-    // Arguments --- none required 
+    /** @returns A promise that resolves to the current period ID, which is just the total number of periods that have elapsed since the community's inception */
     getCurrentPeriodId = async () => await this.read.getPeriodId();
 
-    // 6. getTotalCoverage =>
-    // Use case -- This function will return the current total coverage amount.
-    // Arguments --- none required 
+    /** @returns A promise that resolves to the total coverage amount the community has, i.e. how much must collectively go into the community escrow each period */
     getTotalCoverageAmount = async () => await this.read.getTotalCoverage();
 
-    // 7. getBasePremium =>
-    // Use case -- This function will return the current base premium amount.
-    // Arguments --- none required 
+    /** @returns A promise that resolves to the base premium, a.k.a. the community escrow contribution each individual member must make. Calculated as `(total coverage) / (member count)` */
     getBasePremium = async () => await this.read.getBasePremium();
 
     // 8. getManuallyCollapsedPeriod =>
     // Use case -- if manually collapsed then, this function will return the manually collapsed period Id.
-    // Arguments --- none required 
     //? is this needed for now? read SC code and find out how this actually works later
+    // TODO: implement
 
     // 9. getIsManuallyCollapsed =>
     // Use case -- This function will return if the manual collapse happened or not.
-    // Arguments --- none required 
     //? is this needed for now? find out how this actually works later
+    // TODO: implement
 
-    // 10. getCommunityState =>
-    // Use case -- This function will return the current community state in number, 0 means it's in initialization state, 1 means default, 2 means fractured, and 3 means collapsed.
-    // Arguments --- none required 
+    /** @returns A promise that resolves to an enum value representing the state the TandaPay community is in. (e.g. initialization, default, fractured, collapsed) */
     getCommunityState = async () => await this.read.getCommunityState() as TandaPayState; 
 
-    // 11. getSubGroupIdToSubGroupInfo =>
-    // Use case -- This function will return the SubGroup-related information.
-    // Arguments --- The Caller will have to provide the SubGroup Id.
-    //* Note that the type here is mapped to an internally named type. This  time, the types
-    //* returned by the smart contract had sane member names, so I left it how it was and it can
-    //* be mapped directly
+    /**
+     * get up-to-date information about a subgroup
+     * @param subgroupId Subgroup ID you want information about
+     * @returns A promise resolving to an object containing information about the subgroup
+     */
     getSubgroupInfo = async (subgroupId: bigint): Promise<SubgroupInfo> => await this.read.getSubGroupIdToSubGroupInfo([subgroupId]);
 
-    // 12. getPeriodIdToClaimIdToClaimInfo =>
-    // Use case -- This function will return the claim-related information.
-    // Arguments --- The caller will have to provide the period Id and the Claim Id.
+    /**
+     * Get information about a claim, given a period and claim ID
+     * @param periodId period Id in which the claim occurred
+     * @param claimId claim Id for the claim you want information about
+     * @returns A promise that resolves to an object containing information about the claim
+     */
     getClaimInfo = async (periodId: bigint, claimId: bigint): Promise<ClaimInfo> => {
         const claimInformation = await this.read.getPeriodIdToClaimIdToClaimInfo([periodId, claimId]);
         // Mapping the object returned by the smart contract to an internal object in this code
@@ -83,6 +75,7 @@ export class TandaPayReadMethods<TClient extends Client> {
         // actual type returned from the smart contract should never need to be used elsewhere.
         return {
             id: claimInformation.id,
+            periodId: periodId,
             amount: claimInformation.claimAmount,
             isWhitelisted: claimInformation.isWhitelistd,
             claimantWalletAddress: claimInformation.claimant,
@@ -90,35 +83,47 @@ export class TandaPayReadMethods<TClient extends Client> {
             hasClaimantClaimedFunds: claimInformation.isClaimed,
         };
     }
-    // 13. getPeriodIdToClaimIds =>
-    // Use case -- This function will return the claim Ids of the period.
-    // Arguments ---The caller will have to provide the period Id.
+
+    /**
+     * Retrieve a list of claim IDs for claims that occurred in a given period
+     * @param periodId The period to retrieve claim IDs from
+     * @returns A promise resolving to an array of claim IDs in the given period
+     */
     getClaimIdsInPeriod = async (periodId: bigint) => await this.read.getPeriodIdToClaimIds([periodId]);
 
-    // 14. getPeriodIdToDefectorsId =>
-    // Use case -- This function will return the defectors Ids of the period.
-    // Arguments --- The caller will have to provide the period Id.
+    /**
+     * Retrieve a list of defectors' member IDs in a given period
+     * @param periodId The period to query for defectors
+     * @returns A promise resolving to an array of member IDs for members who defected in the given period
+     */
     getDefectorMemberIdsInPeriod = async (periodId: bigint) => await this.read.getPeriodIdToDefectorsId([periodId]);
 
     // 15. getPeriodIdToManualCollapse =>
     // Use case -- This function will return the manual collapse information.
     // Arguments --- The caller will have to provide the period Id.
     //? is this needed for now? find out how this actually works later.
+    // TODO: implement
 
-    // 16. getMemberToMemberId =>
-    // Use case -- This function will return the member Id of the member.
-    // Arguments --- The caller will have to provide the member's wallet address.
+    /**
+     * Retrieve a member ID given the member's wallet address
+     * @param walletAddress wallet address, as a hexadecimal string (valid hex string prefixed with `0x`)
+     * @returns A promise resolving to the member's ID number within the community
+     */
     getMemberIdFromAddress = async (walletAddress: Hex) => await this.read.getMemberToMemberId([walletAddress]);
 
-    // 17. getPeriodIdWhiteListedClaims =>
-    // Use case -- This function will return the white-listed claim Ids of the period
-    // Arguments --- The caller will have to provide the period Id.
+    /**
+     * Retrieve whitelisted claims that occurred in a given period
+     * @param periodId The period ID to query for whitelisted claims
+     * @returns A promise resolving to an array of claim IDs for whitelisted claims in the given period
+     */
     getWhitelistedClaimIdsInPeriod = async (periodId: bigint) => await this.read.getPeriodIdWhiteListedClaims([periodId]);
 
-    // 18. getMemberToMemberInfo =>
-    // Use case -- This function will return the member's information
-    // Arguments --- The caller will have to provide the member's wallet address and an expected period Id. 
-    // TODO: improve naming/clarity for this
+    /**
+     * Retrieve information about a member given their wallet address and a period Id
+     * @param memberWalletAddress wallet address of the member in question, as a hexadecimal (valid hex prefixed with `0x`) string
+     * @param periodId which period to query for this information
+     * @returns A promise resolving to an object containing information about the given member in the given period ID
+     */
     getMemberInfo = async (memberWalletAddress: Hex, periodId: bigint): Promise<MemberInfo> => {
         const memberInfo = await this.read.getMemberToMemberInfo([memberWalletAddress, periodId]);
         // Mapping the object returned by the smart contract to an internal object in this code
@@ -143,12 +148,21 @@ export class TandaPayReadMethods<TClient extends Client> {
 
     //! Docs weren't provided for following functions, i'll have to write them myself and inspect SC code to use
 
-    // retrieves the address of the secretary
+    /** @returns A promise resolving to a hexadecimal string, which is the wallet address of the community's secretary */
     getSecretaryAddress = async () => await this.read.secretary();
-    
-    // returns a boolean about whether or not every member has paid in the given period
+  
+    /**
+     * Did all members pay their premiums in a given period?
+     * @param periodId period Id to query
+     * @returns A promise resolving to a boolean flag that indicates whether or not all members in the community paid in the given period
+     */
     haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
 
+    /**
+     * Retrieve information about a given period
+     * @param periodId period ID to query
+     * @returns A promise resolving to an object containing information about the given period
+     */
     getPeriodInfo = async (periodId: bigint): Promise<PeriodInfo> => {
         const periodInfo = await this.read.getPeriodIdToPeriodInfo([periodId]);
         return {
@@ -169,13 +183,15 @@ export class TandaPayReadMethods<TClient extends Client> {
 
     //! Methods below are custom methods added by me
 
-    /** this calculates the premium that the user will owe based on the base premium and their current savings account balance.
-     * A key assumption is made that this method is called only during the premium payment window, given that it uses their current
-     * savings account balance, and that could be subject to change otherwise.
-     * 
-     * WARN: this also doesn't factor in situations with new members, only normal premium payments
+    /**
+     * calculate the total premium payment a member will have to pay under normal circumstances.
+     * @note DOES NOT FACTOR IN SPECIAL CIRCUMSTANCES, i.e. new members joining after the community entered the default state
+     * @note THIS FUNCTION SHOULD ONLY BE CALLED if the community is currently in the premiums payment window, and the premium they will owe has been solidified.
+     *  Otherwise, it could be subject to change due to changing community dynamics. 
+     * @todo Implement a more robust calculation that factors in special circumstances
+     * @param memberAddress wallet address of a member you want to calculate the premium for
+     * @returns A promise resolving to a bigint which is the total premium (base + savings obligation) that the member will need to pay.
      */
-    // TODO: figure out if calculations regarding special circumstances, (e.g. new members) should go here
     calculatePremium = async (memberAddress: Hex) => {
         // get the base premium
         const basePremium = await this.getBasePremium();
