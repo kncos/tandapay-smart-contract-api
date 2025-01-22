@@ -183,7 +183,7 @@ describe('Can get to the TandaPay default state from initial deployment using tp
                 // at this stage, they will be successfully assigned
                 await allManagers[memberIndex].write.member?.approveSubgroupAssignment();
                 assignmentStatus = (await tpManager.read.getMemberInfo(allAddresses[memberIndex], 0n)).assignmentStatus;
-                expect(assignmentStatus).toBe(AssignmentStatus.AssignmentSuccessfull);
+                expect(assignmentStatus).toBe(AssignmentStatus.AssignmentSuccessful);
             }
         }
     });

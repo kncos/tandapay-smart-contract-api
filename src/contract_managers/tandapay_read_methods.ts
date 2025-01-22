@@ -1,5 +1,5 @@
 import { Client, Hex } from "viem";
-import { AssignmentStatus, ClaimInfo, MemberInfo, SubgroupInfo, TandaPayState } from "./types";
+import { AssignmentStatus, ClaimInfo, MemberInfo, MemberStatus, PeriodInfo, SubgroupInfo, TandaPayState } from "./types";
 import { TandaPayContract } from "./types"
 
 // TODO: Improve comments in this file. they were copy+pasted directly from a README in the smart contract source
@@ -126,6 +126,7 @@ export class TandaPayReadMethods<TClient extends Client> {
         // actual type returned from the smart contract should never need to be used elsewhere.
         return {
             id: memberInfo.memberId,
+            periodId: periodId,
             subgroupId: memberInfo.associatedGroupId,
             walletAddress: memberInfo.member,
             communityEscrowAmount: memberInfo.cEscrowAmount,
@@ -135,8 +136,7 @@ export class TandaPayReadMethods<TClient extends Client> {
             isEligibleForCoverageThisPeriod: memberInfo.eligibleForCoverageInPeriod,
             isPremiumPaidThisPeriod: memberInfo.isPremiumPaid,
             queuedRefundAmountThisPeriod: memberInfo.idToQuedRefundAmount,
-            // TODO: Convert to enum after figuring out mappings
-            memberStatus: memberInfo.status,
+            memberStatus: memberInfo.status as MemberStatus,
             assignmentStatus: memberInfo.assignment as AssignmentStatus,
         };
     }
@@ -145,7 +145,27 @@ export class TandaPayReadMethods<TClient extends Client> {
 
     // retrieves the address of the secretary
     getSecretaryAddress = async () => await this.read.secretary();
+    
+    // returns a boolean about whether or not every member has paid in the given period
     haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
+
+    getPeriodInfo = async (periodId: bigint): Promise<PeriodInfo> => {
+        const periodInfo = await this.read.getPeriodIdToPeriodInfo([periodId]);
+        return {
+            /** period Id associated with this information */
+            id: periodId,
+            /** The timestamp when the period begins */
+            startTimestamp: periodInfo.startedAt,
+            /** This is the timestamp that the period ended at, or is currently scheduled to end at. Warning: for current periods, the secretary can push this back. */
+            endTimestamp: periodInfo.willEndAt,
+            /** This is the total amount of coverage that the community had this period */
+            coverageAmount: periodInfo.coverage,
+            /** Pretty sure this includes savings contributions */
+            totalPremiumsPaid: periodInfo.totalPaid,
+            /** an array contianing the IDs of each claim that occurred this period */
+            claimIds: periodInfo.claimIds,
+        };
+    }
 
     //! Methods below are custom methods added by me
 
@@ -212,12 +232,12 @@ export class TandaPayReadMethods<TClient extends Client> {
 //TODO: figure out why these weren't documented, such as:
 //TODO: - if any of them were supposed to be private/internal use only
 //TODO: - if any of them are unused or have no utility to us here
-// - [x] this.read.secretary
+// - [x] this.read.secretary                                (no clue why it wasn't documented)
 // - [ ] this.read.getUpcomingSecretary
 // - [ ] this.read.getSecretarySuccessors
-// - [ ] this.read.getPeriodIdToPeriodInfo
+// - [x] this.read.getPeriodIdToPeriodInfo                  (I think this is necessary, not sure why MD didn't document it)
 // - [ ] this.read.getIsHandingOver
-// - [x] this.read.getIsAllMemberNotPaidInPeriod
+// - [x] this.read.getIsAllMemberNotPaidInPeriod            (not sure why MD didn't document it, we'll need to test it though)
 // - [ ] this.read.getIsAMemberDefectedInPeriod
 // - [ ] this.read.getHandoverStartedAt
 // - [ ] this.read.getEmergencySecretaries
