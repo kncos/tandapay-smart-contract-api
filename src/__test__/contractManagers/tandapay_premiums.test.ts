@@ -32,6 +32,7 @@ beforeAll(async () => {
             // assign to subgroup. subgroup indices start at 1
             await acms[0].tpManager?.write.secretary?.assignMemberToSubgroup(acms[memberId].account.address, BigInt(i+1), false);
             // have member accept assignment (actually they need to do jointoCommunity first?)
+            //* NOTE: we nolonger have them approve their subgroup assignments in the initialization period, that's not how it works
             // await acms[memberId].tpManager?.write.member?.approveSubgroupAssignment(true);
         }
     }
@@ -53,12 +54,17 @@ describe('Moving into the default state', () => {
     // - if approve isn't called first, then the smart contract will throw an ambiguous error (which i resolved to ERC20 allowance insufficient)
     // TODO: see if we can query the tp smart contract to find out an exact premium calculation, then use that, instead of approving way more
     // TODO: figure out how much premium is being charged to new members in the initialization state?
-    //! SC error? It makes them pay their full premium, + their full savings requirement, in the very beginning, rather than splitting it
     it(`All members can pay their premiums, and we can advance to the next period`, async () => {
         // get the current period to use it for checking if members have paid
         const currentPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
-    
+   
+        let i = 0;
+        let skip = false;
         for (let acm of acms) {
+            i += 1;
+            if (skip && i % 10 === 0)
+                continue;
+
             let ftkContract = getFtkContract(ftkAddr, acm.client);
            
             // they will owe 2.2x the base premium, i just multiply it by 3n here to exceed that
@@ -68,13 +74,7 @@ describe('Moving into the default state', () => {
             await acm.tpManager?.write.member?.payPremium();
         }
 
-        console.log(`cur period: ${currentPeriod}`);
         await acms[0].tpManager?.write.secretary?.advancePeriod();
-        let paid1 = getPrettyJson(await acms[0].tpManager?.read.getMemberInfo(acms[0].account.address, currentPeriod) ?? fail("getMemberInfo returned undefined"));
-        let paid2 = getPrettyJson(await acms[0].tpManager?.read.getMemberInfo(acms[0].account.address, currentPeriod+1n) ?? fail("getMemberInfo returned undefined"));
-        let paid3 = getPrettyJson(await acms[0].tpManager?.read.getMemberInfo(acms[0].account.address, currentPeriod+2n) ?? fail("getMemberInfo returned undefined"));
-
-        console.log(paid1, paid2, paid3)
     });
 
 //    it(`get period info, advance to period 1 then period 2`, async () => {

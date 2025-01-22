@@ -9,7 +9,7 @@ import { TandaPayContract } from "./types"
  */
 export class TandaPayReadMethods<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
-    
+
     protected get read() {
         return this.contractInstance.read;
     }
@@ -119,19 +119,26 @@ export class TandaPayReadMethods<TClient extends Client> {
     getWhitelistedClaimIdsInPeriod = async (periodId: bigint) => await this.read.getPeriodIdWhiteListedClaims([periodId]);
 
     /**
-     * Retrieve information about a member given their wallet address and a period Id
+     * Retrieve information about a member given their wallet address and a period Id.
+     * @note IF PASSING 0 FOR `periodId`, the underlying smart contract method call simply returns the values for the current period
      * @param memberWalletAddress wallet address of the member in question, as a hexadecimal (valid hex prefixed with `0x`) string
-     * @param periodId which period to query for this information
+     * @param periodId which period to query for this information. If 0 is passed, it just uses the current period. Default: 0
      * @returns A promise resolving to an object containing information about the given member in the given period ID
      */
-    getMemberInfo = async (memberWalletAddress: Hex, periodId: bigint): Promise<MemberInfo> => {
+    getMemberInfo = async (memberWalletAddress: Hex, periodId: bigint = 0n): Promise<MemberInfo> => {
         const memberInfo = await this.read.getMemberToMemberInfo([memberWalletAddress, periodId]);
+
+        // if 0 was passed, let's get the actual period that this information is going to be associated with
+        let curPeriod = periodId;
+        if (periodId === 0n)
+            curPeriod = await this.read.getPeriodId();
+
         // Mapping the object returned by the smart contract to an internal object in this code
         // base that has better naming conventions and works with everything else. In theory, the
         // actual type returned from the smart contract should never need to be used elsewhere.
         return {
             id: memberInfo.memberId,
-            periodId: periodId,
+            periodId: curPeriod,    // if 0 was passed, this will be the current period
             subgroupId: memberInfo.associatedGroupId,
             walletAddress: memberInfo.member,
             communityEscrowAmount: memberInfo.cEscrowAmount,
@@ -150,13 +157,18 @@ export class TandaPayReadMethods<TClient extends Client> {
 
     /** @returns A promise resolving to a hexadecimal string, which is the wallet address of the community's secretary */
     getSecretaryAddress = async () => await this.read.secretary();
-  
-    /**
-     * Did all members pay their premiums in a given period?
-     * @param periodId period Id to query
-     * @returns A promise resolving to a boolean flag that indicates whether or not all members in the community paid in the given period
-     */
-    haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
+    
+    /** temp: this is an experimental method */
+    // TODO: figure out why this doesn't work?
+    //haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
+
+   // haveAllMembersPaid = async (periodId: bigint): Promise<boolean> => {
+   //     let totalMembers = await this.getCurrentMemberCount();
+   //     // start indexing at 1 since member IDs start at 1
+   //     for (let i = 1; i <= totalMembers; i++) {
+   //         
+   //     }
+   // }
 
     /**
      * Retrieve information about a given period

@@ -66,8 +66,8 @@ export type ClaimInfo = {
 export type MemberInfo = {
     /** Member ID */
     id: bigint;
-    /** Period ID that this information is associated with */
-    periodId: bigint
+    /** Period ID the member info is associated with */
+    periodId: bigint;
     /** ID of the subgroup this member belongs to */
     subgroupId: bigint;
     /** This member's wallet address */
