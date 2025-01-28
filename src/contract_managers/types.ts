@@ -4,7 +4,7 @@
  * @note This file is organized in the following manner: Type guard methods, then type definitions, then enums, then miscellaneous (e.g. aliases)
  */
 
-import { Account, Address, Chain, Client, GetContractReturnType, Hex } from "viem";
+import { Account, Address, Chain, Client, GetContractReturnType, Hex, PublicActions, WalletActions } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 
 /**
@@ -17,6 +17,16 @@ export function isWriteableClient(client: Client | WriteableClient): client is W
 
 /** A viem client that has both a `chain` and `account` member */
 export type WriteableClient = Client & { chain: Chain; account: Account; };
+
+/** 
+ * Any viem client that has the `deployContract` wallet action, and `waitForTransactionReceipt` public action, 
+ * both of which are needed to deploy a smart contract to the blockchain. Must also have an `account` and `chain`
+ * that are defined (see: WriteableClient, a type defined in this module's types.ts).
+ */
+export type ContractDeployerClient = WriteableClient & { 
+    deployContract: WalletActions['deployContract']; 
+    waitForTransactionReceipt: PublicActions['waitForTransactionReceipt']; 
+};
 
 /** 
  * Generic type representing instances of the TandaPay smart contract, given by Viem's getContract method.

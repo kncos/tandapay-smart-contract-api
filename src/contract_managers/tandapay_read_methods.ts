@@ -21,6 +21,7 @@ export class TandaPayReadMethods<TClient extends Client> {
         this.contractInstance = contractInstance;
     }
 
+
     /** @returns A promise that resolves to the contract address of the payment token being used in this TandaPay instance, in hexadecimal string format. */
     getPaymentTokenAddress = async (): Promise<Hex> => await this.read.getPaymentToken();
 

@@ -4,6 +4,9 @@ import { TandaPayRole, TandaPayContract, WriteableClient, isWriteableClient } fr
 import { TandaPayReadMethods } from "./tandapay_read_methods";
 import MemberWriteMethods from "./member_write_methods";
 import SecretaryWriteMethods from "./secretary_write_methods";
+import { TandaPayEvents } from "./tandapay_events";
+
+// TODO: see about implementing a mechanism for batching JSON RPC calls. This could work by just implementing it into TandaPayManager
 
 /** This type is used to pass options to createTandaPayManager, or the constructor of TandaPayManager, or WriteableTandaPayManager. */
 export type TandaPayManagerOptions = {
@@ -37,15 +40,23 @@ export function createTandaPayManager<TClient extends Client | WriteableClient>(
     return new TandaPayManager(contract_address, client) as TClient extends WriteableClient ? never : TandaPayManager<TClient>;
 }
 
+
 /** TandaPayManager enables readonly interactions with an instance of a TandaPay smart contract */
 export class TandaPayManager<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
-    protected readMethods: TandaPayReadMethods<TClient>
+    protected readMethods: TandaPayReadMethods<TClient>;
+    protected eventsWrapper: TandaPayEvents<TClient>;
 
     /** Exposes wrappers for all of the read methods for interacting with the TandaPay smart contract */
     get read() {
         return this.readMethods;
     }
+
+    /** @deprecated this is a test method */
+    get eventsCI() {
+        return this.eventsWrapper.contractInstance;
+    }
+
 
     /**
      * @param contract_address Blockchain address of the TandaPay smart contract instance you want to connect to
@@ -62,6 +73,7 @@ export class TandaPayManager<TClient extends Client> {
         });
 
         this.readMethods = new TandaPayReadMethods(this.contractInstance);
+        this.eventsWrapper = new TandaPayEvents(this.contractInstance);
     }
 }
 
@@ -137,6 +149,7 @@ export class WriteableTandaPayManager<TClient extends WriteableClient> extends T
                 break;
             }
         }
+
         return this;
     }
 }

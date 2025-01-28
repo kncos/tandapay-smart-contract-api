@@ -3,7 +3,7 @@ import { Account, privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { createTandaPayManager, TandaPayManager, WriteableTandaPayManager } from "../../contract_managers/tandapay_manager";
 import { AssignmentStatus, isWriteableClient, TandaPayRole, TandaPayState, WriteableClient } from "../../contract_managers/types";
-import { deployFtkContract, deployTandaPayContract } from "./test_helpers.test";
+import { deployFtkContract, deployTandaPayContract, TEST_CHAIN, TEST_TRANSPORT } from "./test_helpers.test";
 
 const secretaryAccount = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
 const additional_private_keys: Hex[] = [
@@ -46,16 +46,16 @@ function makeWallets(private_keys: Hex[]) {
 beforeAll(async () => {
     // create a simple public client
     publicClient = createPublicClient({
-        chain: anvil,
-        transport: http(),
+        chain: TEST_CHAIN,
+        transport: TEST_TRANSPORT,
     });
 
     // create a wallet client. should automatically have
     // accounts since we're using anvil
     walletClient = createWalletClient({
         account: secretaryAccount, 
-        chain: anvil,
-        transport: http(),
+        chain: TEST_CHAIN,
+        transport: TEST_TRANSPORT,
     });
 
     ftkAddress = await deployFtkContract(secretaryAccount);
