@@ -65,12 +65,15 @@ const clients = ((accs) => {
 const ftkAddr = await deployContract(FaucetTokenInfo.abi, FaucetTokenInfo.bytecode.object, clients[0]);
 const tpAddr = await deployContract(TandaPayInfo.abi, TandaPayInfo.bytecode.object, clients[0], ftkAddr, clients[0].account.address);
 
+const cinstance = getContract({
+    abi: TandaPayInfo.abi,
+    address: tpAddr,
+    client: clients[0]  
+});
 
-//const unwatch = watchContractEvent(clients[0], {
-//    address: tpAddr,
-//    abi: TandaPayInfo.abi,
-//    onLogs: (logs) => console.log(logs),
-//});
+const unwatch = cinstance.watchEvent.RefundIssued({
+    onLogs: (logs) => console.log("refund issued!"),
+});
 
 // create a contract instance for each client for the FTK token 
 const ftkContracts = ((clients) => {
@@ -170,7 +173,7 @@ async function payPremiums() {
         // premium is also 110% (110 + 110 = 220%, so 120% goes to savings and 100% goes to community escrow)
         const hash = await ftk.write.approve([tpAddr, JOIN_FEE]);
         await clients[0].waitForTransactionReceipt({ hash });
-        let txReceipt = await tpm.write.member?.payPremium() as TransactionReceipt;
+        let txReceipt = await tpm.write.member?.payPremium(true) as TransactionReceipt;
         //console.log(txReceipt.blockNumber)
     }
 
@@ -184,8 +187,10 @@ async function getCurPeriodInfo() {
 
 async function printEverything() {
     for (const account of accounts) {
-        const info = await tpManagers[0].read.getMemberInfoFromAddress(account.address);
-        console.log(JSON.stringify(info, memberInfoJsonReplacer, 2));
+        let info = await tpManagers[0].read.getMemberInfoFromAddress(account.address);
+        let balance = await ftkContracts[0].read.balanceOf([account.address]);
+
+        console.log(JSON.stringify(info, memberInfoJsonReplacer, 2), " ftk bal: ", (balance / (10n ** 18n)));
     }
 
     const pInfo = await getCurPeriodInfo();
@@ -212,37 +217,32 @@ const increaseTime = async (seconds: number) => {
 
 // pay premiums for period 1 and advance to next period and next payment window
 await payPremiums();
+await printEverything();
 await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(28));
+await increaseTime(daysToSeconds(3.5));
+await tpManagers[0].write.member?.issueRefund();
+await increaseTime(daysToSeconds(24.5));
 await printEverything();
 
-// now do it for period 2.
 await payPremiums();
 await increaseTime(daysToSeconds(4));
+await printEverything();
 await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(28));
+await increaseTime(daysToSeconds(3.5));
+await tpManagers[0].write.member?.issueRefund();
+await increaseTime(daysToSeconds(24.5));
 await printEverything();
 
-// now do it for period 3.
 await payPremiums();
 await increaseTime(daysToSeconds(4));
+await printEverything();
 await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(28));
+await increaseTime(daysToSeconds(3.5));
+await tpManagers[0].write.member?.issueRefund();
+await increaseTime(daysToSeconds(24.5));
 await printEverything();
 
-// now do it for period 4.
-await payPremiums();
-await increaseTime(daysToSeconds(4));
-await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(28));
-await printEverything();
-
-// now do it for period 5.
-await payPremiums();
-await increaseTime(daysToSeconds(4));
-await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(28));
-await printEverything();
+setTimeout(unwatch, 5000);
 
 // TODO: investigate waitForTransactionReceipt in all write methods!!!!!
 

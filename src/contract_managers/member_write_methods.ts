@@ -105,4 +105,11 @@ export default class MemberWriteMethods<TClient extends WriteableClient> extends
         const hash = await this.write.withdrawClaimFund([forfeit]);
         return this.handleHash(hash);
     }
+
+    /** @deprecated improve this */
+    async issueRefund() {
+        await this.simulate.issueRefund([true]);
+        const hash = await this.write.issueRefund([true]);
+        return this.handleHash(hash);
+    }
 }
