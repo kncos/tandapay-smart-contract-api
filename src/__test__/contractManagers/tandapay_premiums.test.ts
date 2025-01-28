@@ -35,7 +35,7 @@ beforeAll(async () => {
         await acms[0].tpManager?.write.secretary?.createSubGroup();
         // add 5 members to that subgroup
         for (let j = 0; j < 5; j++) {
-            let memberId = (i * 5) + j;
+            const memberId = (i * 5) + j;
             // secretary must add the member to the community
             await acms[0].tpManager?.write.secretary?.addMemberToCommunity(acms[memberId].account.address);
             // assign to subgroup. subgroup indices start at 1
@@ -70,7 +70,7 @@ afterAll(async () => {
     //setTimeout(unwatch, 5000);
 });
 
-function getPrettyJson(object: Object) {
+function getPrettyJson(object: object) {
     const replacer = (key: string, value: any) => {
         return typeof value === "bigint" ? Number(value) : value;
     }
@@ -88,8 +88,8 @@ describe('Moving into the default state', () => {
         // get the current period to use it for checking if members have paid
         const currentPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
    
-        for (let acm of acms) {
-            let ftkContract = getFtkContract(ftkAddr, acm.client);
+        for (const acm of acms) {
+            const ftkContract = getFtkContract(ftkAddr, acm.client);
 
             // we get currentPeriod + 1 because they're paying their premiums for the *upcoming* period
             let hasPaid = (await acm.tpManager?.read.getMemberInfoFromAddress(acm.account.address, currentPeriod+1n))?.isPremiumPaidThisPeriod ?? fail("getMemberInfo returned undefined");
@@ -113,7 +113,7 @@ describe('Moving into the default state', () => {
 
         // everyone has paid their premiums, so we can advance into the next period. The first period in which members have coverage
         await acms[0].tpManager?.write.secretary?.advancePeriod();
-        let newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
+        const newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
         expect(newPeriod).toBe(currentPeriod+1n);
 
         // this should fail
@@ -136,13 +136,13 @@ describe('Moving into the default state', () => {
         await testClient.setNextBlockTimestamp({ timestamp: premiumsDueDate });
         await testClient.mine({ blocks: 1 });
 
-        for (let acm of acms) {
+        for (const acm of acms) {
             //! Here, we're going to skip a guy so that in the next test (next period) we can see how his status changes
             if (acm.account.address === acmThatDoesntPay.account.address) {
                 continue;
             }
 
-            let ftkContract = getFtkContract(ftkAddr, acm.client);
+            const ftkContract = getFtkContract(ftkAddr, acm.client);
 
             // we get currentPeriod + 1 because they're paying their premiums for the *upcoming* period
             let hasPaid = (await acm.tpManager?.read.getMemberInfoFromAddress(acm.account.address, currentPeriod+1n))?.isPremiumPaidThisPeriod ?? fail("getMemberInfo returned undefined");
@@ -167,7 +167,7 @@ describe('Moving into the default state', () => {
 
         // everyone has paid their premiums, so we can advance into the next period. The first period in which members have coverage
         await acms[0].tpManager?.write.secretary?.advancePeriod();
-        let newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
+        const newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
         expect(newPeriod).toBe(currentPeriod+1n);
     });
 
@@ -190,13 +190,13 @@ describe('Moving into the default state', () => {
         await testClient.mine({ blocks: 1 });
 
         // if he skips again, he should be removed?
-        for (let acm of acms) {
+        for (const acm of acms) {
             //! here, we skip him a second time
             if (acm.account.address === acmThatDoesntPay.account.address) {
                 continue;
             }
 
-            let ftkContract = getFtkContract(ftkAddr, acm.client);
+            const ftkContract = getFtkContract(ftkAddr, acm.client);
 
             // we get currentPeriod + 1 because they're paying their premiums for the *upcoming* period
             let hasPaid = (await acm.tpManager?.read.getMemberInfoFromAddress(acm.account.address, currentPeriod+1n))?.isPremiumPaidThisPeriod ?? fail("getMemberInfo returned undefined");
@@ -221,7 +221,7 @@ describe('Moving into the default state', () => {
 
         // everyone has paid their premiums, so we can advance into the next period. The first period in which members have coverage
         await acms[0].tpManager?.write.secretary?.advancePeriod();
-        let newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
+        const newPeriod = await acms[0].tpManager?.read.getCurrentPeriodId() ?? fail("getCurrentPeriodId returned undefined");
         expect(newPeriod).toBe(currentPeriod+1n);
 
         // see unpaid invalid guy's new status

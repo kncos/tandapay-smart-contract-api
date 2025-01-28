@@ -1,11 +1,12 @@
 /**
  * @author Kevin C.
  * @fileoverview Exposes types, type guards, and enums for contract managers.
- * @note This file is organized in the following manner: Type guard methods, then type definitions, then enums, then miscellaneous (e.g. aliases)
+ * @note This file is organized in the following manner: Type guard methods, then type definitions, then enums, then miscellaneous (e.g. aliases, json replacers)
  */
 
 import { Account, Address, Chain, Client, GetContractReturnType, Hex, PublicActions, WalletActions } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
+import { bigIntJsonReplacer } from "./utils";
 
 /**
  * Determines if a Viem client is a Writeable client or not. Essentially, whether it has a 'chain' and 'account'
@@ -17,6 +18,9 @@ export function isWriteableClient(client: Client | WriteableClient): client is W
 
 /** A viem client that has both a `chain` and `account` member */
 export type WriteableClient = Client & { chain: Chain; account: Account; };
+
+/** A viem client that is capable of waiting for a transaction receipt. Any client with public actions should do */
+export type TxWaitClient = Client & { waitForTransactionReceipt: PublicActions['waitForTransactionReceipt'] };
 
 /** 
  * Any viem client that has the `deployContract` wallet action, and `waitForTransactionReceipt` public action, 
@@ -230,3 +234,23 @@ export enum MemberStatus {
     /** @deprecated This also seems to not be used by the smart contract. kept for compatibility reasons */
     REJECTEDBYGM,
 }
+
+/** Use this replacer when serializing `SubgroupInfo` to json */
+export const subgroupInfoJsonReplacer = bigIntJsonReplacer;
+/** Use this replacer when serializing `PeriodInfo` to json */
+export const periodInfoJsonReplacer = bigIntJsonReplacer;
+/** Use this replacer when serializing `ClaimInfo` to json */
+export const claimInfoJsonReplacer = bigIntJsonReplacer;
+/** use this replacer when serializing `MemberInfo` to json */
+export function memberInfoJsonReplacer(key: string, value: any): any {
+    const memberStatusKey = "memberStatus";
+    const assignmentStatusKey = "assignmentStatus";
+    
+    if (key === memberStatusKey)
+        return MemberStatus[value];
+    else if (key === assignmentStatusKey)
+        return AssignmentStatus[value];
+    
+    return bigIntJsonReplacer(key, value);
+}
+

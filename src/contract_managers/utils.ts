@@ -25,3 +25,15 @@ export async function deployContract<TClient extends ContractDeployerClient> (
 
     return receipt.contractAddress;
 }
+
+export function bigIntJsonReplacer (key: string, value: any): any {
+    const toStr = (bigIntValue: bigint) => `${bigIntValue.toString()}n`;
+
+    if (Array.isArray(value)) {
+        return value.map((item) => (typeof item === "bigint" ? toStr(item) : item));
+    }
+    else if (typeof value === "bigint") {
+        return toStr(value);
+    }
+    return value;
+}

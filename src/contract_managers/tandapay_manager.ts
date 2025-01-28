@@ -1,6 +1,6 @@
-import { Client, getContract, Hex } from "viem";
+import { Abi, Client, getContract, Hex } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
-import { TandaPayRole, TandaPayContract, WriteableClient, isWriteableClient } from "./types";
+import { TandaPayRole, TandaPayContract, WriteableClient, isWriteableClient, TxWaitClient } from "./types";
 import { TandaPayReadMethods } from "./tandapay_read_methods";
 import MemberWriteMethods from "./member_write_methods";
 import SecretaryWriteMethods from "./secretary_write_methods";
@@ -17,6 +17,8 @@ export type TandaPayManagerOptions = {
      * with the appropriate methods.
      */
     clientRole?: TandaPayRole;
+    /** If defined, a WriteableTandaPayManager will wait for a transaction receipt for every write method */
+    txWaitClient?: TxWaitClient;
 };
 
 /**
@@ -45,35 +47,44 @@ export function createTandaPayManager<TClient extends Client | WriteableClient>(
 export class TandaPayManager<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
     protected readMethods: TandaPayReadMethods<TClient>;
-    protected eventsWrapper: TandaPayEvents<TClient>;
+
+    /** The address of the TandaPay contract this object is managing. provided in the constructor */
+    readonly contractAddress: Hex;
+    /** the client that was provided in the constructor to this manager. */
+    readonly client: TClient;
+    /** The TandaPay abi. this is a constant value retrieved from `TandaPayInfo.abi`, also provided here for easy access */
+    readonly abi: Abi;
 
     /** Exposes wrappers for all of the read methods for interacting with the TandaPay smart contract */
     get read() {
         return this.readMethods;
     }
 
-    /** @deprecated this is a test method */
-    get eventsCI() {
-        return this.eventsWrapper.contractInstance;
-    }
-
-
     /**
-     * @param contract_address Blockchain address of the TandaPay smart contract instance you want to connect to
+     * @param contractAddress Blockchain address of the TandaPay smart contract instance you want to connect to
      * @param client A client to perform blockchain interactions through
      */
     constructor(
-        contract_address: Hex, 
+        contractAddress: Hex, 
         client: TClient, 
     ) {
+        // we create a viem contract instance which exposes methods for interacting with the
+        // smart contract at a low level. We will inject this into helper classes which wrap all of the necessary methods
         this.contractInstance = getContract({
-            address: contract_address,
+            address: contractAddress,
             abi: TandaPayInfo.abi,
             client: client,
         });
 
+        // wraps all of the read methods for the TandaPay smart contract. When the programmer uses
+        // a TandaPayManager, they say `tpManager.read.someWrapperMethod(...)`
         this.readMethods = new TandaPayReadMethods(this.contractInstance);
-        this.eventsWrapper = new TandaPayEvents(this.contractInstance);
+
+        // readonly constants that just provide some information about how this object was created
+        // that might be useful when working with it in other parts of the code base
+        this.contractAddress = contractAddress;
+        this.client = client;
+        this.abi = TandaPayInfo.abi;
     }
 }
 
@@ -89,6 +100,8 @@ type WriteGetterType<TClient extends WriteableClient> = { member?: MemberWriteMe
 export class WriteableTandaPayManager<TClient extends WriteableClient> extends TandaPayManager<TClient> {
     protected memberWriteMethods?: MemberWriteMethods<TClient>;
     protected secretaryWriteMethods?: SecretaryWriteMethods<TClient>;
+    
+    protected txWaitClient?: TxWaitClient;
 
     /**
      * Exposes wrappers for all of the write methods for interacting with the TandaPay smart contract.
@@ -113,13 +126,16 @@ export class WriteableTandaPayManager<TClient extends WriteableClient> extends T
         opts?: TandaPayManagerOptions,
     ) {
         super(contract_address, client);
-        if (opts && 'clientRole' in opts) {
+
+        if (opts) {
+            this.txWaitClient = opts.txWaitClient;
+
             if (opts.clientRole === TandaPayRole.Secretary) {
-                this.memberWriteMethods = new MemberWriteMethods(this.contractInstance);
-                this.secretaryWriteMethods = new SecretaryWriteMethods(this.contractInstance);
+                this.memberWriteMethods = new MemberWriteMethods(this.contractInstance, this.txWaitClient);
+                this.secretaryWriteMethods = new SecretaryWriteMethods(this.contractInstance, this.txWaitClient);
             }
             else if (opts.clientRole === TandaPayRole.Member) {
-                this.memberWriteMethods = new MemberWriteMethods(this.contractInstance);
+                this.memberWriteMethods = new MemberWriteMethods(this.contractInstance, this.txWaitClient);
             }
         }
     }
@@ -131,20 +147,23 @@ export class WriteableTandaPayManager<TClient extends WriteableClient> extends T
      * @param role Role within the TandaPay community that the client account holds. (e.g. member or secretary)
      * @returns It returns `this` so that `.extend` calls may be chained together
      */
-    extend(role: TandaPayRole) {
-        switch (role) {
+
+    extend(opts: TandaPayManagerOptions) {
+        this.txWaitClient = opts.txWaitClient;
+
+        switch (opts.clientRole) {
             case TandaPayRole.Member: {
                 if (this.memberWriteMethods === undefined) {
-                    this.memberWriteMethods = new MemberWriteMethods(this.contractInstance);
+                    this.memberWriteMethods = new MemberWriteMethods(this.contractInstance, this.txWaitClient);
                 }
                 break;
             }
             case TandaPayRole.Secretary: {
                 if (this.memberWriteMethods === undefined) {
-                    this.memberWriteMethods = new MemberWriteMethods(this.contractInstance);
+                    this.memberWriteMethods = new MemberWriteMethods(this.contractInstance, this.txWaitClient);
                 }
                 if (this.secretaryWriteMethods === undefined) {
-                    this.secretaryWriteMethods = new SecretaryWriteMethods(this.contractInstance);
+                    this.secretaryWriteMethods = new SecretaryWriteMethods(this.contractInstance, this.txWaitClient);
                 }
                 break;
             }
