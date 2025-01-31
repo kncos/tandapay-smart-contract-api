@@ -1,4 +1,4 @@
-# TandaPay Smart Contract Wrapper, experiment 2
+# TandaPay Smart Contract Wrapper, (typescript experiment 2)
 
 This is the 2nd typescript experiment with creating a wrapper around the TandaPay smart contract. So far, the development of this is going well and it can evolve into being a complete layer 1 solution for the app. The current architecture idea is:
 - **Layer 1**: A wrapper around the TP smart contract which exposes an API that enables programmatic interactions with instances of the smart contract that are deployed on the blockchain.
