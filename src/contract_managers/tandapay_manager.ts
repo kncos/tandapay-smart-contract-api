@@ -1,4 +1,4 @@
-import { Abi, Client, getContract, Hex } from "viem";
+import { Abi, Client, getContract, Hex, PublicActions, WalletActions } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 import { TandaPayRole, TandaPayContract, WriteableClient, isWriteableClient, TxWaitClient } from "./types";
 import { TandaPayReadMethods } from "./tandapay_read_methods";

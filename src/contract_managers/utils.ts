@@ -1,4 +1,4 @@
-import { Abi, Hex } from "viem";
+import { Abi, Hex, Transaction, TransactionReceipt } from "viem";
 import { ContractDeployerClient } from "./types";
 
 
@@ -7,7 +7,7 @@ export async function deployContract<TClient extends ContractDeployerClient> (
     bytecode: Hex, 
     client: TClient,
     ...args: any[]
-): Promise<Hex> {
+): Promise<TransactionReceipt> {
 
     const receipt = await client.deployContract({
         account: client.account,
@@ -23,7 +23,7 @@ export async function deployContract<TClient extends ContractDeployerClient> (
         throw new Error("failed to deploy smart contract! either transaction receipt or contractAddress is undefined!");
     }
 
-    return receipt.contractAddress;
+    return receipt;
 }
 
 export function bigIntJsonReplacer (key: string, value: any): any {
