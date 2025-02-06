@@ -1,6 +1,7 @@
-import { Client, Hex } from "viem";
+import { Address, Client, getContract, Hex } from "viem";
 import { AssignmentStatus, ClaimInfo, MemberInfo, MemberStatus, PeriodInfo, SubgroupInfo, TandaPayState } from "./types";
 import { TandaPayContract } from "./types"
+import { TandaPayInfo } from "../_contracts/TandaPay";
 
 /**
  * This class wraps all of the readonly methods for the TandaPay smart contract, providing better naming schemes,
@@ -9,6 +10,7 @@ import { TandaPayContract } from "./types"
  */
 export class TandaPayReadMethods<TClient extends Client> {
     protected contractInstance: TandaPayContract<TClient>;
+    protected client: TClient;
 
     protected get read() {
         return this.contractInstance.read;
@@ -17,8 +19,13 @@ export class TandaPayReadMethods<TClient extends Client> {
     /**
      * @param contractInstance a TandaPay contract instance with .read functionality
      */
-    constructor(contractInstance: TandaPayContract<TClient>) {
-        this.contractInstance = contractInstance;
+    constructor(client: TClient, address: Address) {
+        this.client = client;
+        this.contractInstance = getContract({
+            abi: TandaPayInfo.abi,
+            address: address,
+            client: client,
+        });
     }
 
 

@@ -4,7 +4,7 @@
  * @note This file is organized in the following manner: Type guard methods, then type definitions, then enums, then miscellaneous (e.g. aliases, json replacers)
  */
 
-import { Account, Address, Chain, Client, GetContractReturnType, Hex, publicActions, PublicActions, testActions, walletActions, WalletActions } from "viem";
+import { Account, Address, Chain, Client, GetContractReturnType, Hex, publicActions, PublicActions, testActions, Transport, walletActions, WalletActions } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
 
@@ -28,7 +28,12 @@ export function hasPublicActions<TClient extends Client>(client: TClient) {
 
 
 /** A viem client that has both a `chain` and `account` member */
-//export type WriteableClient = Client & { chain: Chain; account: Account; };
+export type WriteableClient<
+    transport extends Transport = Transport,
+    chain extends Chain = Chain,
+    account extends Account = Account,
+    TClient extends Client<transport, chain, account> = Client<transport, chain, account>,
+> = TClient & WalletActions;
 
 /** A viem client that is capable of waiting for a transaction receipt. Any client with public actions should do */
 //export type TxWaitClient = Client & { waitForTransactionReceipt: PublicActions['waitForTransactionReceipt'] };
