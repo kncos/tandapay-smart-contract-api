@@ -2,27 +2,12 @@
 import { Account, createTestClient, createWalletClient, getContract, GetContractReturnType, Hex, http, publicActions, TransactionReceipt, walletActions, WalletClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
-import { deployContract } from "./contract_managers/utils";
 import { FaucetTokenInfo } from "./_contracts/FaucetToken";
-import { AssignmentStatus, ContractDeployerClient, memberInfoJsonReplacer, MemberStatus, periodInfoJsonReplacer, subgroupInfoJsonReplacer, TandaPayRole } from "./contract_managers/types";
+import { AssignmentStatus, memberInfoJsonReplacer, MemberStatus, periodInfoJsonReplacer, subgroupInfoJsonReplacer, TandaPayRole } from "./contract_managers/types";
 import { createTandaPayManager, WriteableTandaPayManager } from "./contract_managers/tandapay_manager";
 import { TandaPayInfo } from "./_contracts/TandaPay";
-import { watchContractEvent } from "viem/actions";
+import { deployContract, waitForTransactionReceipt, watchContractEvent } from "viem/actions";
 import { spawn } from "child_process";
-
-
-let anvilProcess = spawn("anvil", ["-a", "15"], {
-    stdio: "inherit",
-    shell: true,
-});
-
-const testClient = createTestClient({
-    chain: anvil,
-    mode: 'anvil',
-    transport: http(),
-}).extend(publicActions);
-
-await testClient.setAutomine(true);
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -43,212 +28,37 @@ export const PRIVATE_KEYS: Hex[] = [
     "0xc526ee95bf44d8fc405a158bb884d9d1238d99f0612e9f33d006bb0789009aaa",
 ];
 
-// create a bunch of accounts from those private keys
-const accounts = ((keys) => {
-    const accountArr: Account[] = [];
-    for (const key of keys) {
-        accountArr.push(privateKeyToAccount(key));
-    }
-    return accountArr;
-})(PRIVATE_KEYS);
-
-// create a bunch of clients that can write and deploy contracts from those accounts
-const clients = ((accs) => {
-    const clientArr: ContractDeployerClient[] = [];
-    for (const account of accs) {
-        const c = createWalletClient({
-            account: account,
-            chain: anvil,
-            transport: http(),
-        }).extend(publicActions);
-
-        clientArr.push(c);
-    }
-    return clientArr;
-})(accounts);
-
-
-// deploy the faucet token and TandaPay smart contracts
-const ftkreceipt = await deployContract(FaucetTokenInfo.abi, FaucetTokenInfo.bytecode.object, clients[0]);
-const ftkAddr = ftkreceipt.contractAddress as Hex;
-
-const tpreceipt = await deployContract(TandaPayInfo.abi, TandaPayInfo.bytecode.object, clients[0], ftkAddr, clients[0].account.address);
-const tpAddr = tpreceipt.contractAddress as Hex;
-
-const cinstance = getContract({
-    abi: TandaPayInfo.abi,
-    address: tpAddr,
-    client: clients[0]  
+let anvilProcess = spawn("anvil", ["-a", "15"], {
+    stdio: "ignore",
+    shell: true,
 });
 
-// create a contract instance for each client for the FTK token 
-const ftkContracts = ((clients) => {
-    const ftkContracts = [];
-    for (const client of clients) {
-        const c = getContract({
-            abi: FaucetTokenInfo.abi,
-            address: ftkAddr,
-            client: client,
-        });
-        ftkContracts.push(c);
-    }
-    return ftkContracts;
-})(clients);
+const testClient = createTestClient({
+    chain: anvil,
+    mode: 'anvil',
+    transport: http(),
+}).extend(publicActions);
 
-// easily convert an amount of FTK/ETH/etc. to wei
-const toWei = (input: bigint) => input * (10n ** 18n);
+await testClient.setAutomine(true);
 
-// give every member a bunch of FTK to start with
-const startBal = toWei(2_500_000n);
-for (const acc of accounts) {
-    let hash = await ftkContracts[0].write.distribute([acc.address, startBal]);
-    await clients[0].waitForTransactionReceipt({ hash });
-}
-
-// create tpManagers for each account for the TandaPay smart contract
-const tpManagers = ((clients, tpAddress) => {
-    const tpArr: WriteableTandaPayManager<ContractDeployerClient>[] = [];
-    for (const c of clients) {
-        const tpm = createTandaPayManager(tpAddress, c);
-        tpArr.push(tpm);
-    }
-    return tpArr;
-})(clients, tpAddr);
-
-// let first one be the secretary
-tpManagers[0].extend({ 
-    clientRole: TandaPayRole.Secretary, 
-    txWaitClient: clients[0],
+let wc = createWalletClient({
+    transport: http(),
+    //chain: anvil,
+    //account: privateKeyToAccount(PRIVATE_KEYS[0]),
 });
 
-// let remaining ones be members
-for (let i = 1; i < tpManagers.length; i++) {
-    tpManagers[i].extend({
-        clientRole: TandaPayRole.Member,
-        txWaitClient: clients[0],
-    });
-}
+let ftkReceipt = await deployContract(wc, {
+    abi: FaucetTokenInfo.abi,
+    bytecode: FaucetTokenInfo.bytecode.object,
+    account: null,
+    chain: anvil,
+})
+.then((hash) => waitForTransactionReceipt(wc, { hash }));
 
-const SUBGROUPS = 3n;
-const MEMBERS_PER_SUBGROUP = 5n;
-
-// now, the secretary can get the community out of the initialization state
-for (let i = 0n; i < SUBGROUPS; i++) {
-    // create a subgroup
-    await tpManagers[0].write.secretary?.createSubGroup();
-    for (let j = 0n; j < MEMBERS_PER_SUBGROUP; j++) {
-        // add members to the subgroup
-        const accIndex = Number((i*MEMBERS_PER_SUBGROUP) + j);
-        const accAddr = accounts[accIndex].address;
-
-        // secretary adds them
-        await tpManagers[0].write.secretary?.addMemberToCommunity(accAddr);
-        // secretary assigns them to a subgroup. (i+1 because subgroup IDs start at 1)
-        await tpManagers[0].write.secretary?.assignMemberToSubgroup(accAddr, i+1n);
-    }
-}
-
-// secretary can then exit the initialization state
-const TOTAL_COVERAGE = toWei(15000n);
-await tpManagers[0].write.secretary?.initiateDefaultState(TOTAL_COVERAGE);
-
-const NUM_MEMBERS = SUBGROUPS * MEMBERS_PER_SUBGROUP;
-const BASE_PREMIUM = TOTAL_COVERAGE / NUM_MEMBERS;
-
-// join fee will be 110% of the base premium
-const JOIN_FEE = (BASE_PREMIUM * 110n) / 100n;
-
-// now, each member needs to send joinCommunity and pay the initial fee, and approve their subgroup assignment
-for (let i = 0; i < tpManagers.length; i++) {
-    const tpm = tpManagers[i];
-    const ftk = ftkContracts[i];
-   
-    const hash = await ftk.write.approve([tpAddr, JOIN_FEE]);
-    await clients[0].waitForTransactionReceipt({ hash });
-    await tpm.write.member?.joinCommunity();
-    await tpm.write.member?.approveSubgroupAssignment(); 
-}
-
-async function payPremiums() {
-    // now each member needs to pay their first premium and the community may advance
-    for (let i = 0; i < tpManagers.length; i++) {
-        const tpm = tpManagers[i];
-        const ftk = ftkContracts[i];
-
-        // for the first premium, it will be equal to JOIN_FEE again, since the first
-        // premium is also 110% (110 + 110 = 220%, so 120% goes to savings and 100% goes to community escrow)
-        const hash = await ftk.write.approve([tpAddr, JOIN_FEE]);
-        await clients[0].waitForTransactionReceipt({ hash });
-        let txReceipt = await tpm.write.member?.payPremium(true) as TransactionReceipt;
-        //console.log(txReceipt.blockNumber)
-    }
-
-}
-
-async function getCurPeriodInfo() {
-    const curPeriod = await tpManagers[0].read.getCurrentPeriodId();
-    const pInfo = await tpManagers[0].read.getPeriodInfo(curPeriod);
-    return pInfo;
-}
-
-async function printEverything() {
-    for (const account of accounts) {
-        let info = await tpManagers[0].read.getMemberInfoFromAddress(account.address);
-        let balance = await ftkContracts[0].read.balanceOf([account.address]);
-
-        console.log(JSON.stringify(info, memberInfoJsonReplacer, 2), " ftk bal: ", (balance / (10n ** 18n)));
-    }
-
-    const pInfo = await getCurPeriodInfo();
-
-    console.log("\n---- period info ----\n");
-    console.log(JSON.stringify(pInfo, periodInfoJsonReplacer, 2));
-    console.log("\n---- subgroup info ----\n");
-
-    for (let i = 1n; i <= SUBGROUPS; i++) {
-        const sInfo = await tpManagers[0].read.getSubgroupInfo(i);
-        console.log(JSON.stringify(sInfo, subgroupInfoJsonReplacer, 2));
-    }
-}
-
-
-const daysToSeconds = (days: number) => days * 60 * 60 * 24;
-
-const increaseTime = async (seconds: number) => {
-    await testClient.increaseTime({
-        seconds
-    });
-    await testClient.mine({blocks: 1});
-}
-
-// pay premiums for period 1 and advance to next period and next payment window
-await payPremiums();
-await printEverything();
-await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(3.5));
-await tpManagers[0].write.member?.issueRefund();
-await increaseTime(daysToSeconds(24.5));
-await printEverything();
-
-await payPremiums();
-await increaseTime(daysToSeconds(4));
-await printEverything();
-await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(3.5));
-await tpManagers[0].write.member?.issueRefund();
-await increaseTime(daysToSeconds(24.5));
-await printEverything();
-
-await payPremiums();
-await increaseTime(daysToSeconds(4));
-await printEverything();
-await tpManagers[0].write.secretary?.advancePeriod();
-await increaseTime(daysToSeconds(3.5));
-await tpManagers[0].write.member?.issueRefund();
-await increaseTime(daysToSeconds(24.5));
-await printEverything();
+console.log(JSON.stringify(ftkReceipt.contractAddress, null, 2));
 
 anvilProcess.kill();
+
 
 // What's next?
 // - It's time to get started on Layer 2

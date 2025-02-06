@@ -4,7 +4,7 @@
  * @note This file is organized in the following manner: Type guard methods, then type definitions, then enums, then miscellaneous (e.g. aliases, json replacers)
  */
 
-import { Account, Address, Chain, Client, GetContractReturnType, Hex, PublicActions, WalletActions } from "viem";
+import { Account, Address, Chain, Client, GetContractReturnType, Hex, publicActions, PublicActions, testActions, walletActions, WalletActions } from "viem";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
 
@@ -12,25 +12,36 @@ import { bigIntJsonReplacer } from "./utils";
  * Determines if a Viem client is a Writeable client or not. Essentially, whether it has a 'chain' and 'account'
  * that are both defined, which are required for write methods to be executed successfully
  */
-export function isWriteableClient(client: Client | WriteableClient): client is WriteableClient {
-    return ('chain' in client && client.chain !== undefined) && ('account' in client && (client.account !== undefined));
-};
+//export function isWriteableClient(client: Client | WriteableClient): client is WriteableClient {
+//    return ('chain' in client && client.chain !== undefined) && ('account' in client && (client.account !== undefined));
+//};
+
+export function hasWalletActions<TClient extends Client>(client: TClient) {
+    const wa = walletActions(client);
+    return Object.keys(wa).every((key) => typeof (client as any)[key] !== undefined);
+}
+
+export function hasPublicActions<TClient extends Client>(client: TClient) {
+    const pa = publicActions(client);
+    return Object.keys(pa).every((key) => typeof (client as any)[key] !== undefined);
+}
+
 
 /** A viem client that has both a `chain` and `account` member */
-export type WriteableClient = Client & { chain: Chain; account: Account; };
+//export type WriteableClient = Client & { chain: Chain; account: Account; };
 
 /** A viem client that is capable of waiting for a transaction receipt. Any client with public actions should do */
-export type TxWaitClient = Client & { waitForTransactionReceipt: PublicActions['waitForTransactionReceipt'] };
+//export type TxWaitClient = Client & { waitForTransactionReceipt: PublicActions['waitForTransactionReceipt'] };
 
 /** 
  * Any viem client that has the `deployContract` wallet action, and `waitForTransactionReceipt` public action, 
  * both of which are needed to deploy a smart contract to the blockchain. Must also have an `account` and `chain`
  * that are defined (see: WriteableClient, a type defined in this module's types.ts).
  */
-export type ContractDeployerClient = WriteableClient & { 
-    deployContract: WalletActions['deployContract']; 
-    waitForTransactionReceipt: PublicActions['waitForTransactionReceipt']; 
-};
+//export type ContractDeployerClient = WriteableClient & { 
+//    deployContract: WalletActions['deployContract']; 
+//    waitForTransactionReceipt: PublicActions['waitForTransactionReceipt']; 
+//};
 
 /** 
  * Generic type representing instances of the TandaPay smart contract, given by Viem's getContract method.

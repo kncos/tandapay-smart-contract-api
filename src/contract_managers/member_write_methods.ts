@@ -1,9 +1,8 @@
-import { TransactionReceipt } from "viem";
+import { Account, Chain, Client, TransactionReceipt, WalletActions, WalletClient } from "viem";
 import { Hash, Hex } from "viem";
 import { TandaPayWriteMethods } from "./tandapay_write_methods";
-import { WriteableClient } from "./types";
 
-export default class MemberWriteMethods<TClient extends WriteableClient> extends TandaPayWriteMethods<TClient> {
+export default class MemberWriteMethods<TClient extends Client & { account: Account; chain: Chain; } & WalletActions> extends TandaPayWriteMethods<TClient> {
     // 1.  joinToCommunity  =>
     // Use case -- The user will join the community and transfer the 11/12th of the individual savings amount's fund.
     // Arguments --- none required

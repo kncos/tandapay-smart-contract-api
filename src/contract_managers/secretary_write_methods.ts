@@ -1,9 +1,8 @@
-import { Hex } from "viem";
+import { Account, Chain, Client, Hex, WalletActions } from "viem";
 import { TandaPayWriteMethods } from "./tandapay_write_methods";
-import { WriteableClient } from "./types";
 
 // methods within the TandaPay smart contract that only the secretary may call
-export default class SecretaryWriteMethods<TClient extends WriteableClient> extends TandaPayWriteMethods<TClient> {
+export default class SecretaryWriteMethods<TClient extends Client & { account: Account; chain: Chain; } & WalletActions> extends TandaPayWriteMethods<TClient> {
     // 1. addToCommunity =>
     // Use case -- This function will be used to add a new member to the TandaPay community.
     // Arguments --- The secretary needs to provide the member's wallet address while adding a member to the community.
