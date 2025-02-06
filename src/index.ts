@@ -1,12 +1,8 @@
 
-import { Account, createTestClient, createWalletClient, getContract, GetContractReturnType, Hex, http, publicActions, TransactionReceipt, walletActions, WalletClient } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { createTestClient, createWalletClient, Hex, http, publicActions } from "viem";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "./_contracts/FaucetToken";
-import { AssignmentStatus, memberInfoJsonReplacer, MemberStatus, periodInfoJsonReplacer, subgroupInfoJsonReplacer, TandaPayRole } from "./contract_managers/types";
-import { createTandaPayManager, WriteableTandaPayManager } from "./contract_managers/tandapay_manager";
-import { TandaPayInfo } from "./_contracts/TandaPay";
-import { deployContract, waitForTransactionReceipt, watchContractEvent } from "viem/actions";
+import { deployContract, waitForTransactionReceipt } from "viem/actions";
 import { spawn } from "child_process";
 
 // private keys we can use for testing purposes here
