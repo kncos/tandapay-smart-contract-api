@@ -8,7 +8,7 @@ import { TandaPayInfo } from "../_contracts/TandaPay";
  * mapping raw data from the smart contract onto cleaner types, and providing quality of life functions that automate
  * complex tasks involving multiple readonly method calls that might be useful in other areas of the code base
  */
-export class TandaPayReadMethods<TClient extends Client> {
+export default class TandaPayReadMethods<TClient extends Client = Client> {
     protected contractInstance: TandaPayContract<TClient>;
     protected client: TClient;
 

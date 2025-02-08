@@ -18,22 +18,36 @@ import { bigIntJsonReplacer } from "./utils";
 
 export function hasWalletActions<TClient extends Client>(client: TClient) {
     const wa = walletActions(client);
-    return Object.keys(wa).every((key) => typeof (client as any)[key] !== undefined);
+    return Object.keys(wa).every((key) => typeof (client as any)[key] !== "undefined");
 }
 
 export function hasPublicActions<TClient extends Client>(client: TClient) {
     const pa = publicActions(client);
-    return Object.keys(pa).every((key) => typeof (client as any)[key] !== undefined);
+    return Object.keys(pa).every((key) => typeof (client as any)[key] !== "undefined");
 }
 
 
-/** A viem client that has both a `chain` and `account` member */
+/** 
+ * Any viem client that at least has: A defined transport, a defined chain, a defined account,
+ * and is extended with `WalletActions`.
+ */
 export type WriteableClient<
     transport extends Transport = Transport,
     chain extends Chain = Chain,
     account extends Account = Account,
     TClient extends Client<transport, chain, account> = Client<transport, chain, account>,
 > = TClient & WalletActions;
+
+/**
+ * Any viem client that at least has: A defined transport, a defined chain, and
+ * is extended with PublicActions. Account is optional.
+ */
+export type ReadableClient<
+    transport extends Transport = Transport,
+    chain extends Chain = Chain,
+    account extends Account | undefined = undefined,
+    TClient extends Client<transport, chain, account> = Client<transport, chain, account>,
+> = TClient & PublicActions;
 
 /** A viem client that is capable of waiting for a transaction receipt. Any client with public actions should do */
 //export type TxWaitClient = Client & { waitForTransactionReceipt: PublicActions['waitForTransactionReceipt'] };

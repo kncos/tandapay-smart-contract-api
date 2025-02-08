@@ -104,10 +104,4 @@ export default class MemberWriteMethods extends TandaPayWriteMethods {
         return this.handleHash(hash);
     }
 
-    /** @deprecated improve this */
-    async issueRefund() {
-        await this.simulate.issueRefund([true]);
-        const hash = await this.write.issueRefund([true]);
-        return this.handleHash(hash);
-    }
 }

@@ -1,9 +1,11 @@
 
-import { createTestClient, createWalletClient, Hex, http, publicActions } from "viem";
+import { createPublicClient, createTestClient, createWalletClient, Hex, http, publicActions } from "viem";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "./_contracts/FaucetToken";
 import { deployContract, waitForTransactionReceipt } from "viem/actions";
 import { spawn } from "child_process";
+import { hasWalletActions } from "./contract_managers/types";
+import { privateKeyToAccount } from "viem/accounts";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -39,8 +41,13 @@ await testClient.setAutomine(true);
 
 let wc = createWalletClient({
     transport: http(),
-    //chain: anvil,
-    //account: privateKeyToAccount(PRIVATE_KEYS[0]),
+    chain: anvil,
+    account: privateKeyToAccount(PRIVATE_KEYS[0]),
+});
+
+let pc = createPublicClient({
+    transport: http(),
+    chain: anvil,
 });
 
 let ftkReceipt = await deployContract(wc, {
@@ -54,6 +61,10 @@ let ftkReceipt = await deployContract(wc, {
 console.log(JSON.stringify(ftkReceipt.contractAddress, null, 2));
 
 anvilProcess.kill();
+
+console.log(hasWalletActions(wc));
+console.log(hasWalletActions(pc));
+console.log(hasWalletActions(testClient));
 
 
 // What's next?
