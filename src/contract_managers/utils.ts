@@ -2,31 +2,12 @@ import { Abi, Account, Chain, Client, DeployContractParameters, Hex, Transaction
 import { deployContract, waitForTransactionReceipt } from "viem/actions";
 
 
-//export async function deployContract<TClient extends ContractDeployerClient> (
-//    abi: Abi, 
-//    bytecode: Hex, 
-//    client: TClient,
-//    ...args: any[]
-//): Promise<TransactionReceipt> {
-//
-//    const receipt = await client.deployContract({
-//        account: client.account,
-//        chain: client.chain,
-//        abi: abi,
-//        bytecode: bytecode,
-//        args: args,
-//    }).then (
-//        (hash) => client.waitForTransactionReceipt( {hash} ),
-//    );
-//
-//    if (!receipt || !receipt.contractAddress) {
-//        throw new Error("failed to deploy smart contract! either transaction receipt or contractAddress is undefined!");
-//    }
-//
-//    return receipt;
-//}
-
-
+/**
+ * Deploys a smart contract and waits for the transaction receipt
+ * @param walletClient Client that will perform the contract deployment
+ * @param parameters Parameters to include with the deployment, e.g. abi, constructor args
+ * @returns A transaction receipt after the contract deployment has been seen on chain (one block confirmation)
+ */
 export async function deployContractAndWait<
     const abi extends Abi | readonly unknown[],
     chain extends Chain | undefined,
@@ -41,7 +22,7 @@ export async function deployContractAndWait<
     return receipt;
 }
 
-
+/** Can be used with JSON.Stringify, allows it to parse `bigint` and `bigint[]` */
 export function bigIntJsonReplacer (key: string, value: any): any {
     const toStr = (bigIntValue: bigint) => `${bigIntValue.toString()}n`;
 

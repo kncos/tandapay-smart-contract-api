@@ -8,19 +8,14 @@ import { Account, Address, Chain, Client, GetContractReturnType, Hex, publicActi
 import { TandaPayInfo } from "../_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
 
-/**
- * Determines if a Viem client is a Writeable client or not. Essentially, whether it has a 'chain' and 'account'
- * that are both defined, which are required for write methods to be executed successfully
- */
-//export function isWriteableClient(client: Client | WriteableClient): client is WriteableClient {
-//    return ('chain' in client && client.chain !== undefined) && ('account' in client && (client.account !== undefined));
-//};
 
+/** Tests if a viem client has been extended with WalletActions at runtime */
 export function hasWalletActions<TClient extends Client>(client: TClient) {
     const wa = walletActions(client);
     return Object.keys(wa).every((key) => typeof (client as any)[key] !== "undefined");
 }
 
+/** Tests if a viem client has been extended with PublicActions at runtime */
 export function hasPublicActions<TClient extends Client>(client: TClient) {
     const pa = publicActions(client);
     return Object.keys(pa).every((key) => typeof (client as any)[key] !== "undefined");
@@ -48,19 +43,6 @@ export type ReadableClient<
     account extends Account | undefined = undefined,
     TClient extends Client<transport, chain, account> = Client<transport, chain, account>,
 > = TClient & PublicActions;
-
-/** A viem client that is capable of waiting for a transaction receipt. Any client with public actions should do */
-//export type TxWaitClient = Client & { waitForTransactionReceipt: PublicActions['waitForTransactionReceipt'] };
-
-/** 
- * Any viem client that has the `deployContract` wallet action, and `waitForTransactionReceipt` public action, 
- * both of which are needed to deploy a smart contract to the blockchain. Must also have an `account` and `chain`
- * that are defined (see: WriteableClient, a type defined in this module's types.ts).
- */
-//export type ContractDeployerClient = WriteableClient & { 
-//    deployContract: WalletActions['deployContract']; 
-//    waitForTransactionReceipt: PublicActions['waitForTransactionReceipt']; 
-//};
 
 /** 
  * Generic type representing instances of the TandaPay smart contract, given by Viem's getContract method.
