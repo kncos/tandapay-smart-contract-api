@@ -4,8 +4,7 @@ This library serves as an abstraction layer on top of the TandaPay smart contrac
 2. Serve as a layer to build business logic and applications on top of
 3. Serve as a single chokepoint where if the smart contract is later refactored and improved (likely), this library can be updated without necessarily impacting layers built on top of it
 
-# About
-## Features
+# Features
 Here is a brief summary of what this library includes
 - A TandaPay Manager concept, which is essentially the object that encapsulates the smart contract wrapper functionality. It is constructed with a viem client and smart contract address, and depending
 on what functionality the client has available (e.g., whether it's a wallet client with a valid account, or just a public client), it exposes a different set of methods. This adds a separation of concerns
@@ -19,12 +18,12 @@ nicer to work with, and encapsulates procedures for sending the transactions pro
 - A test suite which not only validates the functionality of this library itself, but by extension helps validate the functionality of the smart contract, since the test suite here runs many scenarios
 through the smart contract deployed on a test network, and we can compare the state of the smart contract to the expected outcomes.
 
-## Tight Coupling with Smart Contract Build Artifact
+# Tight Coupling with Smart Contract Build Artifact
 When looking at the source, you may notice that the smart contract abi/bytecode has been included here as a hardcoded object. The reasoning for this is that the version of the smart contract
 that this library works with is included in the library's source, without necessarily needing to include the solidity code or a build system for solidity, as the smart contract is a different
 project written by another developer.
 
-## Smart Contract Code Quality Issues
+# Smart Contract Code Quality Issues
 The smart contract was developed as a rush order by a contractor whose first language was not english. This has resulted in smart contract code that:
 - Is somewhat hard to decipher and make sense of as a developer with familiarity with what it *should* be doing (me), let alone someone new to the project
 - Uses inconsistent code styles and naming conventions throughout
