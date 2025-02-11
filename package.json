@@ -12,7 +12,10 @@
   },
   "keywords": [
     "typescript",
-    "tandapay"
+    "tandapay",
+    "smart contract",
+    "wrapper",
+    "abstraction"
   ],
   "exports": {
     ".": {
@@ -24,7 +27,7 @@
   "author": "k.c.",
   "license": "ISC",
   "type": "module",
-  "description": "messing around with typescript",
+  "description": "Wrapper / Abstraction Layer built on top of the TandaPay smart contract. the TandaPay smart contract implements a p2p crowdfunding protocol, this library exposes an API for interacting with it.",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/jest": "^29.5.14",
