@@ -30,6 +30,8 @@ The smart contract was developed as a rush order by a contractor whose first lan
 - Lacks documentation and comments explaining code
 - Contains many spelling errors and capitalization errors throughout
 - Has dead code, duplicated code, and seemingly unused variables / features
-This API aims to mitigate some of these issues for the time being, while also allowing for improvements to be made to the smart contract later without disrupting business logic that is built on top.
+
+This API aims to mitigate these issues for the time being, while also allowing for improvements to be made to the smart contract later without disrupting business logic that is built on top.
+Basically, it's a way to interact with the smart contract without using the smart contract directly.
 
 
