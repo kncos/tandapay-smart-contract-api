@@ -1,13 +1,15 @@
-import { Address } from "viem";
+import { Address, createWalletClient, http, publicActions } from "viem";
 import { TandaPayRole, WriteableClient, ReadableClient, hasWalletActions } from "./types";
 import TandaPayReadMethods from "./tandapay_read_methods";
 import MemberWriteMethods from "./member_write_methods";
 import SecretaryWriteMethods from "./secretary_write_methods";
 import PublicWriteMethods from "./public_write_methods";
+import { privateKeyToAccount } from "viem/accounts";
+import { anvil } from "viem/chains";
 
 
 /** Interface that simply defines the type of a TandaPay manager with only read operations */
-interface ReadOnlyTandaPayManager {
+export interface ReadOnlyTandaPayManager {
     read: TandaPayReadMethods<ReadableClient>;
 }
 
@@ -16,7 +18,7 @@ interface ReadOnlyTandaPayManager {
  * Further narrows this down based on what role the client plays in the TandaPay community
  * (e.g. `Member`, `Secretary`). If no role is provided, only public write methods will be available
  */
-interface WriteableTandaPayManager<
+export interface WriteableTandaPayManager<
     role_ extends TandaPayRole,
 > extends ReadOnlyTandaPayManager {
     write: (
@@ -33,7 +35,7 @@ interface WriteableTandaPayManager<
 /**
  * Creates a writeable TandaPay manager, which includes Member and Secretary write methods. `Member and `Secretary` refer to roles
  * within the TandaPay smart contract instance which are allowed to perform a set of operations
- * @param client A viem client that contains all of the functionality needed to perform write operations. See: `WriteableClient`.
+ * @param client A viem client that contains all of the functionality needed to perform write operations. See: `ReadWriteClient`.
  * IT IS ASSUMED that this client's account actually does have the secretary permissions within the TandaPay smart contract
  * @param address The address of the TandaPay smart contract instance
  * @param role Specifies that this client has the Secretary permissions within the smart contract.
@@ -47,7 +49,7 @@ export function createTandaPayManager(
 /**
  * Creates a writeable TandaPay manager, which includes Member write methods. `Member` refers to a specific role
  * within the TandaPay smart contract instance which is allowed to perform a set of member-only write operations.
- * @param client A viem client that contains all of the functionality needed to perform write operations. See: `WriteableClient`.
+ * @param client A viem client that contains all of the functionality needed to perform write operations. See: `ReadWriteClient`.
  * IT IS ASSUMED that this client's account actually does have the member permissions within the TandaPay smart contract
  * @param address The address of the TandaPay smart contract instance
  * @param role Specifies that this client has the Member permissions within the smart contract.
@@ -60,7 +62,7 @@ export function createTandaPayManager(
 
 /**
  * Creates a writeable TandaPay manager, which only includes public write methods.
- * @param client A viem client that contains all of the functionality needed to perform write operations. See: `WriteableClient`.
+ * @param client A viem client that contains all of the functionality needed to perform write operations. See: `ReadWriteClient`.
  * @param address The address of the TandaPay smart contract instance
  * @param role Can be omitted, or can be `None`
  */
@@ -88,7 +90,7 @@ export function createTandaPayManager(
     address: Address,
     role?: TandaPayRole,
 ): WriteableTandaPayManager<TandaPayRole> | ReadOnlyTandaPayManager {
-    // create read methods because a ReadableClient or WriteableClient will always have read functionality
+    // create read methods because a ReadableClient or ReadWriteClient will always have read functionality
     let readMethods = new TandaPayReadMethods(client, address);
     
     // the base object we'll return is just a ReadOnlyTandaPayManager. This will be expanded if we can
@@ -97,6 +99,8 @@ export function createTandaPayManager(
 
     // To perform write operations, the client needs to have wallet actions and a valid account.
     if (hasWalletActions(client) && client.account) {
+        // TODO: should this be done? is this necessary? it might not be good to modify the client like this
+        client.extend(publicActions);
         // If the role of Secretary was passed, then the writeable TandaPay manager will include
         // secretary write methods, member write methods, and public write methods
         if (role === TandaPayRole.Secretary) {
@@ -133,3 +137,5 @@ export function createTandaPayManager(
     // operations, we will simply return a read-only TandaPay manager
     return base as ReadOnlyTandaPayManager;
 }
+
+
