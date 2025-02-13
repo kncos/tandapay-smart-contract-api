@@ -1,6 +1,6 @@
 # TandaPay Smart Contract API
 
-![CI Tests](https://github.com/kncos/tandapay-smart-contract-api/actions/workflows/CI.yml/badge.svg)
+![CI Tests](https://github.com/kncos/tandapay-smart-contract-api/actions/workflows/ci.yml/badge.svg)
 
 This library serves as an abstraction layer on top of the TandaPay smart contract. The TandaPay smart contract implements a peer-to-peer crowdfunding protocol. The goals of this library are:
 1. Expose an API for interacting with the TandaPay smart contract
