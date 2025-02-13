@@ -5,7 +5,7 @@ This library serves as an abstraction layer on top of the TandaPay smart contrac
 3. Serve as a single chokepoint where if the smart contract is later refactored and improved (likely), this library can be updated without necessarily impacting layers built on top of it
 
 # Features
-Here is a brief summary of what this library includes
+Here is a brief summary of the major features this library includes
 - A TandaPay Manager concept, which is essentially the object that encapsulates the smart contract wrapper functionality. It is constructed with a viem client and smart contract address, and depending
 on what functionality the client has available (e.g., whether it's a wallet client with a valid account, or just a public client), it exposes a different set of methods. This adds a separation of concerns
 between read/write methods
@@ -33,5 +33,3 @@ The smart contract was developed as a rush order by a contractor whose first lan
 
 This API aims to mitigate these issues for the time being, while also allowing for improvements to be made to the smart contract later without disrupting business logic that is built on top.
 Basically, it's a way to interact with the smart contract without using the smart contract directly.
-
-

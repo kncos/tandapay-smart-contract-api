@@ -1,0 +1,51 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    run-tests:
+        runs-on: ubuntu-latest
+
+        steps:
+            # this checks out the repo
+          - name: checkout the code
+            uses: actions/checkout@v3
+            
+            # this intalls node.js (version 23, just what i have on my machine rn)
+          - name: Setup Node.js
+            uses: actions/setup-node@v3
+            with:
+                node-version: '23'
+                # this caches the dependencies installed with pnpm to speed up workflows
+                cache: 'pnpm'
+            
+            # this installs pnpm (latest version. should this be changed since node is on 23?)
+          - name: Setup pnpm
+            uses: pnpm/action-setup@v2
+            with:
+                version: 'latest'
+            
+            # this installs the dependencies with pnpm
+          - name: install dependencies
+            run: pnpm install
+            
+            # this runs the script to install the `foundryup` tool
+          - name: install foundry
+            run: curl -L https://foundry.paradigm.xyz | bash
+            
+            # this runs foundryup, so that way we get `anvil` test net
+            # TODO: might be reasonable to find some pnpm package that lets us
+            # TODO: programmatically run a test network instead of relying on an
+            # TODO: external dependency like this.
+          - name: foundryup
+            run: foundryup
+            
+            # finally, this runs the tests with a basic `pnpm test` command
+          - name: run tests
+            run: pnpm test
