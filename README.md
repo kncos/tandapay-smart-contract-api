@@ -1,6 +1,6 @@
 # TandaPay Smart Contract API
 
-![CI Tests](https://github.com/kncos/tandapay-smart-contract-api/actions/workflows/ci.yml/badge.svg) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+![CI Tests](https://github.com/kncos/tandapay-smart-contract-api/actions/workflows/ci.yml/badge.svg) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Language: TypeScript](https://img.shields.io/github/languages/top/kncos/tandapay-smart-contract-api)
 
 This library serves as an abstraction layer on top of the TandaPay smart contract. The TandaPay smart contract implements a peer-to-peer crowdfunding protocol. The goals of this library are:
 
