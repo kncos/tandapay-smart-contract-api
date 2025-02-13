@@ -32,8 +32,8 @@ jobs:
             # this installs the dependencies with pnpm
           - name: install dependencies
             run: pnpm install
-            
-            # this runs the script to install the `foundryup` tool
+          
+            # this installs the foundry toolchain. Needed because the tests use `anvil`
           - name: install foundry
             uses: foundry-rs/foundry-toolchain@v1
             
