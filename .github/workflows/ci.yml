@@ -28,9 +28,6 @@ jobs:
             uses: actions/setup-node@v3
             with:
                 node-version: '23'
-                # this caches the dependencies installed with pnpm to speed up workflows
-                cache: 'pnpm'
-            
             
             # this installs the dependencies with pnpm
           - name: install dependencies
