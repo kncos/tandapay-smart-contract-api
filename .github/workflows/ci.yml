@@ -35,14 +35,7 @@ jobs:
             
             # this runs the script to install the `foundryup` tool
           - name: install foundry
-            run: curl -L https://foundry.paradigm.xyz | bash
-            
-            # this runs foundryup, so that way we get `anvil` test net
-            # TODO: might be reasonable to find some pnpm package that lets us
-            # TODO: programmatically run a test network instead of relying on an
-            # TODO: external dependency like this.
-          - name: foundryup
-            run: foundryup
+            uses: foundry-rs/foundry-toolchain@v1
             
             # finally, this runs the tests with a basic `pnpm test` command
           - name: run tests
