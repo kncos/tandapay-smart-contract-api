@@ -1,4 +1,4 @@
-import { hasWalletActions } from "../../src/types";
+import { hasWalletActions } from "types";
 import { makeAccounts, makeWalletClients } from "../test_helpers";
 
 test("hasWalletActions works", () => {

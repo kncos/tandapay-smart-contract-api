@@ -1,5 +1,5 @@
 import { WriteableTandaPayManager } from "../../src/contract_managers/tandapay_manager";
-import { TandaPayRole, TandaPayState } from "../../src/types";
+import { TandaPayRole, TandaPayState } from "types";
 import { deployTandaPayAndMakeManagers, spawnAnvil } from "../test_helpers";
 
 test("get to default state", async () => {

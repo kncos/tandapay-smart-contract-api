@@ -20,7 +20,7 @@ import {
   createTandaPayManager,
   WriteableTandaPayManager,
 } from "../src/contract_managers/tandapay_manager";
-import { TandaPayRole, WriteableClient } from "../src/types";
+import { TandaPayRole, WriteableClient } from "types";
 
 /** viem transport we'll use for test networks */
 export const TEST_TRANSPORT = http();
