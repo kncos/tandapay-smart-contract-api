@@ -1,4 +1,3 @@
-
-test('utils temp', () => {
-    expect(1+1).toBe(2);
-})
+test("utils temp", () => {
+  expect(1 + 1).toBe(2);
+});

@@ -1,35 +1,32 @@
-import { Address, createWalletClient, http, publicActions } from "viem";
-import { TandaPayRole, WriteableClient, ReadableClient, hasWalletActions } from "./types";
+import { Address, publicActions } from "viem";
+import {
+  TandaPayRole,
+  WriteableClient,
+  ReadableClient,
+  hasWalletActions,
+} from "types";
 import TandaPayReadMethods from "./tandapay_read_methods";
 import MemberWriteMethods from "./member_write_methods";
 import SecretaryWriteMethods from "./secretary_write_methods";
 import PublicWriteMethods from "./public_write_methods";
-import { privateKeyToAccount } from "viem/accounts";
-import { anvil } from "viem/chains";
-
 
 /** Interface that simply defines the type of a TandaPay manager with only read operations */
 export interface ReadOnlyTandaPayManager {
-    read: TandaPayReadMethods<ReadableClient>;
+  read: TandaPayReadMethods<ReadableClient>;
 }
 
-/** 
- * Interface that defines the type of a TandaPay manager with both read and write operations. 
+/**
+ * Interface that defines the type of a TandaPay manager with both read and write operations.
  * Further narrows this down based on what role the client plays in the TandaPay community
  * (e.g. `Member`, `Secretary`). If no role is provided, only public write methods will be available
  */
-export interface WriteableTandaPayManager<
-    role_ extends TandaPayRole,
-> extends ReadOnlyTandaPayManager {
-    write: (
-        role_ extends TandaPayRole.Secretary 
-        ? { member: MemberWriteMethods; secretary: SecretaryWriteMethods }
-        : role_ extends TandaPayRole.Member
-            ? { member: MemberWriteMethods }
-            : {}
-    ) & (
-        { public: PublicWriteMethods }
-    );
+export interface WriteableTandaPayManager<role_ extends TandaPayRole>
+  extends ReadOnlyTandaPayManager {
+  write: (role_ extends TandaPayRole.Secretary
+    ? { member: MemberWriteMethods; secretary: SecretaryWriteMethods }
+    : role_ extends TandaPayRole.Member
+      ? { member: MemberWriteMethods }
+      : unknown) & { public: PublicWriteMethods };
 }
 
 /**
@@ -41,9 +38,9 @@ export interface WriteableTandaPayManager<
  * @param role Specifies that this client has the Secretary permissions within the smart contract.
  */
 export function createTandaPayManager(
-    client: WriteableClient,
-    address: Address,
-    role: TandaPayRole.Secretary,
+  client: WriteableClient,
+  address: Address,
+  role: TandaPayRole.Secretary,
 ): WriteableTandaPayManager<TandaPayRole.Secretary>;
 
 /**
@@ -55,9 +52,9 @@ export function createTandaPayManager(
  * @param role Specifies that this client has the Member permissions within the smart contract.
  */
 export function createTandaPayManager(
-    client: WriteableClient,
-    address: Address,
-    role: TandaPayRole.Member,
+  client: WriteableClient,
+  address: Address,
+  role: TandaPayRole.Member,
 ): WriteableTandaPayManager<TandaPayRole.Member>;
 
 /**
@@ -67,9 +64,9 @@ export function createTandaPayManager(
  * @param role Can be omitted, or can be `None`
  */
 export function createTandaPayManager(
-    client: WriteableClient,
-    address: Address,
-    role?: TandaPayRole.None,
+  client: WriteableClient,
+  address: Address,
+  role?: TandaPayRole.None,
 ): WriteableTandaPayManager<TandaPayRole.None>;
 
 /**
@@ -79,63 +76,61 @@ export function createTandaPayManager(
  * @param role Does nothing when creating a read-only TandaPay manager. Can be omitted
  */
 export function createTandaPayManager(
-    client: ReadableClient,
-    address: Address,
-    role?: TandaPayRole,
+  client: ReadableClient,
+  address: Address,
+  role?: TandaPayRole,
 ): ReadOnlyTandaPayManager;
 
 /** Implementation signature for createTandaPayManager */
 export function createTandaPayManager(
-    client: ReadableClient | WriteableClient,
-    address: Address,
-    role?: TandaPayRole,
+  client: ReadableClient | WriteableClient,
+  address: Address,
+  role?: TandaPayRole,
 ): WriteableTandaPayManager<TandaPayRole> | ReadOnlyTandaPayManager {
-    // create read methods because a ReadableClient or ReadWriteClient will always have read functionality
-    let readMethods = new TandaPayReadMethods(client, address);
-    
-    // the base object we'll return is just a ReadOnlyTandaPayManager. This will be expanded if we can
-    // also include write functionality, based on the client that was passed
-    const base = { read: readMethods };
+  // create read methods because a ReadableClient or ReadWriteClient will always have read functionality
+  const readMethods = new TandaPayReadMethods(client, address);
 
-    // To perform write operations, the client needs to have wallet actions and a valid account.
-    if (hasWalletActions(client) && client.account) {
-        // TODO: should this be done? is this necessary? it might not be good to modify the client like this
-        client.extend(publicActions);
-        // If the role of Secretary was passed, then the writeable TandaPay manager will include
-        // secretary write methods, member write methods, and public write methods
-        if (role === TandaPayRole.Secretary) {
-            return {
-                ...base,
-                write: {
-                    public: new PublicWriteMethods(client as WriteableClient, address),
-                    member: new MemberWriteMethods(client as WriteableClient, address),
-                    secretary: new SecretaryWriteMethods(client as WriteableClient, address),
-                }
-            } as WriteableTandaPayManager<TandaPayRole.Secretary>;
-        // if the role of Member was passed, the writeable TandaPay manager will include
-        // member and public write methods
-        } else if (role === TandaPayRole.Member) {
-            return {
-                ...base,
-                write: {
-                    public: new PublicWriteMethods(client as WriteableClient, address),
-                    member: new MemberWriteMethods(client as WriteableClient, address),
-                }
-            } as WriteableTandaPayManager<TandaPayRole.Member>;
-        }
-        // finally, if the role was omitted, or `None` was passed, then the writeable
-        // TandaPay manager will include only public write methods
-        return {
-            ...base,
-            write: {
-                public: new PublicWriteMethods(client as WriteableClient, address),
-            },
-        } as WriteableTandaPayManager<TandaPayRole.None>;
+  // the base object we'll return is just a ReadOnlyTandaPayManager. This will be expanded if we can
+  // also include write functionality, based on the client that was passed
+  const base = { read: readMethods };
+
+  // To perform write operations, the client needs to have wallet actions and a valid account.
+  if (hasWalletActions(client) && client.account) {
+    // TODO: should this be done? is this necessary? it might not be good to modify the client like this
+    client.extend(publicActions);
+    // If the role of Secretary was passed, then the writeable TandaPay manager will include
+    // secretary write methods, member write methods, and public write methods
+    if (role === TandaPayRole.Secretary) {
+      return {
+        ...base,
+        write: {
+          public: new PublicWriteMethods(client, address),
+          member: new MemberWriteMethods(client, address),
+          secretary: new SecretaryWriteMethods(client, address),
+        },
+      } as WriteableTandaPayManager<TandaPayRole.Secretary>;
+      // if the role of Member was passed, the writeable TandaPay manager will include
+      // member and public write methods
+    } else if (role === TandaPayRole.Member) {
+      return {
+        ...base,
+        write: {
+          public: new PublicWriteMethods(client, address),
+          member: new MemberWriteMethods(client, address),
+        },
+      } as WriteableTandaPayManager<TandaPayRole.Member>;
     }
+    // finally, if the role was omitted, or `None` was passed, then the writeable
+    // TandaPay manager will include only public write methods
+    return {
+      ...base,
+      write: {
+        public: new PublicWriteMethods(client, address),
+      },
+    } as WriteableTandaPayManager<TandaPayRole.None>;
+  }
 
-    // lastly, if the client passed does not meet the criteria for performing write
-    // operations, we will simply return a read-only TandaPay manager
-    return base as ReadOnlyTandaPayManager;
+  // lastly, if the client passed does not meet the criteria for performing write
+  // operations, we will simply return a read-only TandaPay manager
+  return base as ReadOnlyTandaPayManager;
 }
-
-
