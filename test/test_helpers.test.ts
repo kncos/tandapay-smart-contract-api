@@ -94,7 +94,7 @@ describe("anvil and client connections", () => {
   test("can deploy faucet token & tandapay contracts", async () => {
     const anvil = await spawnAnvil();
 
-    let ftkAddress: Address = '0x0';
+    let ftkAddress: Address = "0x0";
     // first deploy ftk contract and ensure it works
     try {
       ftkAddress = await deployFaucetToken();

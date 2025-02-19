@@ -1,5 +1,12 @@
 import { TandaPayState } from "types";
-import { deployFaucetToken, deployTandaPay, makeManagers, makeTestClient, makeWriteableClients, spawnAnvil } from "../test_helpers";
+import {
+  deployFaucetToken,
+  deployTandaPay,
+  makeManagers,
+  makeTestClient,
+  makeWriteableClients,
+  spawnAnvil,
+} from "../test_helpers";
 import { setupDefaultState } from "./setupDefaultState";
 
 test("setupDefaultState works, dump/load state works", async () => {

@@ -1,5 +1,10 @@
 import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
-import { ftkApprove, makeManagers, makeTestClient, makeWriteableClients } from "../test_helpers";
+import {
+  ftkApprove,
+  makeManagers,
+  makeTestClient,
+  makeWriteableClients,
+} from "../test_helpers";
 import { TandaPayRole } from "types";
 import { Address, DumpStateReturnType } from "viem";
 
@@ -19,15 +24,17 @@ export function getAnyCachedDefaultState(): CachedDefaultStateInfo | null {
   return null;
 }
 
-/** 
+/**
  * Gets the community to the default state. Uses caching so it doesn't have to be done multiple times,
  * returns a blob dumped from the blockchain where it was after this transaction was run for the first time.
  * Use this to test anything *after* getting to the default state. Assumes there is an `anvil` instance running.
  */
-export async function setupDefaultState(tpAddress: Address, ftkAddress: Address): Promise<CachedDefaultStateInfo> {
+export async function setupDefaultState(
+  tpAddress: Address,
+  ftkAddress: Address,
+): Promise<CachedDefaultStateInfo> {
   // return result if it's cached
-  if (cache.has(tpAddress))
-    return cache.get(tpAddress)!;
+  if (cache.has(tpAddress)) return cache.get(tpAddress)!;
 
   // create 15 wallet clients for each member including the secretary
   const wallets = makeWriteableClients(15);
@@ -38,13 +45,15 @@ export async function setupDefaultState(tpAddress: Address, ftkAddress: Address)
     ftkAddress: ftkAddress,
     spender: tpAddress,
     // arbitrarily high amount, like 10 million FTK
-    amount: (10n ** 7n) * (10n ** 18n),
+    amount: 10n ** 7n * 10n ** 18n,
     // distribute ftk to them so they actually have some
-    amountToDistribute: (10n ** 7n) * (10n ** 18n),
+    amountToDistribute: 10n ** 7n * 10n ** 18n,
   });
 
   const secretary = managers[0];
-  const members = managers.slice(1) as unknown as WriteableTandaPayManager<TandaPayRole.Member>[];
+  const members = managers.slice(
+    1,
+  ) as unknown as WriteableTandaPayManager<TandaPayRole.Member>[];
 
   // make subgroups and assign members to it
   for (let i = 0; i < 3; i++) {
@@ -54,11 +63,11 @@ export async function setupDefaultState(tpAddress: Address, ftkAddress: Address)
       const walletIndex = i * 5 + j;
       // let the secretary add members to the community, and the subgroup
       await secretary.write.secretary.addMemberToCommunity(
-        wallets[walletIndex].account.address
+        wallets[walletIndex].account.address,
       );
       await secretary.write.secretary.assignMemberToSubgroup(
         wallets[walletIndex].account.address,
-        BigInt(i + 1)
+        BigInt(i + 1),
       );
     }
   }

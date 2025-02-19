@@ -1,12 +1,25 @@
 import { publicActions } from "viem";
-import { advanceTime, deployFaucetToken, deployTandaPay, ftkApprove, makeManagers, makeTestClient, makeWriteableClients, spawnAnvil } from "../test_helpers";
-import { CachedDefaultStateInfo, getAnyCachedDefaultState, setupDefaultState } from "./setupDefaultState";
+import {
+  advanceTime,
+  deployFaucetToken,
+  deployTandaPay,
+  ftkApprove,
+  makeManagers,
+  makeTestClient,
+  makeWriteableClients,
+  spawnAnvil,
+} from "../test_helpers";
+import {
+  CachedDefaultStateInfo,
+  getAnyCachedDefaultState,
+  setupDefaultState,
+} from "./setupDefaultState";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;
 
 beforeEach(async () => {
-  anvil = await spawnAnvil(); 
-})
+  anvil = await spawnAnvil();
+});
 
 test("can advance through periods and pay premiums", async () => {
   // address of the TandaPay smart contract, faucet token smart contract,
@@ -18,8 +31,8 @@ test("can advance through periods and pay premiums", async () => {
   const anyCache = getAnyCachedDefaultState();
   if (anyCache) {
     defaultStateInfo = anyCache;
-    await tc.loadState({state: defaultStateInfo.dump});
-  // if we don't have a cached default state, just make one
+    await tc.loadState({ state: defaultStateInfo.dump });
+    // if we don't have a cached default state, just make one
   } else {
     const ftkAddress = await deployFaucetToken();
     const tpAddress = await deployTandaPay(ftkAddress);
@@ -33,8 +46,8 @@ test("can advance through periods and pay premiums", async () => {
     writeableClients: writeableClients,
     ftkAddress: defaultStateInfo.ftkAddress,
     spender: defaultStateInfo.tpAddress,
-    amount: (10n ** 7n) * (10n ** 18n),
-    amountToDistribute: (10n ** 7n) * (10n ** 18n),
+    amount: 10n ** 7n * 10n ** 18n,
+    amountToDistribute: 10n ** 7n * 10n ** 18n,
   });
 
   // we need managers here
@@ -48,7 +61,9 @@ test("can advance through periods and pay premiums", async () => {
   // so, even though they did pay premiums, that's for *next* period therefore this
   // value should still be false for all of them
   for (const wc of writeableClients) {
-    const memberInfo = await managers[0].read.getMemberInfoFromAddress(wc.account.address);
+    const memberInfo = await managers[0].read.getMemberInfoFromAddress(
+      wc.account.address,
+    );
     expect(memberInfo.isPremiumPaidThisPeriod).toBe(false);
   }
 
@@ -65,22 +80,22 @@ test("can advance through periods and pay premiums", async () => {
 
     // now, we're in the period they paid premiums for. Therefore, it should evaluate to true
     for (const wc of writeableClients) {
-      const memberInfo = await managers[0].read.getMemberInfoFromAddress(wc.account.address);
+      const memberInfo = await managers[0].read.getMemberInfoFromAddress(
+        wc.account.address,
+      );
       expect(memberInfo.isPremiumPaidThisPeriod).toBe(true);
     }
 
     // advance by 3.5 days because that's when they can get refunds
     await advanceTime(3.5 * 24 * 60 * 60);
     // here, they don't actually get anything, but we always issue refunds in this window
-    //await managers[1].write.public.issueRefund();
-    await managers[0].write.public.issueRefund();
+    await managers[1].write.public.issueRefund();
 
     // advance by another 25 days, should have us in day 28.5, ripe for premium payments
     await advanceTime(25 * 24 * 60 * 60);
 
     // now they can pay their premiums again
-    for (const m of managers)
-      await m.write.member.payPremium();
+    for (const m of managers) await m.write.member.payPremium();
 
     // adavnce time again so we're good to advance the period
     await advanceTime(5 * 24 * 60 * 60);
@@ -89,4 +104,4 @@ test("can advance through periods and pay premiums", async () => {
 
 afterEach(() => {
   anvil.kill();
-})
+});

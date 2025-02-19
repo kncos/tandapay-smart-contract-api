@@ -3,9 +3,11 @@ import {
   Address,
   createPublicClient,
   createTestClient,
-  createWalletClient, getContract, HDAccount,
+  createWalletClient,
+  getContract,
+  HDAccount,
   http,
-  PublicClient
+  PublicClient,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
@@ -13,7 +15,10 @@ import { FaucetTokenInfo } from "../src/_contracts/FaucetToken";
 import { waitForTransactionReceipt } from "viem/actions";
 import { TandaPayInfo } from "../src/_contracts/TandaPay";
 import { TandaPayRole, WriteableClient } from "types";
-import { createTandaPayManager, WriteableTandaPayManager } from "contract_managers/tandapay_manager";
+import {
+  createTandaPayManager,
+  WriteableTandaPayManager,
+} from "contract_managers/tandapay_manager";
 
 /** viem transport we'll use for test networks */
 export const TEST_TRANSPORT = http();
@@ -100,22 +105,23 @@ export async function advanceTime(seconds: number) {
 /**
  * Creates writeable clients
  * @param n number of writeable clients to make
- * @returns an array containing the specified number of writeable clients 
+ * @returns an array containing the specified number of writeable clients
  */
-export function makeWriteableClients(n: number = DEFAULT_ACCOUNT_COUNT): WriteableClient[] {
-  if (n < 1)
-    n = 1;
+export function makeWriteableClients(
+  n: number = DEFAULT_ACCOUNT_COUNT,
+): WriteableClient[] {
+  if (n < 1) n = 1;
 
   const accounts = makeAccounts(n);
   const wc: WriteableClient[] = [];
   for (const acc of accounts) {
     wc.push(
       createWalletClient({
-          transport: TEST_TRANSPORT,
-          chain: TEST_CHAIN,
-          account: acc,
-      })
-    )
+        transport: TEST_TRANSPORT,
+        chain: TEST_CHAIN,
+        account: acc,
+      }),
+    );
   }
   return wc;
 }
@@ -123,11 +129,10 @@ export function makeWriteableClients(n: number = DEFAULT_ACCOUNT_COUNT): Writeab
 /**
  * Creates public clients
  * @param n number of public clients to make
- * @returns an array containing the specified number of public clients 
+ * @returns an array containing the specified number of public clients
  */
 export function makePublicClients(n: number = 1): PublicClient[] {
-  if (n < 1)
-    n = 1;
+  if (n < 1) n = 1;
 
   const pc: PublicClient[] = [];
   for (let i = 0; i < n; i++) {
@@ -159,7 +164,9 @@ export async function deployFaucetToken() {
   // wait for the transaction to be confirmed (one block confirmation)
   const receipt = await waitForTransactionReceipt(wc, { hash });
   if (!receipt || !receipt.contractAddress)
-    throw new Error("failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!");
+    throw new Error(
+      "failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!",
+    );
 
   // return the address of the faucet token
   return receipt.contractAddress;
@@ -188,22 +195,25 @@ export async function deployTandaPay(ftk_address: Address): Promise<Address> {
   // wait for the transaction receipt, one block confirmation
   const receipt = await waitForTransactionReceipt(wc, { hash });
   if (!receipt || !receipt.contractAddress)
-    throw new Error("failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!");
+    throw new Error(
+      "failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!",
+    );
 
   // return the tandapay smart contract address
   return receipt.contractAddress;
 }
 
-/** 
+/**
  * Creates a bunch of tandapay managers (with secretary privileges by default) from a list of writeableClients
  * and a tandapay smart contract address
  */
-export function makeManagers(writeableClients: WriteableClient[], tpAddress: Address) {
+export function makeManagers(
+  writeableClients: WriteableClient[],
+  tpAddress: Address,
+) {
   const managers: WriteableTandaPayManager<TandaPayRole.Secretary>[] = [];
   for (const wc of writeableClients) {
-    managers.push(
-      createTandaPayManager(wc, tpAddress, TandaPayRole.Secretary)
-    );
+    managers.push(createTandaPayManager(wc, tpAddress, TandaPayRole.Secretary));
   }
   return managers;
 }
@@ -226,19 +236,33 @@ export async function ftkApprove(opts: ftkApproveOptions) {
       address: opts.ftkAddress,
       client: wc,
     });
-    
+
     // distribute FTK if that option was enabled
     if (opts.amountToDistribute) {
-      const distributeHash = await contract.write.distribute([wc.account.address, opts.amountToDistribute]);
-      const distributeReceipt = await waitForTransactionReceipt(wc, {hash: distributeHash});
+      const distributeHash = await contract.write.distribute([
+        wc.account.address,
+        opts.amountToDistribute,
+      ]);
+      const distributeReceipt = await waitForTransactionReceipt(wc, {
+        hash: distributeHash,
+      });
       if (!distributeReceipt)
-        throw new Error("failed to distribute ftk! no distribute transaction receipt!")
+        throw new Error(
+          "failed to distribute ftk! no distribute transaction receipt!",
+        );
     }
 
     // approve ftk spending
-    const approvalHash = await contract.write.approve([opts.spender, opts.amount]);
-    const approvalReceipt = await waitForTransactionReceipt(wc, {hash: approvalHash});
+    const approvalHash = await contract.write.approve([
+      opts.spender,
+      opts.amount,
+    ]);
+    const approvalReceipt = await waitForTransactionReceipt(wc, {
+      hash: approvalHash,
+    });
     if (!approvalReceipt)
-      throw new Error("failed to approve ftk spending! no transaction receipt?");
+      throw new Error(
+        "failed to approve ftk spending! no transaction receipt?",
+      );
   }
 }
