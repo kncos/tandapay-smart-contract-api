@@ -1,9 +1,8 @@
 import { hasWalletActions } from "types";
-import { makeAccounts, makeWalletClients } from "../test_helpers";
+import { makeWriteableClients } from "../test_helpers";
 
 test("hasWalletActions works", () => {
-  const accs = makeAccounts();
-  const wallets = makeWalletClients(accs);
+  const wallets = makeWriteableClients(5);
   for (const w of wallets) {
     expect(hasWalletActions(w)).toBe(true);
   }

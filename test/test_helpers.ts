@@ -1,26 +1,19 @@
 import { ChildProcess, spawn } from "child_process";
 import {
-  Account,
   Address,
   createPublicClient,
   createTestClient,
-  createWalletClient,
-  getContract,
-  HDAccount,
+  createWalletClient, getContract, HDAccount,
   http,
-  PublicClient,
-  WalletClient,
+  PublicClient
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../src/_contracts/FaucetToken";
 import { waitForTransactionReceipt } from "viem/actions";
 import { TandaPayInfo } from "../src/_contracts/TandaPay";
-import {
-  createTandaPayManager,
-  WriteableTandaPayManager,
-} from "../src/contract_managers/tandapay_manager";
 import { TandaPayRole, WriteableClient } from "types";
+import { createTandaPayManager, WriteableTandaPayManager } from "contract_managers/tandapay_manager";
 
 /** viem transport we'll use for test networks */
 export const TEST_TRANSPORT = http();
@@ -33,7 +26,7 @@ export const TEST_ACCOUNT_MNEMONIC =
   "test test test test test test test test test test test junk";
 
 // not exported, will simply be used with methods in here
-const UTILITY_ACC = mnemonicToAccount(TEST_ACCOUNT_MNEMONIC);
+export const UTILITY_ACC = mnemonicToAccount(TEST_ACCOUNT_MNEMONIC);
 const DEFAULT_ACCOUNT_COUNT = 15;
 
 /**
@@ -104,187 +97,148 @@ export async function advanceTime(seconds: number) {
   await tc.mine({ blocks: 1 });
 }
 
-/** Make one wallet client from a singular viem account */
-export function makeWalletClients(account: Account): WalletClient[];
-/** Make many wallet clients from an array of viem accounts */
-export function makeWalletClients(accounts: Account[]): WalletClient[];
+/**
+ * Creates writeable clients
+ * @param n number of writeable clients to make
+ * @returns an array containing the specified number of writeable clients 
+ */
+export function makeWriteableClients(n: number = DEFAULT_ACCOUNT_COUNT): WriteableClient[] {
+  if (n < 1)
+    n = 1;
 
-/** makeWalletClients overload implementation signature */
-export function makeWalletClients(
-  accountOrAccounts: Account | Account[],
-): WalletClient[] {
-  // if an array was passed, iterate through and make wallet clients for each account in the array
-  if (Array.isArray(accountOrAccounts)) {
-    const wc: WalletClient[] = [];
-    for (const acc of accountOrAccounts) {
-      wc.push(
-        createWalletClient({
+  const accounts = makeAccounts(n);
+  const wc: WriteableClient[] = [];
+  for (const acc of accounts) {
+    wc.push(
+      createWalletClient({
           transport: TEST_TRANSPORT,
           chain: TEST_CHAIN,
           account: acc,
-        }),
-      );
-    }
-    return wc;
+      })
+    )
   }
-  // otherwise, just make a singular wallet client using the single account that was passed
-  return [
-    createWalletClient({
-      transport: TEST_TRANSPORT,
-      chain: TEST_CHAIN,
-      account: accountOrAccounts,
-    }),
-  ];
+  return wc;
 }
 
 /**
- * Create either one or many public clients
+ * Creates public clients
  * @param n number of public clients to make
- * @returns either a singular public client, or an array
+ * @returns an array containing the specified number of public clients 
  */
 export function makePublicClients(n: number = 1): PublicClient[] {
-  // if a number > 1 was passed, make multiple public accounts and return those
-  if (n > 1) {
-    const pc: PublicClient[] = [];
-    for (let i = 0; i < n; i++) {
-      pc.push(
-        createPublicClient({
-          transport: TEST_TRANSPORT,
-          chain: TEST_CHAIN,
-        }),
-      );
-    }
-    return pc;
+  if (n < 1)
+    n = 1;
+
+  const pc: PublicClient[] = [];
+  for (let i = 0; i < n; i++) {
+    pc.push(
+      createPublicClient({
+        transport: TEST_TRANSPORT,
+        chain: TEST_CHAIN,
+      }),
+    );
   }
-  // otherwise, just make a singular public client
-  return [
-    createPublicClient({
-      transport: TEST_TRANSPORT,
-      chain: TEST_CHAIN,
-    }),
-  ];
+  return pc;
 }
 
 /**
- * Deploys the faucet token smart contract
- * @param account optional account to use for deploying the faucet token. Defaults to the 0-th account given by anvil's default mnemonic
- * @returns Transaction receipt from contract deployment
+ * Deploys the ERC-20 faucet token smart contract. Uses the 0-th account in the test mnemonic for deployment
+ * @returns Address of the faucet token smart contract
  */
-export async function deployFaucetToken(account: Account = UTILITY_ACC) {
+export async function deployFaucetToken() {
   // create wallet client for deploying it
-  const [wc] = makeWalletClients(account);
+  const [wc] = makeWriteableClients(1);
   // deploy the faucet token contract
   const hash = await wc.deployContract({
     abi: FaucetTokenInfo.abi,
     bytecode: FaucetTokenInfo.bytecode.object,
-    account: account,
+    account: wc.account,
     chain: TEST_CHAIN,
   });
 
   // wait for the transaction to be confirmed (one block confirmation)
   const receipt = await waitForTransactionReceipt(wc, { hash });
-  // return the transaction receipt
-  return receipt;
+  if (!receipt || !receipt.contractAddress)
+    throw new Error("failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!");
+
+  // return the address of the faucet token
+  return receipt.contractAddress;
 }
 
 /**
- * deploy an instance of the TandaPay smart contract, and also deploy the faucet token it requires if not provided
- * @param account optional account to use for deploying TandaPay smart contract. Defaults to the 0-th account given by anvil's default mnemonic
- * @param ftk_address optional address for the faucet token. If this isn't provided, this method deploys the faucet token automatically
- * @returns An object that has the transaction receipt from deploying the TandaPay smart contract, and the address of the faucet token contract
+ * Deploys the TandaPay smart contract. Uses the 0-th account in the test mnemonic for deployment and as the secretary
+ * @param ftk_address address of the ERC-20 faucet token contract to use for testing
+ * @returns The address of the TandaPay smart contract
  */
-export async function deployTandaPay(
-  account: Account = UTILITY_ACC,
-  ftk_address?: Address,
-) {
-  let address = ftk_address;
-  // if no faucet token address was provided, we will deploy it
-  if (!address) {
-    const ftk = await deployFaucetToken(account);
-    if (!ftk.contractAddress) {
-      throw new Error("failed to deploy Faucet Token contract?");
-    }
-
-    address = ftk.contractAddress;
-  }
-
+export async function deployTandaPay(ftk_address: Address): Promise<Address> {
   // create a wallet client for deploying the TandaPay contract
-  const [wc] = makeWalletClients(account);
+  const [wc] = makeWriteableClients(1);
+
   // deploy tandapay contract. The parameters passed to the smart contract constructor are
   // the address (of the ERC-20 token it's using for payments) and then the account address of
   // the individual who deployed it (who will become the secretary of the community).
   const hash = await wc.deployContract({
     abi: TandaPayInfo.abi,
     bytecode: TandaPayInfo.bytecode.object,
-    account: account,
+    account: wc.account,
     chain: TEST_CHAIN,
-    args: [address, account.address],
+    args: [ftk_address, wc.account.address],
   });
+
   // wait for the transaction receipt, one block confirmation
   const receipt = await waitForTransactionReceipt(wc, { hash });
+  if (!receipt || !receipt.contractAddress)
+    throw new Error("failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!");
 
-  // return the transaction receipt for the TandaPay smart contract deployment, and also
-  // the address for the faucet token deployment.
-  return {
-    ftkAddress: address,
-    tpReceipt: receipt,
-  };
+  // return the tandapay smart contract address
+  return receipt.contractAddress;
 }
 
-/**
- * deploy TandaPay, create instances of tandapay managers, issue faucet token to each account and approve the tandapay
- * contract for spending the full balance
- * @param n number of managers and clients to create (default is 15)
- * @returns an array of writeable TandaPay managers and Writeable wallet clients
+/** 
+ * Creates a bunch of tandapay managers (with secretary privileges by default) from a list of writeableClients
+ * and a tandapay smart contract address
  */
-export async function deployTandaPayAndMakeManagers(n: number = 15) {
-  const accs = makeAccounts(n);
-  const wallets = makeWalletClients(accs) as WriteableClient[];
-  const managers: WriteableTandaPayManager<TandaPayRole>[] = [];
-
-  const tpr = await deployTandaPay();
-
-  if (!tpr.tpReceipt || !tpr.tpReceipt.contractAddress)
-    throw new Error("TandaPay contract deployment failed.");
-
-  managers.push(
-    createTandaPayManager(
-      wallets[0],
-      tpr.tpReceipt.contractAddress,
-      TandaPayRole.Secretary,
-    ),
-  );
-  for (let i = 1; i < n; i++) {
+export function makeManagers(writeableClients: WriteableClient[], tpAddress: Address) {
+  const managers: WriteableTandaPayManager<TandaPayRole.Secretary>[] = [];
+  for (const wc of writeableClients) {
     managers.push(
-      createTandaPayManager(
-        wallets[i],
-        tpr.tpReceipt.contractAddress,
-        TandaPayRole.Member,
-      ),
+      createTandaPayManager(wc, tpAddress, TandaPayRole.Secretary)
     );
   }
+  return managers;
+}
 
-  const amountToDistribute: bigint = 1_000_000n * 10n ** 18n;
-  for (const wallet of wallets) {
-    const ftkContract = getContract({
+export type ftkApproveOptions = {
+  writeableClients: WriteableClient[];
+  ftkAddress: Address;
+  spender: Address;
+  amount: bigint;
+  amountToDistribute?: bigint;
+};
+
+/** approves spending for faucet token contract. Also distributes to each client */
+export async function ftkApprove(opts: ftkApproveOptions) {
+  for (const wc of opts.writeableClients) {
+    // create a contract instance with this client and the ERC-20 contract address
+    // to use for write operations (e.g., distribute, approve).
+    const contract = getContract({
       abi: FaucetTokenInfo.abi,
-      client: wallet,
-      address: tpr.ftkAddress,
+      address: opts.ftkAddress,
+      client: wc,
     });
-    let hash = await ftkContract.write.distribute([
-      wallet.account.address,
-      amountToDistribute,
-    ]);
-    await waitForTransactionReceipt(wallets[0], { hash });
-    hash = await ftkContract.write.approve([
-      tpr.tpReceipt.contractAddress,
-      amountToDistribute,
-    ]);
-    await waitForTransactionReceipt(wallets[0], { hash });
-  }
+    
+    // distribute FTK if that option was enabled
+    if (opts.amountToDistribute) {
+      const distributeHash = await contract.write.distribute([wc.account.address, opts.amountToDistribute]);
+      const distributeReceipt = await waitForTransactionReceipt(wc, {hash: distributeHash});
+      if (!distributeReceipt)
+        throw new Error("failed to distribute ftk! no distribute transaction receipt!")
+    }
 
-  return {
-    managers,
-    wallets,
-  };
+    // approve ftk spending
+    const approvalHash = await contract.write.approve([opts.spender, opts.amount]);
+    const approvalReceipt = await waitForTransactionReceipt(wc, {hash: approvalHash});
+    if (!approvalReceipt)
+      throw new Error("failed to approve ftk spending! no transaction receipt?");
+  }
 }

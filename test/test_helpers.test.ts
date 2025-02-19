@@ -1,3 +1,4 @@
+import { Address } from "viem";
 import {
   advanceTime,
   deployFaucetToken,
@@ -5,7 +6,7 @@ import {
   makeAccounts,
   makePublicClients,
   makeTestClient,
-  makeWalletClients,
+  makeWriteableClients,
   spawnAnvil,
 } from "./test_helpers";
 
@@ -49,7 +50,7 @@ describe("anvil and client connections", () => {
 
     // make wallet clients, ensure they have accounts and chains
     // (although i believe this check is redundant, since they def do)
-    const [wc1, wc2] = makeWalletClients(makeAccounts(2));
+    const [wc1, wc2] = makeWriteableClients(2);
     if (!wc1.account || !wc2.account) fail("wallet client has no account!");
 
     if (!wc1.chain || !wc2.chain) fail("wallet client has no chain!");
@@ -93,22 +94,20 @@ describe("anvil and client connections", () => {
   test("can deploy faucet token & tandapay contracts", async () => {
     const anvil = await spawnAnvil();
 
+    let ftkAddress: Address = '0x0';
     // first deploy ftk contract and ensure it works
-    const receipt = await deployFaucetToken();
-    if (!receipt) fail("transaction receipt is null or undefined?");
-    if (!receipt.contractAddress)
-      fail("receipt does not contain an ftk smart contract address?");
+    try {
+      ftkAddress = await deployFaucetToken();
+    } catch {
+      fail("failed to deploy faucet token");
+    }
 
-    // status should be success
-    expect(receipt.status).toBe("success");
-
-    // make an account to serve as TandaPay secretary
-    const [acc] = makeAccounts(1);
-
-    // use the ftk contract we just deployed, and the account we just created, to deploy
-    // the TandaPay smart contract
-    const tpreceipt = await deployTandaPay(acc, receipt.contractAddress);
-    expect(tpreceipt.tpReceipt.status).toBe("success");
+    // then try to deploy TandaPay
+    try {
+      await deployTandaPay(ftkAddress);
+    } catch {
+      fail("failed to deploy TandaPay");
+    }
 
     anvil.kill();
   });
