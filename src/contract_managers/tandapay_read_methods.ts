@@ -219,46 +219,6 @@ export default class TandaPayReadMethods<TClient extends Client = Client> {
   };
 
   //! Methods below are custom methods added by me
-
-  /**
-   * calculate the total premium payment a member will have to pay under normal circumstances.
-   * @note DOES NOT FACTOR IN SPECIAL CIRCUMSTANCES, i.e. new members joining after the community entered the default state
-   * @note THIS FUNCTION SHOULD ONLY BE CALLED if the community is currently in the premiums payment window, and the premium they will owe has been solidified.
-   *  Otherwise, it could be subject to change due to changing community dynamics.
-   * @todo Implement a more robust calculation that factors in special circumstances
-   * @param memberAddress wallet address of a member you want to calculate the premium for
-   * @returns A promise resolving to a bigint which is the total premium (base + savings obligation) that the member will need to pay.
-   */
-  // TODO: refactor out of read methods and into layer 2?
-  calculatePremium = async (memberAddress: Hex) => {
-    // get the base premium
-    const basePremium = await this.getBasePremium();
-
-    // get current period
-    const currentPeriod = await this.getCurrentPeriodId();
-
-    // get member's information
-    const memberInfo = await this.getMemberInfoFromAddress(
-      memberAddress,
-      currentPeriod,
-    );
-
-    // calculate how much they should have in their savings escrow
-    const savingsObligation: bigint = basePremium + (basePremium / 100n) * 20n;
-
-    // determine if there is a savings shortfall which must be made up
-    const savingsShortfall = savingsObligation - memberInfo.savingsEscrowAmount;
-
-    // calculate the premium owed as being the base premium, + whatever is required
-    // to ensure that the member meets their savings escrow obligation
-    let premiumOwed = basePremium;
-    if (savingsShortfall > 0n) {
-      premiumOwed += savingsShortfall;
-    }
-
-    return premiumOwed;
-  };
-
   getMemberInfoFromId = async (memberId: bigint, periodId: bigint = 0n) => {
     const memberInfo = await this.read.getMemberInfoFromId([
       memberId,

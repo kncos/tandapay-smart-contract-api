@@ -1,5 +1,7 @@
 import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
 import {
+  deployFaucetToken,
+  deployTandaPay,
   ftkApprove,
   makeManagers,
   makeTestClient,
@@ -15,6 +17,22 @@ export type CachedDefaultStateInfo = {
 };
 
 const cache = new Map<Address, CachedDefaultStateInfo>();
+
+export async function getAnyCachedDefaultStateOrDeploy(load: boolean = true): Promise<CachedDefaultStateInfo> {
+  let cached = getAnyCachedDefaultState();
+  if (cached) {
+    // load that state into anvil
+    if (load) {
+      const tc = makeTestClient();
+      await tc.loadState({state: cached.dump});
+    }
+    return cached;
+  }
+
+  let ftkAddress = await deployFaucetToken();
+  let tpAddress = await deployTandaPay(ftkAddress);
+  return await setupDefaultState(tpAddress, ftkAddress);
+}
 
 export function getAnyCachedDefaultState(): CachedDefaultStateInfo | null {
   if (cache.size > 0) {
