@@ -17,7 +17,9 @@ beforeEach(async () => {
 });
 
 describe('claims, defectors, and other related functions', () => {
-  
+  it('placeholder', async () => {
+    expect(2).toBe(1+1);
+  })
 })
 
 
