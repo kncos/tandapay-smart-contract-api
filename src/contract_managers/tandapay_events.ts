@@ -57,7 +57,6 @@
 import { TandaPayInfo } from "_contracts/TandaPay";
 import { Address, PublicClient, TransactionReceipt } from "viem";
 
-
 export default class TandaPayWatcher<TClient extends PublicClient> {
   protected client: TClient;
   protected receipt: TransactionReceipt;
@@ -67,9 +66,11 @@ export default class TandaPayWatcher<TClient extends PublicClient> {
     this.receipt = deploymentReceipt;
 
     if (!this.receipt || !this.receipt.contractAddress)
-      throw new Error('attempting to construct TandaPayWatcher with invalid receipt!');
+      throw new Error(
+        "attempting to construct TandaPayWatcher with invalid receipt!",
+      );
 
-    this.receipt = deploymentReceipt; 
+    this.receipt = deploymentReceipt;
   }
 
   async getEvents() {

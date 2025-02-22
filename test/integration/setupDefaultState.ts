@@ -18,13 +18,15 @@ export type CachedDefaultStateInfo = {
 
 const cache = new Map<Address, CachedDefaultStateInfo>();
 
-export async function getAnyCachedDefaultStateOrDeploy(load: boolean = true): Promise<CachedDefaultStateInfo> {
+export async function getAnyCachedDefaultStateOrDeploy(
+  load: boolean = true,
+): Promise<CachedDefaultStateInfo> {
   const cached = getAnyCachedDefaultState();
   if (cached) {
     // load that state into anvil
     if (load) {
       const tc = makeTestClient();
-      await tc.loadState({state: cached.dump});
+      await tc.loadState({ state: cached.dump });
     }
     return cached;
   }
@@ -36,7 +38,7 @@ export async function getAnyCachedDefaultStateOrDeploy(load: boolean = true): Pr
 
 export function getAnyCachedDefaultState(): CachedDefaultStateInfo | null {
   if (cache.size > 0) {
-    const [key, ...keys] = cache.keys();
+    const [key] = cache.keys();
     return cache.get(key)!;
   }
   return null;

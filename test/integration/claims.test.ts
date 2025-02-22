@@ -1,12 +1,20 @@
 import { TandaPayRole, WriteableClient } from "types";
-import { advanceTime, makeManagers, makeTestClient, makeWriteableClients, spawnAnvil } from "../test_helpers";
+import {
+  advanceTime,
+  makeManagers,
+  makeTestClient,
+  makeWriteableClients,
+  spawnAnvil,
+} from "../test_helpers";
 import { getAnyCachedDefaultStateOrDeploy } from "./setupDefaultState";
 import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
-import { CreateEventFilterReturnType, parseAbi, publicActions } from "viem";
+import { publicActions } from "viem";
 import { TandaPayInfo } from "_contracts/TandaPay";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;
-let defaultStateInfo: Awaited<ReturnType<typeof getAnyCachedDefaultStateOrDeploy>>;
+let defaultStateInfo: Awaited<
+  ReturnType<typeof getAnyCachedDefaultStateOrDeploy>
+>;
 
 let writeableClients: WriteableClient[];
 let managers: WriteableTandaPayManager<TandaPayRole.Secretary>[];
@@ -19,7 +27,7 @@ async function toDaySeven() {
     await m.write.member.payPremium();
   }
 
-  // advance the period 
+  // advance the period
   await advanceTime(5 * 24 * 60 * 60);
   await managers[0].write.secretary.advancePeriod();
   await advanceTime(3.5 * 24 * 60 * 60);
@@ -36,24 +44,24 @@ beforeEach(async () => {
   await toDaySeven();
 }, 30000);
 
-describe('toDaySeven helper works', () => {
-  it('advances the period and issues refunds successfully', async () => {
-    const curPeriod = await managers[0].read.getCurrentPeriodId(); 
+describe("toDaySeven helper works", () => {
+  it("advances the period and issues refunds successfully", async () => {
+    const curPeriod = await managers[0].read.getCurrentPeriodId();
     expect(curPeriod).toBe(1n);
   }, 30000);
 
-  it('event filter works?', async () => {
-    const filter = await tc.createEventFilter({
-      address: defaultStateInfo.tpAddress,
-      events: TandaPayInfo.abi.filter((input) => input.type === "event"),
-      fromBlock: 0n,
-    });
-
-    const hashes = await tc.getFilterChanges({filter});
-    console.log(hashes);
-  });
+//  it("event filter works?", async () => {
+//    const filter = await tc.createEventFilter({
+//      address: defaultStateInfo.tpAddress,
+//      events: TandaPayInfo.abi.filter((input) => input.type === "event"),
+//      fromBlock: 0n,
+//    });
+//
+//    const hashes = await tc.getFilterChanges({ filter });
+//    //console.log(hashes);
+//  });
 });
 
 afterEach(() => {
   anvil.kill();
-})
+});

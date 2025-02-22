@@ -1,4 +1,4 @@
-import { Address, Client, getContract, Hex } from "viem";
+import { Address, getContract, Hex } from "viem";
 import {
   AssignmentStatus,
   ClaimInfo,
@@ -18,7 +18,9 @@ import { TandaPayInfo } from "../_contracts/TandaPay";
  * mapping raw data from the smart contract onto cleaner types, and providing quality of life functions that automate
  * complex tasks involving multiple readonly method calls that might be useful in other areas of the code base
  */
-export default class TandaPayReadMethods<TClient extends ReadableClient | WriteableClient = ReadableClient> {
+export default class TandaPayReadMethods<
+  TClient extends ReadableClient | WriteableClient = ReadableClient,
+> {
   protected contractInstance: TandaPayContract<TClient>;
   protected client: TClient;
 

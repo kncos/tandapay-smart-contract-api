@@ -1,14 +1,11 @@
-import { publicActions } from "viem";
 import {
-  advanceTime, ftkApprove,
+  advanceTime,
+  ftkApprove,
   makeManagers,
-  makeTestClient,
   makeWriteableClients,
-  spawnAnvil
+  spawnAnvil,
 } from "../test_helpers";
-import {
-  getAnyCachedDefaultStateOrDeploy
-} from "./setupDefaultState";
+import { getAnyCachedDefaultStateOrDeploy } from "./setupDefaultState";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;
 
@@ -20,7 +17,7 @@ test("can advance through periods and pay premiums", async () => {
   // address of the TandaPay smart contract, faucet token smart contract,
   // and a dump of the blockchain after getting to the default state
   const defaultStateInfo = await getAnyCachedDefaultStateOrDeploy();
-  const tc = makeTestClient().extend(publicActions);
+  //const tc = makeTestClient().extend(publicActions);
 
   const writeableClients = makeWriteableClients(15);
   // we can just always do this, it may not be necessary since we used setupDefaultState somewhere.
