@@ -53,3 +53,29 @@
 //        this.contractInstance = contractInstance;
 //    }
 //}
+
+import { TandaPayInfo } from "_contracts/TandaPay";
+import { Address, PublicClient, TransactionReceipt } from "viem";
+
+
+export default class TandaPayWatcher<TClient extends PublicClient> {
+  protected client: TClient;
+  protected receipt: TransactionReceipt;
+
+  constructor(client: TClient, deploymentReceipt: TransactionReceipt) {
+    this.client = client;
+    this.receipt = deploymentReceipt;
+
+    if (!this.receipt || !this.receipt.contractAddress)
+      throw new Error('attempting to construct TandaPayWatcher with invalid receipt!');
+
+    this.receipt = deploymentReceipt; 
+  }
+
+  async getEvents() {
+    return await this.client.getContractEvents({
+      address: this.receipt.contractAddress as Address,
+      abi: TandaPayInfo.abi,
+    });
+  }
+}

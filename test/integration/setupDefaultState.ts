@@ -19,7 +19,7 @@ export type CachedDefaultStateInfo = {
 const cache = new Map<Address, CachedDefaultStateInfo>();
 
 export async function getAnyCachedDefaultStateOrDeploy(load: boolean = true): Promise<CachedDefaultStateInfo> {
-  let cached = getAnyCachedDefaultState();
+  const cached = getAnyCachedDefaultState();
   if (cached) {
     // load that state into anvil
     if (load) {
@@ -29,8 +29,8 @@ export async function getAnyCachedDefaultStateOrDeploy(load: boolean = true): Pr
     return cached;
   }
 
-  let ftkAddress = await deployFaucetToken();
-  let tpAddress = await deployTandaPay(ftkAddress);
+  const ftkAddress = await deployFaucetToken();
+  const tpAddress = await deployTandaPay(ftkAddress);
   return await setupDefaultState(tpAddress, ftkAddress);
 }
 

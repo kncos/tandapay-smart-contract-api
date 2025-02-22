@@ -19,7 +19,7 @@ beforeEach(async () => {
 test("can advance through periods and pay premiums", async () => {
   // address of the TandaPay smart contract, faucet token smart contract,
   // and a dump of the blockchain after getting to the default state
-  let defaultStateInfo = await getAnyCachedDefaultStateOrDeploy();
+  const defaultStateInfo = await getAnyCachedDefaultStateOrDeploy();
   const tc = makeTestClient().extend(publicActions);
 
   const writeableClients = makeWriteableClients(15);

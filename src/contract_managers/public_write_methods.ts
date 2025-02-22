@@ -4,8 +4,6 @@ import {
 } from "./tandapay_write_methods";
 
 export default class PublicWriteMethods extends TandaPayWriteMethods {
-  // TODO: go through the smart contract and figure out if this is actually public? it *should be* but i think
-  // TODO: it is marked as secretary only
   /**
    * Issues any due refunds within the TandaPay community. Must be called between 72 and 96 hours
    * of the beginning of a TandaPay period, and only when no claim was whitelisted in the previous period.
