@@ -50,16 +50,13 @@ describe("toDaySeven helper works", () => {
     expect(curPeriod).toBe(1n);
   }, 30000);
 
-//  it("event filter works?", async () => {
-//    const filter = await tc.createEventFilter({
-//      address: defaultStateInfo.tpAddress,
-//      events: TandaPayInfo.abi.filter((input) => input.type === "event"),
-//      fromBlock: 0n,
-//    });
-//
-//    const hashes = await tc.getFilterChanges({ filter });
-//    //console.log(hashes);
-//  });
+  it("event filter works?", async () => {
+    const events = await tc.getContractEvents({
+      address: defaultStateInfo.tpAddress,
+      abi: TandaPayInfo.abi,
+    });
+    console.log(events);
+  });
 });
 
 afterEach(() => {

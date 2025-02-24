@@ -12,10 +12,9 @@ import {
   GetContractReturnType,
   Hex,
   publicActions,
-  PublicActions,
-  Transport,
+  PublicClient,
   walletActions,
-  WalletActions,
+  WalletClient,
 } from "viem";
 import { TandaPayInfo } from "./_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
@@ -40,31 +39,18 @@ export function hasPublicActions<TClient extends Client>(client: TClient) {
  * Any viem client that at least has: A defined transport, a defined chain, a defined account,
  * and is extended with `WalletActions`.
  */
-export type WriteableClient<
-  transport extends Transport = Transport,
-  chain extends Chain = Chain,
-  account extends Account = Account,
-  TClient extends Client<transport, chain, account> = Client<
-    transport,
-    chain,
-    account
-  >,
-> = TClient & WalletActions;
+export interface WriteableClient extends WalletClient {
+  account: Account;
+  chain: Chain;
+}
 
 /**
  * Any viem client that at least has: A defined transport, a defined chain, and
  * is extended with PublicActions. Account is optional.
  */
-export type ReadableClient<
-  transport extends Transport = Transport,
-  chain extends Chain = Chain,
-  account extends Account | undefined = undefined,
-  TClient extends Client<transport, chain, account> = Client<
-    transport,
-    chain,
-    account
-  >,
-> = TClient & PublicActions;
+export interface ReadableClient extends PublicClient {
+  chain: Chain;
+}
 
 /**
  * Generic type representing instances of the TandaPay smart contract, given by Viem's getContract method.
