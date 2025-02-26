@@ -1,39 +1,101 @@
-import MemberWriteMethods from "contract_managers/member_write_methods";
-import SecretaryWriteMethods from "contract_managers/secretary_write_methods";
-import TandaPayReadMethods from "contract_managers/tandapay_read_methods";
-import { WriteableClient } from "types";
-import { Address, isAddressEqual } from "viem";
+import TandaPayReadMethods, { TandaPayReadMethodParameters } from "contract_managers/tandapay_read_methods";
+import { memberWriteMethodNames, MemberWriteMethodNames, PeriodInfo, publicWriteMethodNames, PublicWriteMethodNames, secretaryWriteMethodNames, SecretaryWriteMethodNames, TandaPayState, WriteableClient } from "types";
+import { Address, publicActions } from "viem";
 
-type MethodNames<T> = {
-  [K in keyof T]: T[K] extends Function ? K : never;
-}[keyof T] & string;
+export interface AvailableMethods {
+  public: PublicWriteMethodNames[];
+  member: MemberWriteMethodNames[];
+  secretary: SecretaryWriteMethodNames[];
+};
 
-type SecretaryWriteMethodNames = MethodNames<SecretaryWriteMethods>
-type MemberWriteMethodNames = MethodNames<MemberWriteMethods>
+export interface GetAvailableMethodsParameters {
+  client: WriteableClient;
+  address: Address;
+}
 
-export type AvailableMethods = Record<SecretaryWriteMethodNames | MemberWriteMethodNames, boolean>;
+interface TandaPayInfo {
+  blockTimestamp: bigint;
+  periodInfo: PeriodInfo;
+  state: TandaPayState;
+}
 
-async function getAvailableSecretaryMethods<
-  TClient extends WriteableClient
->(client: TClient, address: Address): Promise<Partial<AvailableMethods>> {
-  let available: Partial<AvailableMethods> = {};
-  const readMethods = new TandaPayReadMethods({client, address});
-  const secretary = await readMethods.getSecretaryAddress();
+async function getTandaPayInfo(params: GetAvailableMethodsParameters): Promise<TandaPayInfo> {
+  const read = new TandaPayReadMethods(params);
+  const block = await params.client.extend(publicActions).getBlock();
+  const blockTimestamp = block.timestamp;
+  const curPeriod = await read.getCurrentPeriodId();
+  const periodInfo = await read.getPeriodInfo(curPeriod);
+  
+  const state = await read.getCommunityState();
 
-  if (!isAddressEqual(secretary, client.account.address)) {
-    
+  return {
+    blockTimestamp, 
+    periodInfo, 
+    state
+  };
+}
+
+function secondsToDays(secs: number | bigint) {
+  if (typeof secs === 'number') {
+    return BigInt(secs * 60 * 60 * 24);
+  } 
+  
+  return secs * 60n * 60n *24n;
+}
+
+async function getAvailablePublicMethods(info: TandaPayInfo): Promise<PublicWriteMethodNames[]> {
+  let {
+    blockTimestamp,
+    periodInfo,
+    state
+  } = info;
+
+  let res: PublicWriteMethodNames[] = [];
+
+  for (let methodName of publicWriteMethodNames) {
+    switch (methodName) {
+      case 'issueRefund':
+        const day3 = periodInfo.startTimestamp + secondsToDays(3) + 60n;
+        const day4 = periodInfo.startTimestamp + secondsToDays(4) - 60n;
+        if (day3 < blockTimestamp && blockTimestamp < day4)
+          res.push('issueRefund');
+        break;
+      default:
+        throw new Error('encountered methodName not on PublicWriteMethodNames?');
+    }
   }
 
-  return available;
+  return res;
 }
 
-export default async function getAvailableMethods<
-  TClient extends WriteableClient
->(client: TClient, tpAddress: Address): Promise<AvailableMethods> {
-  // we'll build up a record as we go along
-  let availableMethods: Partial<AvailableMethods> = {};
-
-
-  return availableMethods as AvailableMethods;
+async function getAvailableMemberMethods(info: TandaPayInfo): Promise<MemberWriteMethodNames[]> {
+  return ['acceptSecretaryRole'];
 }
 
+async function getAvailableSecretaryMethods(info: TandaPayInfo): Promise<SecretaryWriteMethodNames[]> {
+  return ['addMemberToCommunity'];
+}
+
+
+export async function getAvailableMethods(params: GetAvailableMethodsParameters): Promise<AvailableMethods> {
+  const info = await getTandaPayInfo(params);
+
+  try {
+    let publicMethods = await getAvailablePublicMethods(info);
+    let memberMethods = await getAvailableMemberMethods(info);
+    let secretaryMethods = await getAvailableSecretaryMethods(info);
+
+    return {
+      public: [...publicMethods],
+      member: [...memberMethods],
+      secretary: [...secretaryMethods],
+    };
+  } catch(error) {
+    console.error('failed to get method availability. returning all methods', error);
+    return {
+      public: publicWriteMethodNames,
+      member: memberWriteMethodNames,
+      secretary: secretaryWriteMethodNames,
+    };
+  }
+}

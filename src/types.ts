@@ -18,6 +18,9 @@ import {
 } from "viem";
 import { TandaPayInfo } from "./_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
+import MemberWriteMethods from "contract_managers/member_write_methods";
+import PublicWriteMethods from "contract_managers/public_write_methods";
+import SecretaryWriteMethods from "contract_managers/secretary_write_methods";
 
 /** Tests if a viem client has been extended with WalletActions at runtime */
 export function hasWalletActions<TClient extends Client>(client: TClient) {
@@ -274,3 +277,45 @@ export function memberInfoJsonReplacer(key: string, value: unknown): unknown {
 
   return bigIntJsonReplacer(key, value);
 }
+
+/** 
+ * Utility that allows you to retrieve a union with all public method names given an 
+ * object type. Omits constructor and methods beginning with `_` (underscore) 
+ */
+export type MethodNames<T> = {
+  [K in keyof T]: K extends 'constructor' ? never : T[K] extends Function ? K extends `_${string}` ? never : K : never;
+}[keyof T];
+
+/** Union type with all public method names on PublicWriteMethods */
+export type PublicWriteMethodNames = MethodNames<PublicWriteMethods>;
+/** Union type with all public method names on MemberWriteMethods */
+export type MemberWriteMethodNames = MethodNames<MemberWriteMethods>;
+/** Union type with all public method names on SecretaryWriteMethods */
+export type SecretaryWriteMethodNames = MethodNames<SecretaryWriteMethods>;
+
+/**
+ * Retrieves all of the names of public methods on any given object
+ * @param o Any object type
+ * @returns An array with all of the method names on that object
+ */
+export function getMethodNames(o: Object) {
+  const names = Object.getOwnPropertyNames(o);
+  const methodNames = names.filter((name) => {
+    if (name === 'constructor')
+      return false;
+    const descriptor = Object.getOwnPropertyDescriptor(o, name);
+    if (typeof descriptor?.value !== 'function')
+      return false;
+
+    return true;
+  });
+  return methodNames;
+}
+
+/** runtime constant, has an array of all method names on PublicWriteMethods */
+export const publicWriteMethodNames = getMethodNames(PublicWriteMethods.prototype) as PublicWriteMethodNames[];
+/** runtime constant, has an array of all method names on MemberWriteMethods */
+export const memberWriteMethodNames = getMethodNames(MemberWriteMethods.prototype) as MemberWriteMethodNames[];
+/** runtime constant, has an array of all method names on SecretaryWriteMethods */
+export const secretaryWriteMethodNames = getMethodNames(SecretaryWriteMethods.prototype) as SecretaryWriteMethodNames[];
+
