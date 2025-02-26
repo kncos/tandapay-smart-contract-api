@@ -9,6 +9,7 @@ import {
 import { getAnyCachedDefaultStateOrDeploy } from "./setupDefaultState";
 import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
 import { publicActions } from "viem";
+import TandaPayEvents from "contract_managers/tandapay_events";
 import { TandaPayInfo } from "_contracts/TandaPay";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;
@@ -18,6 +19,7 @@ let defaultStateInfo: Awaited<
 
 let writeableClients: WriteableClient[];
 let managers: WriteableTandaPayManager<TandaPayRole.Secretary>[];
+let watcher: TandaPayEvents;
 
 const tc = makeTestClient().extend(publicActions);
 
@@ -38,6 +40,7 @@ async function toDaySeven() {
 beforeEach(async () => {
   anvil = await spawnAnvil();
   defaultStateInfo = await getAnyCachedDefaultStateOrDeploy();
+  watcher = new TandaPayEvents(tc, defaultStateInfo.tpAddress);
   writeableClients = makeWriteableClients(15);
   managers = makeManagers(writeableClients, defaultStateInfo.tpAddress);
 
@@ -50,13 +53,6 @@ describe("toDaySeven helper works", () => {
     expect(curPeriod).toBe(1n);
   }, 30000);
 
-  it("event filter works?", async () => {
-    const events = await tc.getContractEvents({
-      address: defaultStateInfo.tpAddress,
-      abi: TandaPayInfo.abi,
-    });
-    console.log(events);
-  });
 });
 
 afterEach(() => {

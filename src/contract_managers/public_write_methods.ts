@@ -10,9 +10,9 @@ export default class PublicWriteMethods extends TandaPayWriteMethods {
    * @todo This may be marked as secretary only in the smart contract code? Fix if true
    * @returns A transaction receipt or transaction hash
    */
-  async issueRefund(): TandaPayWriteMethodReturnType {
-    await this.simulate.issueRefund([true]);
-    const hash = await this.write.issueRefund([true]);
-    return this.handleHash(hash);
+  async issueRefund(): TandaPayWriteMethodReturnType<'issueRefund'> {
+    const simulate = async () => await this.simulate.issueRefund([true]);
+    const write = async () => await this.write.issueRefund([true]);
+    return this.performOperation({simulate, write});
   }
 }

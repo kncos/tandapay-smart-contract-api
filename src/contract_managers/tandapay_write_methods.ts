@@ -1,10 +1,46 @@
-import { Address, getContract, Hash, TransactionReceipt } from "viem";
+import { Abi, AbiStateMutability, Address, ExtractAbiFunctionForArgs, ExtractAbiItemNames, getContract, Hash, SimulateContractReturnType, TransactionReceipt } from "viem";
 import { TandaPayContract, WriteableClient } from "types";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 import { waitForTransactionReceipt } from "viem/actions";
 
-/** Return type of all TandaPayWriteMethods -- either returns a transaction hash or transaction receipt. */
-export type TandaPayWriteMethodReturnType = Promise<Hash | TransactionReceipt>;
+type ExtractAbiFunctions<
+  abi extends Abi,
+  abiStateMutability extends AbiStateMutability = AbiStateMutability,
+> = Extract<
+  abi[number],
+  { type: 'function'; stateMutability: abiStateMutability }
+>
+
+type ExtractAbiFunctionNames<
+  abi extends Abi,
+  abiStateMutability extends AbiStateMutability = AbiStateMutability,
+> = ExtractAbiFunctions<abi, abiStateMutability>['name']
+
+type TandaPayWriteMethodNames = ExtractAbiFunctionNames<typeof TandaPayInfo.abi, 'nonpayable' | 'payable'>;
+
+/** Return type of all TandaPayWriteMethods -- either returns a transaction hash or transaction receipt or a SimulateContractReturnType */
+export type TandaPayWriteMethodReturnType<
+  TMethodName extends TandaPayWriteMethodNames,
+  TSimulateReturnType = SimulateContractReturnType<typeof TandaPayInfo.abi, Exclude<TMethodName, undefined>>
+> = Promise<Hash | TransactionReceipt | TSimulateReturnType>;
+
+export type TandaPayWriteMethodParameters<TClient extends WriteableClient = WriteableClient> = {
+  /** A writeable client; this is any client with WalletActions, and a defined transport/chain/account */
+  client: TClient;
+  /** Address of the TandaPay smart contract */
+  address: Address;
+  /** should we wait for transaction receipts? Default = `true` if not specified */
+  waitForTransactionReceipts?: boolean;
+  /** should we only simulate transactions instead of executing them? Default = `false` if not specified */
+  simulateOnly?: boolean;
+};
+
+export type performOperationParams<
+  TMethodName extends TandaPayWriteMethodNames
+> = {
+  simulate: () => Promise<SimulateContractReturnType<typeof TandaPayInfo.abi, TMethodName>>;
+  write: () => Promise<Hash>;
+}
 
 /** Abstract class template for all TandaPay smart contract write interactions. */
 export abstract class TandaPayWriteMethods<
@@ -16,6 +52,8 @@ export abstract class TandaPayWriteMethods<
   protected contractInstance: TandaPayContract<TClient>;
   /** If true, all write methods will wait for the transaction to be included in a block (one confirmation) */
   public waitForTransactionReceipts: boolean = true;
+  /** If true, all write methods will only simulate the transaction. They won't actually write */
+  public simulateOnly: boolean = false;
 
   /** shorthand for referencing the contractInstance's simulate method */
   protected get simulate() {
@@ -26,31 +64,36 @@ export abstract class TandaPayWriteMethods<
   protected get write() {
     return this.contractInstance.write;
   }
+  
+  protected async performOperation<
+    TMethodName extends TandaPayWriteMethodNames
+  >(params: performOperationParams<TMethodName>): TandaPayWriteMethodReturnType<TMethodName> {
+    const simulatedResult = await params.simulate();
+    if (this.simulateOnly)
+      return simulatedResult;
 
-  /**
-   * Deals with hashes at the end of every write method call. if `waitForTransactionReceipts` is set
-   * to true, then it waits for the transaction to be included in a block (one confirmation) then
-   * returns the transaction receipt
-   */
-  protected async handleHash(hash: Hash): TandaPayWriteMethodReturnType {
-    if (this.waitForTransactionReceipts) {
-      return await waitForTransactionReceipt(this.client, { hash });
-    }
+    const hash = await params.write();
+    if (!this.waitForTransactionReceipts)
+      return hash;
 
-    return hash;
+    const receipt = await waitForTransactionReceipt(this.client, { hash });
+    return receipt; 
   }
 
-  /**
-   * @param client Any client that extends `WriteableClient`, e.g. has WalletActions, an Account, and
-   * a Chain.
-   * @param address The address of the smart contract
-   */
-  constructor(client: TClient, address: Address) {
-    this.client = client;
+  constructor(params: TandaPayWriteMethodParameters<TClient>) {
+    this.client = params.client;
     this.contractInstance = getContract({
       abi: TandaPayInfo.abi,
-      address: address,
-      client: client,
+      address: params.address,
+      client: params.client,
     });
+
+    if (params.waitForTransactionReceipts !== undefined)
+      this.waitForTransactionReceipts = params.waitForTransactionReceipts;
+
+    if (params.simulateOnly !== undefined)
+      this.simulateOnly = params.simulateOnly;
+
+
   }
 }

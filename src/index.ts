@@ -1,7 +1,9 @@
 import {
+  Address,
   createPublicClient,
   createTestClient,
   createWalletClient,
+  getContract,
   Hex,
   http,
   publicActions,
@@ -10,8 +12,9 @@ import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "./_contracts/FaucetToken";
 import { deployContract, waitForTransactionReceipt } from "viem/actions";
 import { spawn } from "child_process";
-import { hasWalletActions } from "./types";
+import { hasWalletActions, periodInfoJsonReplacer } from "./types";
 import { privateKeyToAccount } from "viem/accounts";
+import { TandaPayInfo } from "_contracts/TandaPay";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -63,7 +66,28 @@ const ftkReceipt = await deployContract(wc, {
   chain: anvil,
 }).then((hash) => waitForTransactionReceipt(wc, { hash }));
 
+const tpReceipt = await deployContract(wc, {
+  abi: TandaPayInfo.abi,
+  bytecode: TandaPayInfo.bytecode.object,
+  account: wc.account,
+  chain: anvil,
+  args: [ftkReceipt.contractAddress as Address, wc.account.address as Address],
+}).then((hash) => waitForTransactionReceipt(wc, {hash}));
+
 console.log(JSON.stringify(ftkReceipt.contractAddress, null, 2));
+
+const ci = getContract({
+  abi: TandaPayInfo.abi,
+  address: tpReceipt.contractAddress as Address,
+  client: wc,
+});
+
+let functions = TandaPayInfo.abi.filter((value) => value.type === "function" && value.stateMutability !== "view");
+let names = functions.map(f => f.name);
+console.log(names.join('\t'));
+
+let pi = await ci.read.getPeriodIdToPeriodInfo([0n]);
+console.log(JSON.stringify(pi, periodInfoJsonReplacer, 2));
 
 anvilProcess.kill();
 

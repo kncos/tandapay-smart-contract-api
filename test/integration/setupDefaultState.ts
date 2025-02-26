@@ -78,7 +78,7 @@ export async function setupDefaultState(
   // make subgroups and assign members to it
   for (let i = 0; i < 3; i++) {
     // let the secretary make a subgroup
-    await secretary.write.secretary.createSubGroup();
+    await secretary.write.secretary.createSubgroup();
     for (let j = 0; j < 5; j++) {
       const walletIndex = i * 5 + j;
       // let the secretary add members to the community, and the subgroup

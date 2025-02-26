@@ -16,10 +16,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    */
   async addMemberToCommunity(
     memberWalletAddress: Hex,
-  ): TandaPayWriteMethodReturnType {
-    await this.simulate.addToCommunity([memberWalletAddress]);
-    const hash = await this.write.addToCommunity([memberWalletAddress]);
-    return this.handleHash(hash);
+  ): TandaPayWriteMethodReturnType<'addToCommunity'> {
+    const simulate = async () => this.simulate.addToCommunity([memberWalletAddress]);
+    const write = async () => this.write.addToCommunity([memberWalletAddress]);
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -27,10 +27,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async createSubGroup(): TandaPayWriteMethodReturnType {
-    await this.simulate.createSubGroup();
-    const hash = await this.write.createSubGroup();
-    return this.handleHash(hash);
+  async createSubgroup(): TandaPayWriteMethodReturnType<'createSubGroup'> {
+    const simulate = async () => await this.simulate.createSubGroup();
+    const write = async () => this.write.createSubGroup();
+    return this.performOperation({simulate, write});
   }
 
   // TODO
@@ -47,18 +47,18 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
     memberWalletAddress: Hex,
     subgroupID: bigint,
     isReorging: boolean = false,
-  ): TandaPayWriteMethodReturnType {
-    await this.simulate.assignToSubGroup([
+  ): TandaPayWriteMethodReturnType<'assignToSubGroup'> {
+    const simulate = async () => await this.simulate.assignToSubGroup([
       memberWalletAddress,
       subgroupID,
       isReorging,
     ]);
-    const hash = await this.write.assignToSubGroup([
+    const write = async () => await this.write.assignToSubGroup([
       memberWalletAddress,
       subgroupID,
       isReorging,
     ]);
-    return this.handleHash(hash);
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -71,12 +71,12 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    */
   async initiateDefaultState(
     totalCoverage: bigint,
-  ): TandaPayWriteMethodReturnType {
-    await this.simulate.initiatDefaultStateAndSetCoverage([totalCoverage]);
-    const hash = await this.write.initiatDefaultStateAndSetCoverage([
+  ): TandaPayWriteMethodReturnType<'initiatDefaultStateAndSetCoverage'> {
+    const simulate = async () => await this.simulate.initiatDefaultStateAndSetCoverage([totalCoverage]);
+    const write = async () => await this.write.initiatDefaultStateAndSetCoverage([
       totalCoverage,
     ]);
-    return this.handleHash(hash);
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -85,10 +85,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async whitelistClaim(claimID: bigint): TandaPayWriteMethodReturnType {
-    await this.simulate.whitelistClaim([claimID]);
-    const hash = await this.write.whitelistClaim([claimID]);
-    return this.handleHash(hash);
+  async whitelistClaim(claimID: bigint): TandaPayWriteMethodReturnType<'whitelistClaim'> {
+    const simulate = async () => await this.simulate.whitelistClaim([claimID]);
+    const write = async () => await this.write.whitelistClaim([claimID]);
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -100,10 +100,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    */
   async updateCoverageAmount(
     totalCoverage: bigint,
-  ): TandaPayWriteMethodReturnType {
-    await this.simulate.updateCoverageAmount([totalCoverage]);
-    const hash = await this.write.updateCoverageAmount([totalCoverage]);
-    return this.handleHash(hash);
+  ): TandaPayWriteMethodReturnType<'updateCoverageAmount'> {
+    const simulate = async () => await this.simulate.updateCoverageAmount([totalCoverage]);
+    const write = async () => await this.write.updateCoverageAmount([totalCoverage]);
+    return this.performOperation({simulate, write});
   }
 
   // TODO:
@@ -119,14 +119,14 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    */
   async defineSecretarySuccesorList(
     successorListWalletAddresses: [Hex],
-  ): TandaPayWriteMethodReturnType {
-    await this.simulate.defineSecretarySuccessor([
+  ): TandaPayWriteMethodReturnType<'defineSecretarySuccessor'> {
+    const simulate = async () => await this.simulate.defineSecretarySuccessor([
       successorListWalletAddresses,
     ]);
-    const hash = await this.write.defineSecretarySuccessor([
+    const write = async () => await this.write.defineSecretarySuccessor([
       successorListWalletAddresses,
     ]);
-    return this.handleHash(hash);
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -137,10 +137,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    */
   async handoverSecretaryRoleToSuccessor(
     successorWalletAddress: Hex,
-  ): TandaPayWriteMethodReturnType {
-    await this.simulate.handoverSecretary([successorWalletAddress]);
-    const hash = await this.write.handoverSecretary([successorWalletAddress]);
-    return this.handleHash(hash);
+  ): TandaPayWriteMethodReturnType<'handoverSecretary'> {
+    const simulate = async () => await this.simulate.handoverSecretary([successorWalletAddress]);
+    const write = async () => await this.write.handoverSecretary([successorWalletAddress]);
+    return this.performOperation({simulate, write});
   }
 
   // TODO
@@ -154,10 +154,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async injectFunds(): TandaPayWriteMethodReturnType {
-    await this.simulate.injectFunds();
-    const hash = await this.write.injectFunds();
-    return this.handleHash(hash);
+  async injectFunds(): TandaPayWriteMethodReturnType<'injectFunds'> {
+    const simulate = async () => await this.simulate.injectFunds();
+    const write = async () => await this.write.injectFunds();
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -167,10 +167,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async divideShortfall(): TandaPayWriteMethodReturnType {
-    await this.simulate.divideShortFall();
-    const hash = await this.write.injectFunds();
-    return this.handleHash(hash);
+  async divideShortfall(): TandaPayWriteMethodReturnType<'divideShortFall'> {
+    const simulate = async () => await this.simulate.divideShortFall();
+    const write = async () => await this.write.injectFunds();
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -179,10 +179,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async extendPeriodByOneDay(): TandaPayWriteMethodReturnType {
-    await this.simulate.addAdditionalDay();
-    const hash = await this.write.addAdditionalDay();
-    return this.handleHash(hash);
+  async extendPeriodByOneDay(): TandaPayWriteMethodReturnType<'addAdditionalDay'> {
+    const simulate = async () => await this.simulate.addAdditionalDay();
+    const write = async () => await this.write.addAdditionalDay();
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -193,10 +193,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async manuallyCollapseCommunity(): TandaPayWriteMethodReturnType {
-    await this.simulate.manualCollapsBySecretary();
-    const hash = await this.write.manualCollapsBySecretary();
-    return this.handleHash(hash);
+  async manuallyCollapseCommunity(): TandaPayWriteMethodReturnType<'manualCollapsBySecretary'> {
+    const simulate = async () => await this.simulate.manualCollapsBySecretary();
+    const write = async () => await this.write.manualCollapsBySecretary();
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -206,10 +206,10 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async cancelManualCollapse(): TandaPayWriteMethodReturnType {
-    await this.simulate.cancelManualCollapsBySecretary();
-    const hash = await this.write.cancelManualCollapsBySecretary();
-    return this.handleHash(hash);
+  async cancelManualCollapse(): TandaPayWriteMethodReturnType<'cancelManualCollapsBySecretary'> {
+    const simulate = async () => await this.simulate.cancelManualCollapsBySecretary();
+    const write = async () => await this.write.cancelManualCollapsBySecretary();
+    return this.performOperation({simulate, write});
   }
 
   /**
@@ -218,9 +218,9 @@ export default class SecretaryWriteMethods extends TandaPayWriteMethods {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async advancePeriod(): TandaPayWriteMethodReturnType {
-    await this.simulate.AdvanceToTheNextPeriod();
-    const hash = await this.write.AdvanceToTheNextPeriod();
-    return this.handleHash(hash);
+  async advancePeriod(): TandaPayWriteMethodReturnType<'AdvanceToTheNextPeriod'> {
+    const simulate = async () => await this.simulate.AdvanceToTheNextPeriod();
+    const write = async () => await this.write.AdvanceToTheNextPeriod();
+    return this.performOperation({simulate, write});
   }
 }

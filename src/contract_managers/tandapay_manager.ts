@@ -104,9 +104,9 @@ export function createTandaPayManager(
       return {
         ...base,
         write: {
-          public: new PublicWriteMethods(client, address),
-          member: new MemberWriteMethods(client, address),
-          secretary: new SecretaryWriteMethods(client, address),
+          public: new PublicWriteMethods({client, address}),
+          member: new MemberWriteMethods({client, address}),
+          secretary: new SecretaryWriteMethods({client, address}),
         },
       } as WriteableTandaPayManager<TandaPayRole.Secretary>;
       // if the role of Member was passed, the writeable TandaPay manager will include
@@ -115,8 +115,8 @@ export function createTandaPayManager(
       return {
         ...base,
         write: {
-          public: new PublicWriteMethods(client, address),
-          member: new MemberWriteMethods(client, address),
+          public: new PublicWriteMethods({client, address}),
+          member: new MemberWriteMethods({client, address}),
         },
       } as WriteableTandaPayManager<TandaPayRole.Member>;
     }
@@ -125,7 +125,7 @@ export function createTandaPayManager(
     return {
       ...base,
       write: {
-        public: new PublicWriteMethods(client, address),
+        public: new PublicWriteMethods({client, address}),
       },
     } as WriteableTandaPayManager<TandaPayRole.None>;
   }
