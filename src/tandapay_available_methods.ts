@@ -13,12 +13,11 @@ type MemberWriteMethodNames = MethodNames<MemberWriteMethods>
 
 export type AvailableMethods = Record<SecretaryWriteMethodNames | MemberWriteMethodNames, boolean>;
 
-
 async function getAvailableSecretaryMethods<
   TClient extends WriteableClient
 >(client: TClient, address: Address): Promise<Partial<AvailableMethods>> {
   let available: Partial<AvailableMethods> = {};
-  const readMethods = new TandaPayReadMethods(client, address);
+  const readMethods = new TandaPayReadMethods({client, address});
   const secretary = await readMethods.getSecretaryAddress();
 
   if (!isAddressEqual(secretary, client.account.address)) {
@@ -34,5 +33,7 @@ export default async function getAvailableMethods<
   // we'll build up a record as we go along
   let availableMethods: Partial<AvailableMethods> = {};
 
-  return Promise.reject("not implemented");
+
+  return availableMethods as AvailableMethods;
 }
+

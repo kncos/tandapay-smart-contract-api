@@ -88,7 +88,7 @@ export function createTandaPayManager(
   role?: TandaPayRole,
 ): WriteableTandaPayManager<TandaPayRole> | ReadOnlyTandaPayManager {
   // create read methods because a ReadableClient or ReadWriteClient will always have read functionality
-  const readMethods = new TandaPayReadMethods(client, address);
+  const readMethods = new TandaPayReadMethods({client, address});
 
   // the base object we'll return is just a ReadOnlyTandaPayManager. This will be expanded if we can
   // also include write functionality, based on the client that was passed

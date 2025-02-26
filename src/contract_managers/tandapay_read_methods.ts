@@ -13,6 +13,11 @@ import {
 } from "types";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 
+export type TandaPayReadMethodParameters<TClient extends ReadableClient | WriteableClient = ReadableClient> = {
+  client: TClient;
+  address: Address;
+}
+
 /**
  * This class wraps all of the readonly methods for the TandaPay smart contract, providing better naming schemes,
  * mapping raw data from the smart contract onto cleaner types, and providing quality of life functions that automate
@@ -31,12 +36,12 @@ export default class TandaPayReadMethods<
   /**
    * @param contractInstance a TandaPay contract instance with .read functionality
    */
-  constructor(client: TClient, address: Address) {
-    this.client = client;
+  constructor(params: TandaPayReadMethodParameters<TClient>) {
+    this.client = params.client;
     this.contractInstance = getContract({
       abi: TandaPayInfo.abi,
-      address: address,
-      client: client,
+      address: params.address,
+      client: params.client,
     });
   }
 
