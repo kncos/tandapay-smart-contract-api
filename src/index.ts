@@ -55,10 +55,11 @@ export const PRIVATE_KEYS: Hex[] = [
 //  account: privateKeyToAccount(PRIVATE_KEYS[0]),
 //});
 //
-//const pc = createPublicClient({
-//  transport: http(),
-//  chain: anvil,
-//});
+const pc = createPublicClient({
+  transport: http(),
+  chain: anvil,
+});
+
 //
 //const ftkReceipt = await deployContract(wc, {
 //  abi: FaucetTokenInfo.abi,
