@@ -1,5 +1,5 @@
 import { hasWalletActions } from "types";
-import { makeWriteableClients } from "../test_helpers";
+import { makeWriteableClients } from "../helpers/tandapay_test_suite";
 
 test("hasWalletActions works", () => {
   const wallets = makeWriteableClients(5);

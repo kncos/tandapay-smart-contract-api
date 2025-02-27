@@ -44,15 +44,15 @@ function secondsToDays(secs: number | bigint) {
 }
 
 async function getAvailablePublicMethods(info: TandaPayInfo): Promise<PublicWriteMethodNames[]> {
-  let {
+  const {
     blockTimestamp,
     periodInfo,
     state
   } = info;
 
-  let res: PublicWriteMethodNames[] = [];
+  const res: PublicWriteMethodNames[] = [];
 
-  for (let methodName of publicWriteMethodNames) {
+  for (const methodName of publicWriteMethodNames) {
     switch (methodName) {
       case 'issueRefund':
         const day3 = periodInfo.startTimestamp + secondsToDays(3) + 60n;
@@ -81,9 +81,9 @@ export async function getAvailableMethods(params: GetAvailableMethodsParameters)
   const info = await getTandaPayInfo(params);
 
   try {
-    let publicMethods = await getAvailablePublicMethods(info);
-    let memberMethods = await getAvailableMemberMethods(info);
-    let secretaryMethods = await getAvailableSecretaryMethods(info);
+    const publicMethods = await getAvailablePublicMethods(info);
+    const memberMethods = await getAvailableMemberMethods(info);
+    const secretaryMethods = await getAvailableSecretaryMethods(info);
 
     return {
       public: [...publicMethods],

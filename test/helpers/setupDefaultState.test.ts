@@ -5,8 +5,8 @@ import {
   makeManagers,
   makeTestClient,
   makeWriteableClients,
-  spawnAnvil,
-} from "../test_helpers";
+  spawnAnvil
+} from "./tandapay_test_suite";
 import { setupDefaultState } from "./setupDefaultState";
 
 test("setupDefaultState works, dump/load state works", async () => {

@@ -2,9 +2,9 @@ import { TandaPayRole, TandaPayState, WriteableClient } from "types";
 import {
   makeManagers,
   makeWriteableClients,
-  spawnAnvil,
-} from "../test_helpers";
-import { getAnyCachedDefaultStateOrDeploy } from "./setupDefaultState";
+  spawnAnvil
+} from "../helpers/tandapay_test_suite";
+import { getAnyCachedDefaultStateOrDeploy } from "../helpers/setupDefaultState";
 import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;

@@ -298,7 +298,7 @@ export type SecretaryWriteMethodNames = MethodNames<SecretaryWriteMethods>;
  * @param o Any object type
  * @returns An array with all of the method names on that object
  */
-export function getMethodNames(o: Object) {
+export function getMethodNames(o: object) {
   const names = Object.getOwnPropertyNames(o);
   const methodNames = names.filter((name) => {
     if (name === 'constructor')

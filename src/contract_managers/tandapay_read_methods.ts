@@ -3,13 +3,12 @@ import {
   AssignmentStatus,
   ClaimInfo,
   MemberInfo,
-  MemberStatus,
-  PeriodInfo,
+  MemberStatus, PeriodInfo,
   ReadableClient,
   SubgroupInfo,
   TandaPayContract,
   TandaPayState,
-  WriteableClient,
+  WriteableClient
 } from "types";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 

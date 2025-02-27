@@ -1,20 +1,8 @@
 import {
-  Address,
-  createPublicClient,
-  createTestClient,
-  createWalletClient,
-  getContract,
-  Hex,
-  http,
-  publicActions,
+  createPublicClient, Hex,
+  http
 } from "viem";
 import { anvil } from "viem/chains";
-import { FaucetTokenInfo } from "./_contracts/FaucetToken";
-import { deployContract, waitForTransactionReceipt } from "viem/actions";
-import { spawn } from "child_process";
-import { hasWalletActions, periodInfoJsonReplacer } from "./types";
-import { privateKeyToAccount } from "viem/accounts";
-import { TandaPayInfo } from "_contracts/TandaPay";
 import { memberWriteMethodNames, publicWriteMethodNames, secretaryWriteMethodNames } from "types";
 
 // private keys we can use for testing purposes here
@@ -36,82 +24,11 @@ export const PRIVATE_KEYS: Hex[] = [
   "0xc526ee95bf44d8fc405a158bb884d9d1238d99f0612e9f33d006bb0789009aaa",
 ];
 
-//const anvilProcess = spawn("anvil", ["-a", "15"], {
-//  stdio: "ignore",
-//  shell: true,
-//});
-//
-//const testClient = createTestClient({
-//  chain: anvil,
-//  mode: "anvil",
-//  transport: http(),
-//}).extend(publicActions);
-//
-//await testClient.setAutomine(true);
-//
-//const wc = createWalletClient({
-//  transport: http(),
-//  chain: anvil,
-//  account: privateKeyToAccount(PRIVATE_KEYS[0]),
-//});
-//
 const pc = createPublicClient({
   transport: http(),
   chain: anvil,
 });
 
-//
-//const ftkReceipt = await deployContract(wc, {
-//  abi: FaucetTokenInfo.abi,
-//  bytecode: FaucetTokenInfo.bytecode.object,
-//  account: null,
-//  chain: anvil,
-//}).then((hash) => waitForTransactionReceipt(wc, { hash }));
-//
-//const tpReceipt = await deployContract(wc, {
-//  abi: TandaPayInfo.abi,
-//  bytecode: TandaPayInfo.bytecode.object,
-//  account: wc.account,
-//  chain: anvil,
-//  args: [ftkReceipt.contractAddress as Address, wc.account.address as Address],
-//}).then((hash) => waitForTransactionReceipt(wc, {hash}));
-
-//console.log(JSON.stringify(ftkReceipt.contractAddress, null, 2));
-
-//const ci = getContract({
-//  abi: TandaPayInfo.abi,
-//  address: tpReceipt.contractAddress as Address,
-//  client: wc,
-//});
-
-//let functions = TandaPayInfo.abi.filter((value) => value.type === "function" && value.stateMutability !== "view");
-//let names = functions.map(f => f.name);
-//console.log(names.join('\t'));
-
-//let pi = await ci.read.getPeriodIdToPeriodInfo([0n]);
-//console.log(JSON.stringify(pi, periodInfoJsonReplacer, 2));
-
-//anvilProcess.kill();
-
-//console.log(hasWalletActions(wc));
-//console.log(hasWalletActions(pc));
-//console.log(hasWalletActions(testClient));
-
 console.log(publicWriteMethodNames);
 console.log(memberWriteMethodNames);
 console.log(secretaryWriteMethodNames);
-
-// What's next?
-// - It's time to get started on Layer 2
-// - Layer 2 will have to contain some logic that builds on the contract managers. But how?
-// -
-
-// How Layer 2 builds on top of contract managers
-// - we need to have a mechanism for handling errors. Perhaps custom errors at this stage?
-// - we should probably have some sort of abstraction for advancing the smart contract state
-// - we should probably have some basic options for querying the smart contract state. We don't need to
-//   actually keep track of it at this stage, but we do need a way to query info in a more robust manner
-//   which can then be used by L3 to track the state, to an extent
-
-// Where to start?
-// - fleshing out the test cases would probably be a good idea

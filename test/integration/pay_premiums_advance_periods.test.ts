@@ -3,9 +3,9 @@ import {
   ftkApprove,
   makeManagers,
   makeWriteableClients,
-  spawnAnvil,
-} from "../test_helpers";
-import { getAnyCachedDefaultStateOrDeploy } from "./setupDefaultState";
+  spawnAnvil
+} from "../helpers/tandapay_test_suite";
+import { getAnyCachedDefaultStateOrDeploy } from "../helpers/setupDefaultState";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;
 

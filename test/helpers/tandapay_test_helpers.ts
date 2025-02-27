@@ -11,9 +11,9 @@ import {
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { anvil } from "viem/chains";
-import { FaucetTokenInfo } from "../src/_contracts/FaucetToken";
+import { FaucetTokenInfo } from "../../src/_contracts/FaucetToken";
 import { waitForTransactionReceipt } from "viem/actions";
-import { TandaPayInfo } from "../src/_contracts/TandaPay";
+import { TandaPayInfo } from "../../src/_contracts/TandaPay";
 import { TandaPayRole, WriteableClient } from "types";
 import {
   createTandaPayManager,

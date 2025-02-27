@@ -93,7 +93,5 @@ export abstract class TandaPayWriteMethods<
 
     if (params.simulateOnly !== undefined)
       this.simulateOnly = params.simulateOnly;
-
-
   }
 }
