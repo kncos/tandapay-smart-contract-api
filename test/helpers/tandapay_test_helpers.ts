@@ -6,11 +6,9 @@ import {
   createWalletClient,
   getContract,
   HDAccount,
-  http,
   PublicClient,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
-import { anvil } from "viem/chains";
 import { FaucetTokenInfo } from "../../src/_contracts/FaucetToken";
 import { waitForTransactionReceipt } from "viem/actions";
 import { TandaPayInfo } from "../../src/_contracts/TandaPay";
@@ -19,27 +17,14 @@ import {
   createTandaPayManager,
   WriteableTandaPayManager,
 } from "contract_managers/tandapay_manager";
-
-/** viem transport we'll use for test networks */
-export const TEST_TRANSPORT = http();
-/** viem chain we will use for test networks */
-export const TEST_CHAIN = anvil;
-/** viem "mode" we will use for constructing test clients */
-export const TEST_MODE = "anvil";
-/** mnemonic used to generate accounts used in testing */
-export const TEST_ACCOUNT_MNEMONIC =
-  "test test test test test test test test test test test junk";
-
-// not exported, will simply be used with methods in here
-export const UTILITY_ACC = mnemonicToAccount(TEST_ACCOUNT_MNEMONIC);
-const DEFAULT_ACCOUNT_COUNT = 15;
+import { TEST_ACCOUNT_MNEMONIC, TEST_TRANSPORT, TEST_CHAIN, TEST_MODE, NUM_TEST_ACCOUNTS } from "../test_config";
 
 /**
  * Creates an array of accounts for use in testing
  * @param n Number of accounts to create
  * @returns An array of HDAccounts created from the mnemonic with differing derivation paths
  */
-export function makeAccounts(n: number = DEFAULT_ACCOUNT_COUNT): HDAccount[] {
+export function makeAccounts(n: number = NUM_TEST_ACCOUNTS): HDAccount[] {
   const accounts: HDAccount[] = [];
   // create accounts by using the test mnemonic, but just incrementing the
   // `addressIndex` to get new private keys from the derivation path. This matches
@@ -73,7 +58,7 @@ export function makeTestClient() {
  * @returns A child process for the anvil instance
  */
 export async function spawnAnvil(
-  num_accounts: number = DEFAULT_ACCOUNT_COUNT,
+  num_accounts: number = NUM_TEST_ACCOUNTS,
 ): Promise<ChildProcess> {
   const anvilProcess = spawn("anvil", ["-a", `${num_accounts}`], {
     stdio: "ignore",
@@ -108,7 +93,7 @@ export async function advanceTime(seconds: number) {
  * @returns an array containing the specified number of writeable clients
  */
 export function makeWriteableClients(
-  n: number = DEFAULT_ACCOUNT_COUNT,
+  n: number = NUM_TEST_ACCOUNTS,
 ): WriteableClient[] {
   if (n < 1) n = 1;
 

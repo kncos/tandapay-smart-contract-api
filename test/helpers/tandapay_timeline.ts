@@ -1,6 +1,7 @@
 import { advanceTime, makeManagers, makeTestClient, makeWriteableClients } from "./tandapay_test_helpers";
 import { PeriodInfo } from "types";
-import { TandaPayTestSuite, DAYS_IN_SECONDS, TestClientWithPublicActions } from "./tandapay_test_suite";
+import { TestClientWithPublicActions } from "./tandapay_test_suite";
+import { DAYS_IN_SECONDS } from "../test_config";
 import { Address, publicActions } from "viem";
 import TandaPayReadMethods from "contract_managers/tandapay_read_methods";
 
@@ -20,7 +21,7 @@ export default class TandaPayTimeline {
   advanceToPayPremiumsDay = async () => await this.advanceToDayInPeriod(this.PAY_PREMIUMS_DAY);
 
   constructor(address: Address) {
-    let [m] = makeManagers(makeWriteableClients(1), address);
+    const [m] = makeManagers(makeWriteableClients(1), address);
     this.read = m.read;
     this.testClient = makeTestClient().extend(publicActions);
   }

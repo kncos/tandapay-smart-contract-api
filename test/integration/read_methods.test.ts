@@ -1,72 +1,70 @@
-import { TandaPayRole, TandaPayState, WriteableClient } from "types";
+import { TandaPayState } from "types";
 import {
-  makeManagers,
-  makeWriteableClients,
+  deployFaucetToken,
+  deployTandaPay,
   spawnAnvil
-} from "../helpers/tandapay_test_suite";
-import { getAnyCachedDefaultStateOrDeploy } from "../helpers/setupDefaultState";
-import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
+} from "../helpers/tandapay_test_helpers";
+import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
 
 let anvil: Awaited<ReturnType<typeof spawnAnvil>>;
-let defaultStateInfo: Awaited<
-  ReturnType<typeof getAnyCachedDefaultStateOrDeploy>
->;
+let suite: TandaPayTestSuite;
 
-let writeableClient: WriteableClient;
-let manager: WriteableTandaPayManager<TandaPayRole.Secretary>;
+beforeAll(async () => {
+  anvil = await spawnAnvil();
+  const fa = await deployFaucetToken();
+  const ta = await deployTandaPay(fa);
+  suite = new TandaPayTestSuite(fa, ta);
+})
 
 beforeEach(async () => {
-  anvil = await spawnAnvil();
-  defaultStateInfo = await getAnyCachedDefaultStateOrDeploy();
-  [writeableClient] = makeWriteableClients(1);
-  [manager] = makeManagers([writeableClient], defaultStateInfo.tpAddress);
+  await suite.toDefaultState(true);
 });
 
 describe("TandaPay Read Methods", () => {
   it("can get the payment address token", async () => {
-    const paymentTokenAddr = await manager.read.getPaymentTokenAddress();
+    const paymentTokenAddr = await suite.secretary.read.getPaymentTokenAddress();
     expect(paymentTokenAddr.toUpperCase()).toBe(
-      defaultStateInfo.ftkAddress.toUpperCase(),
+      suite.ftkAddress.toUpperCase(),
     );
   });
 
   it("can get current member count", async () => {
-    const memberCount = await manager.read.getCurrentMemberCount();
+    const memberCount = await suite.secretary.read.getCurrentMemberCount();
     // 15 because this is what we expect after setting up the default state
     expect(memberCount).toBe(15n);
   });
 
   it("can get current subgroup count", async () => {
-    const subgroupCount = await manager.read.getCurrentSubgroupCount();
+    const subgroupCount = await suite.secretary.read.getCurrentSubgroupCount();
     // 15 members will be divided into 3 subgroups
     expect(subgroupCount).toBe(3n);
   });
 
   it("Gets the current claim ID", async () => {
-    const claimCount = await manager.read.getCurrentClaimId();
+    const claimCount = await suite.secretary.read.getCurrentClaimId();
     expect(claimCount).toBe(0n);
   });
 
   it("get current period ID", async () => {
-    const periodId = await manager.read.getCurrentPeriodId();
+    const periodId = await suite.secretary.read.getCurrentPeriodId();
     expect(periodId).toBe(0n);
   });
 
   it("Get the total coverage amount & base premium", async () => {
-    const coverageAmount = await manager.read.getTotalCoverageAmount();
+    const coverageAmount = await suite.secretary.read.getTotalCoverageAmount();
     expect(coverageAmount).toBeGreaterThan(0n);
-    const basePremium = await manager.read.getBasePremium();
+    const basePremium = await suite.secretary.read.getBasePremium();
     // in case it's like, 14.999 but truncates
     expect(coverageAmount / basePremium).toBeGreaterThanOrEqual(14n);
   });
 
   it("Get the community state (should be default)", async () => {
-    const state = await manager.read.getCommunityState();
+    const state = await suite.secretary.read.getCommunityState();
     expect(state).toBe(TandaPayState.Default);
   });
 
   it("Get subgroup info for a subgroup id", async () => {
-    const subgroupInfo = await manager.read.getSubgroupInfo(1n);
+    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(1n);
     expect(subgroupInfo.members.length).toBe(5);
   });
 
@@ -75,8 +73,8 @@ describe("TandaPay Read Methods", () => {
   // getDefectorMemberIdsInPeriod
 
   it("get Member ID from address", async () => {
-    const memberId = await manager.read.getMemberIdFromAddress(
-      writeableClient.account.address,
+    const memberId = await suite.secretary.read.getMemberIdFromAddress(
+      suite.secretaryAccount.address,
     );
     // member IDs start at 1 in TandaPay's smart contract
     expect(memberId).toBe(1n);
@@ -85,24 +83,24 @@ describe("TandaPay Read Methods", () => {
   // getWhitelistedClaimIdsInPeriod
 
   it("get member info from both address and id", async () => {
-    const memberInfo1 = await manager.read.getMemberInfoFromAddress(
-      writeableClient.account.address,
+    const memberInfo1 = await suite.secretary.read.getMemberInfoFromAddress(
+      suite.secretaryAccount.address,
     );
-    const memberInfo2 = await manager.read.getMemberInfoFromId(1n);
+    const memberInfo2 = await suite.secretary.read.getMemberInfoFromId(1n);
     expect(memberInfo1.id).toBe(memberInfo2.id);
   });
 
   it("can get the secretary address", async () => {
-    const secretaryAddress = await manager.read.getSecretaryAddress();
-    expect(secretaryAddress).toBe(writeableClient.account.address);
+    const secretaryAddress = await suite.secretary.read.getSecretaryAddress();
+    expect(secretaryAddress).toBe(suite.secretaryAccount.address);
   });
 
   it("can get period info", async () => {
-    const periodInfo = await manager.read.getPeriodInfo(0n);
+    const periodInfo = await suite.secretary.read.getPeriodInfo(0n);
     expect(periodInfo.id).toBe(0n);
   });
 });
 
-afterEach(() => {
+afterAll(() => {
   anvil.kill();
 });
