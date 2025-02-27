@@ -2,7 +2,7 @@ import { TandaPayState } from "types";
 import {
   deployFaucetToken,
   deployTandaPay,
-  spawnAnvil
+  spawnAnvil,
 } from "../helpers/tandapay_test_helpers";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
 
@@ -14,7 +14,7 @@ beforeAll(async () => {
   const fa = await deployFaucetToken();
   const ta = await deployTandaPay(fa);
   suite = new TandaPayTestSuite(fa, ta);
-})
+});
 
 beforeEach(async () => {
   await suite.toDefaultState(true);
@@ -22,10 +22,9 @@ beforeEach(async () => {
 
 describe("TandaPay Read Methods", () => {
   it("can get the payment address token", async () => {
-    const paymentTokenAddr = await suite.secretary.read.getPaymentTokenAddress();
-    expect(paymentTokenAddr.toUpperCase()).toBe(
-      suite.ftkAddress.toUpperCase(),
-    );
+    const paymentTokenAddr =
+      await suite.secretary.read.getPaymentTokenAddress();
+    expect(paymentTokenAddr.toUpperCase()).toBe(suite.ftkAddress.toUpperCase());
   });
 
   it("can get current member count", async () => {

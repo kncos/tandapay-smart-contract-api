@@ -1,4 +1,9 @@
-import { advanceTime, makeManagers, makeTestClient, makeWriteableClients } from "./tandapay_test_helpers";
+import {
+  advanceTime,
+  makeManagers,
+  makeTestClient,
+  makeWriteableClients,
+} from "./tandapay_test_helpers";
 import { PeriodInfo } from "types";
 import { TestClientWithPublicActions } from "./tandapay_test_suite";
 import { DAYS_IN_SECONDS } from "../test_config";
@@ -13,12 +18,16 @@ export default class TandaPayTimeline {
   public readonly SUBMIT_CLAIMS_DAY = 7;
   public readonly WHITELIST_CLAIMS_DAY = 16;
   public readonly PAY_PREMIUMS_DAY = 28;
-  
+
   // simple aliases to advance to the day constants specified above easily
-  advanceToRefundsDay = async () => await this.advanceToDayInPeriod(this.REFUNDS_DAY);
-  advanceToSubmitClaimsDay = async () => await this.advanceToDayInPeriod(this.SUBMIT_CLAIMS_DAY);
-  advanceToWhitelistClaimsDay = async () => await this.advanceToDayInPeriod(this.WHITELIST_CLAIMS_DAY);
-  advanceToPayPremiumsDay = async () => await this.advanceToDayInPeriod(this.PAY_PREMIUMS_DAY);
+  advanceToRefundsDay = async () =>
+    await this.advanceToDayInPeriod(this.REFUNDS_DAY);
+  advanceToSubmitClaimsDay = async () =>
+    await this.advanceToDayInPeriod(this.SUBMIT_CLAIMS_DAY);
+  advanceToWhitelistClaimsDay = async () =>
+    await this.advanceToDayInPeriod(this.WHITELIST_CLAIMS_DAY);
+  advanceToPayPremiumsDay = async () =>
+    await this.advanceToDayInPeriod(this.PAY_PREMIUMS_DAY);
 
   constructor(address: Address) {
     const [m] = makeManagers(makeWriteableClients(1), address);
@@ -46,26 +55,32 @@ export default class TandaPayTimeline {
   async getCurrentDayInPeriod(): Promise<number> {
     const periodInfo = await this.getCurrentPeriodInfo();
     const timestamp = await this.getCurrentBlockTimestamp();
-    return (Number(timestamp) - Number(periodInfo.startTimestamp)) / (DAYS_IN_SECONDS);
+    return (
+      (Number(timestamp) - Number(periodInfo.startTimestamp)) / DAYS_IN_SECONDS
+    );
   }
 
   /** Advances to a specific day in the period. Decimals supported (e.g., day 3.5) */
   async advanceToDayInPeriod(day: number) {
     const currentDay = Math.floor(await this.getCurrentDayInPeriod());
-    const daysToAdvance = day - currentDay; 
+    const daysToAdvance = day - currentDay;
     if (daysToAdvance <= 0) {
-      return Promise.reject(`already at or past day ${day}! (current day: ${currentDay})`);
+      return Promise.reject(
+        new Error(
+          `already at or past day ${day}! (current day: ${currentDay})`,
+        ),
+      );
     }
 
-    await advanceTime(daysToAdvance * DAYS_IN_SECONDS)
+    await advanceTime(daysToAdvance * DAYS_IN_SECONDS);
   }
-  
+
   /** Advances time to the end of the current period */
   async advancePastEndOfPeriod() {
     const periodInfo = await this.getCurrentPeriodInfo();
     const timestamp = await this.getCurrentBlockTimestamp();
     if (periodInfo.endTimestamp < timestamp) {
-      return Promise.reject(`already at the end of the period!`);
+      return Promise.reject(new Error(`already at the end of the period!`));
     }
 
     const offset = periodInfo.endTimestamp - timestamp;

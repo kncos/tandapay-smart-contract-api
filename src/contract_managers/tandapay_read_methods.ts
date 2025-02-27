@@ -3,19 +3,22 @@ import {
   AssignmentStatus,
   ClaimInfo,
   MemberInfo,
-  MemberStatus, PeriodInfo,
+  MemberStatus,
+  PeriodInfo,
   ReadableClient,
   SubgroupInfo,
   TandaPayContract,
   TandaPayState,
-  WriteableClient
+  WriteableClient,
 } from "types";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 
-export type TandaPayReadMethodParameters<TClient extends ReadableClient | WriteableClient = ReadableClient> = {
+export type TandaPayReadMethodParameters<
+  TClient extends ReadableClient | WriteableClient = ReadableClient,
+> = {
   client: TClient;
   address: Address;
-}
+};
 
 /**
  * This class wraps all of the readonly methods for the TandaPay smart contract, providing better naming schemes,

@@ -6,7 +6,7 @@ export const DAYS_IN_SECONDS = 24 * 60 * 60;
 /** The number of test accounts we're using for all of these tests */
 export const NUM_TEST_ACCOUNTS = 15;
 /** An arbitrarily high amount of FTK we'll distribute to every client */
-export const DEFAULT_FTK_BALANCE = (10n ** 8n) * (10n ** 18n);
+export const DEFAULT_FTK_BALANCE = 10n ** 8n * 10n ** 18n;
 /** Default coverage requirement we'll set in the smart contract */
 export const DEFAULT_COVERAGE_REQUIREMENT = 1500n * 10n * 18n;
 
@@ -17,5 +17,5 @@ export const TEST_CHAIN = anvil;
 /** viem "mode" we will use for constructing test clients */
 export const TEST_MODE = "anvil";
 /** mnemonic used to generate accounts used in testing */
-export const TEST_ACCOUNT_MNEMONIC = "test test test test test test test test test test test junk";
-
+export const TEST_ACCOUNT_MNEMONIC =
+  "test test test test test test test test test test test junk";

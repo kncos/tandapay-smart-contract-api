@@ -1,9 +1,9 @@
+import { Hex } from "viem";
 import {
-  createPublicClient, Hex,
-  http
-} from "viem";
-import { anvil } from "viem/chains";
-import { memberWriteMethodNames, publicWriteMethodNames, secretaryWriteMethodNames } from "types";
+  memberWriteMethodNames,
+  publicWriteMethodNames,
+  secretaryWriteMethodNames,
+} from "types";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -24,10 +24,10 @@ export const PRIVATE_KEYS: Hex[] = [
   "0xc526ee95bf44d8fc405a158bb884d9d1238d99f0612e9f33d006bb0789009aaa",
 ];
 
-const pc = createPublicClient({
-  transport: http(),
-  chain: anvil,
-});
+//const pc = createPublicClient({
+//  transport: http(),
+//  chain: anvil,
+//});
 
 console.log(publicWriteMethodNames);
 console.log(memberWriteMethodNames);

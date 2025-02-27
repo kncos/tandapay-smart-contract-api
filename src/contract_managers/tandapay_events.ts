@@ -1,4 +1,4 @@
-export type TandaPayEventName = 
+export type TandaPayEventName =
   | "AddedToCommunity"
   | "AdditionalDayAdded"
   | "ApproveNewGroupMember"
@@ -33,19 +33,31 @@ export type TandaPayEventName =
   | "SecretarySuccessorsDefined"
   | "SecretaryTransferred"
   | "ShortFallDivided"
-  | "SubGroupCreated"
-
+  | "SubGroupCreated";
 
 import { TandaPayInfo } from "_contracts/TandaPay";
 import { ReadableClient, TandaPayContract } from "types";
-import { Address, createPublicClient, getContract, GetContractEventsParameters, GetContractReturnType, GetLogsParameters, http, WatchContractEventParameters } from "viem";
-import { anvil } from "viem/chains";
+import {
+  Address,
+  getContract,
+  GetContractEventsParameters,
+  GetLogsParameters,
+  WatchContractEventParameters,
+} from "viem";
 
-export type GetTandaPayEventsParameters = Omit<GetContractEventsParameters<typeof TandaPayInfo.abi>, 'address' | 'abi'>;
-export type WatchTandaPayEventsParameters = Omit<WatchContractEventParameters<typeof TandaPayInfo.abi>, 'address' | 'abi'>;
-export type GetTandaPayLogsParameters = Omit<GetLogsParameters, 'address'>;
+export type GetTandaPayEventsParameters = Omit<
+  GetContractEventsParameters<typeof TandaPayInfo.abi>,
+  "address" | "abi"
+>;
+export type WatchTandaPayEventsParameters = Omit<
+  WatchContractEventParameters<typeof TandaPayInfo.abi>,
+  "address" | "abi"
+>;
+export type GetTandaPayLogsParameters = Omit<GetLogsParameters, "address">;
 
-export default class TandaPayEvents<TClient extends ReadableClient = ReadableClient> {
+export default class TandaPayEvents<
+  TClient extends ReadableClient = ReadableClient,
+> {
   protected client: TClient;
   protected address: Address;
   public contract: TandaPayContract<TClient>;
@@ -63,9 +75,5 @@ export default class TandaPayEvents<TClient extends ReadableClient = ReadableCli
       address: this.address,
       client: this.client,
     });
-
-    
   }
-
-
 }

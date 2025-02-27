@@ -1,4 +1,12 @@
-import { Abi, AbiStateMutability, Address, ExtractAbiFunctionForArgs, ExtractAbiItemNames, getContract, Hash, SimulateContractReturnType, TransactionReceipt } from "viem";
+import {
+  Abi,
+  AbiStateMutability,
+  Address,
+  getContract,
+  Hash,
+  SimulateContractReturnType,
+  TransactionReceipt,
+} from "viem";
 import { TandaPayContract, WriteableClient } from "types";
 import { TandaPayInfo } from "../_contracts/TandaPay";
 import { waitForTransactionReceipt } from "viem/actions";
@@ -8,23 +16,31 @@ type ExtractAbiFunctions<
   abiStateMutability extends AbiStateMutability = AbiStateMutability,
 > = Extract<
   abi[number],
-  { type: 'function'; stateMutability: abiStateMutability }
->
+  { type: "function"; stateMutability: abiStateMutability }
+>;
 
 type ExtractAbiFunctionNames<
   abi extends Abi,
   abiStateMutability extends AbiStateMutability = AbiStateMutability,
-> = ExtractAbiFunctions<abi, abiStateMutability>['name']
+> = ExtractAbiFunctions<abi, abiStateMutability>["name"];
 
-type TandaPayWriteMethodNames = ExtractAbiFunctionNames<typeof TandaPayInfo.abi, 'nonpayable' | 'payable'>;
+type TandaPayWriteMethodNames = ExtractAbiFunctionNames<
+  typeof TandaPayInfo.abi,
+  "nonpayable" | "payable"
+>;
 
 /** Return type of all TandaPayWriteMethods -- either returns a transaction hash or transaction receipt or a SimulateContractReturnType */
 export type TandaPayWriteMethodReturnType<
   TMethodName extends TandaPayWriteMethodNames,
-  TSimulateReturnType = SimulateContractReturnType<typeof TandaPayInfo.abi, Exclude<TMethodName, undefined>>
+  TSimulateReturnType = SimulateContractReturnType<
+    typeof TandaPayInfo.abi,
+    Exclude<TMethodName, undefined>
+  >,
 > = Promise<Hash | TransactionReceipt | TSimulateReturnType>;
 
-export type TandaPayWriteMethodParameters<TClient extends WriteableClient = WriteableClient> = {
+export type TandaPayWriteMethodParameters<
+  TClient extends WriteableClient = WriteableClient,
+> = {
   /** A writeable client; this is any client with WalletActions, and a defined transport/chain/account */
   client: TClient;
   /** Address of the TandaPay smart contract */
@@ -36,11 +52,13 @@ export type TandaPayWriteMethodParameters<TClient extends WriteableClient = Writ
 };
 
 export type performOperationParams<
-  TMethodName extends TandaPayWriteMethodNames
+  TMethodName extends TandaPayWriteMethodNames,
 > = {
-  simulate: () => Promise<SimulateContractReturnType<typeof TandaPayInfo.abi, TMethodName>>;
+  simulate: () => Promise<
+    SimulateContractReturnType<typeof TandaPayInfo.abi, TMethodName>
+  >;
   write: () => Promise<Hash>;
-}
+};
 
 /** Abstract class template for all TandaPay smart contract write interactions. */
 export abstract class TandaPayWriteMethods<
@@ -64,20 +82,20 @@ export abstract class TandaPayWriteMethods<
   protected get write() {
     return this.contractInstance.write;
   }
-  
+
   protected async performOperation<
-    TMethodName extends TandaPayWriteMethodNames
-  >(params: performOperationParams<TMethodName>): TandaPayWriteMethodReturnType<TMethodName> {
+    TMethodName extends TandaPayWriteMethodNames,
+  >(
+    params: performOperationParams<TMethodName>,
+  ): TandaPayWriteMethodReturnType<TMethodName> {
     const simulatedResult = await params.simulate();
-    if (this.simulateOnly)
-      return simulatedResult;
+    if (this.simulateOnly) return simulatedResult;
 
     const hash = await params.write();
-    if (!this.waitForTransactionReceipts)
-      return hash;
+    if (!this.waitForTransactionReceipts) return hash;
 
     const receipt = await waitForTransactionReceipt(this.client, { hash });
-    return receipt; 
+    return receipt;
   }
 
   constructor(params: TandaPayWriteMethodParameters<TClient>) {

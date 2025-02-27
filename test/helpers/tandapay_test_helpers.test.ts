@@ -7,7 +7,7 @@ import {
   makePublicClients,
   makeTestClient,
   makeWriteableClients,
-  spawnAnvil
+  spawnAnvil,
 } from "./tandapay_test_helpers";
 
 describe("makeAccounts test", () => {

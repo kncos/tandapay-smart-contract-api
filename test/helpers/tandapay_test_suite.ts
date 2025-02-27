@@ -1,18 +1,35 @@
 import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
 import { TandaPayRole, WriteableClient } from "types";
-import { TestClient, PublicClient, Address, publicActions, Account, DumpStateReturnType } from "viem";
-import { makeWriteableClients, makeManagers, makeTestClient, makeAccounts, ftkApprove } from "./tandapay_test_helpers";
+import {
+  TestClient,
+  PublicClient,
+  Address,
+  publicActions,
+  Account,
+  DumpStateReturnType,
+} from "viem";
+import {
+  makeWriteableClients,
+  makeManagers,
+  makeTestClient,
+  makeAccounts,
+  ftkApprove,
+} from "./tandapay_test_helpers";
 import TandaPayTimeline from "./tandapay_timeline";
 import { filterAndValidate, Validators } from "utils";
-import { NUM_TEST_ACCOUNTS, DEFAULT_FTK_BALANCE, DEFAULT_COVERAGE_REQUIREMENT } from "../test_config";
+import {
+  NUM_TEST_ACCOUNTS,
+  DEFAULT_FTK_BALANCE,
+  DEFAULT_COVERAGE_REQUIREMENT,
+} from "../test_config";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
 export type DoActionForEachManagerParams = {
   /** managers that will perform the action. If omitted, defaults to all */
-  include?: number[],
+  include?: number[];
   /** managers that will not perform the action. if omitted, defaults to none */
-  exclude?: number[],
-}
+  exclude?: number[];
+};
 
 export class TandaPayTestSuite {
   /** Address where the TandaPay smart contract has been deployed */
@@ -21,7 +38,7 @@ export class TandaPayTestSuite {
   public readonly ftkAddress: Address;
   /** An array of viem `Account` that we can use for general transactions */
   public readonly accounts: Account[];
-  /** 
+  /**
    * An array of `WriteableTandaPayManager`. All are assigned the role of `Secretary` for simplicity,
    * but only managers[0] is *actually* a secretary in the contract. the rest are members. Why? just
    * so it's easier to work with the types and iterate over them all. This is a use case that will only
@@ -34,17 +51,17 @@ export class TandaPayTestSuite {
   public readonly testClient: TestClientWithPublicActions;
   /** An alias for managers[0], this is the secretary of the community */
   public readonly secretary: WriteableTandaPayManager<TandaPayRole.Secretary>;
-  
+
   public readonly secretaryAccount: Account;
 
   public readonly secretaryClient: WriteableClient;
-  /** 
+  /**
    * A timeline helper. Allows us to easily advance to specific points within
    * the TandaPay monthly period to perform conditional logic based on time
    */
   public readonly timeline: TandaPayTimeline;
 
-  /** 
+  /**
    * A dump of the test network upon first getting to the default state and having
    * all of the members join the community and apporve their subgroup assignments
    */
@@ -75,7 +92,7 @@ export class TandaPayTestSuite {
 
   async toDefaultState(useCacheIfExists: boolean = true) {
     if (useCacheIfExists && this.defaultStateDump) {
-      await this.testClient.loadState({state: this.defaultStateDump});
+      await this.testClient.loadState({ state: this.defaultStateDump });
       return this.defaultStateDump;
     }
 
@@ -91,7 +108,7 @@ export class TandaPayTestSuite {
       for (let j = 0; j < 5; j++) {
         // calculate wallet index and subgroupID
         const walletIndex = i * 5 + j;
-        const subgroupId = BigInt(i+1);
+        const subgroupId = BigInt(i + 1);
         // add this member to the community
         await this.secretary.write.secretary.addMemberToCommunity(
           this.accounts[walletIndex].address,
@@ -105,8 +122,10 @@ export class TandaPayTestSuite {
     }
 
     // initiate default state
-    await this.secretary.write.secretary.initiateDefaultState(DEFAULT_COVERAGE_REQUIREMENT);
-    
+    await this.secretary.write.secretary.initiateDefaultState(
+      DEFAULT_COVERAGE_REQUIREMENT,
+    );
+
     // have every member (including the secretary) join the community and
     // approve their subgroup assignment
     for (const m of this.managers) {
@@ -120,8 +139,8 @@ export class TandaPayTestSuite {
   }
 
   private async advanceTimeAndDoAction(
-    advanceTimeFunc: () => Promise<void>, 
-    actionFunc: () => Promise<void>
+    advanceTimeFunc: () => Promise<void>,
+    actionFunc: () => Promise<void>,
   ): Promise<string[]> {
     const log: string[] = [];
     let doAction = true;
@@ -135,7 +154,7 @@ export class TandaPayTestSuite {
     if (doAction) {
       try {
         await actionFunc();
-      } catch(error) {
+      } catch (error) {
         log.push(`action failed: ${error}`);
       }
     }
@@ -146,97 +165,127 @@ export class TandaPayTestSuite {
   /**
    * Filter manager indices using the generic utility
    */
-  private filterManagerIndices = (params: DoActionForEachManagerParams): Set<number> => {
+  private filterManagerIndices = (
+    params: DoActionForEachManagerParams,
+  ): Set<number> => {
     return filterAndValidate<number>({
       include: params.include,
       exclude: params.exclude,
-      defaultInclude: () => Array.from({length: this.managers.length}, (_, i) => i),
+      defaultInclude: () =>
+        Array.from({ length: this.managers.length }, (_, i) => i),
       validators: [
-        (filtered: Set<number>) => Validators.setSize(filtered, this.managers.length, "manager indices"),
-        (filtered: Set<number>) => Validators.indicesInBounds(filtered, this.managers.length - 1, "manager index")
-      ]
+        (filtered: Set<number>) =>
+          Validators.setSize(filtered, this.managers.length, "manager indices"),
+        (filtered: Set<number>) =>
+          Validators.indicesInBounds(
+            filtered,
+            this.managers.length - 1,
+            "manager index",
+          ),
+      ],
     });
-  }
+  };
 
   /**
    * Filter claim IDs using the generic utility
    */
   private filterClaimIds = (
     claimIds: bigint[] | boolean,
-    allClaimIds: Set<bigint>
+    allClaimIds: Set<bigint>,
   ): Set<bigint> => {
     // Handle boolean cases
     if (claimIds === false) return new Set<bigint>();
     if (claimIds === true) return new Set<bigint>(allClaimIds);
-    
+
     // Handle array case
     return filterAndValidate<bigint>({
       include: claimIds,
       defaultInclude: () => [],
       validators: [
-        (filtered: Set<bigint>) => Validators.setSize(filtered, allClaimIds.size, "claim IDs"),
-        (filtered: Set<bigint>) => Validators.elementsInSuperset(
-          filtered,
-          allClaimIds,
-          `Claims given that are not in the list of submitted claim IDs!`
-        )
-      ]
+        (filtered: Set<bigint>) =>
+          Validators.setSize(filtered, allClaimIds.size, "claim IDs"),
+        (filtered: Set<bigint>) =>
+          Validators.elementsInSuperset(
+            filtered,
+            allClaimIds,
+            `Claims given that are not in the list of submitted claim IDs!`,
+          ),
+      ],
     });
-  }
+  };
 
-  advanceTimeAndIssueRefunds = async () => await this.advanceTimeAndDoAction(
-    async () => {await this.timeline.advanceToRefundsDay()},
-    async () => {await this.secretary.write.public.issueRefund()},
-  );
+  advanceTimeAndIssueRefunds = async () =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advanceToRefundsDay();
+      },
+      async () => {
+        await this.secretary.write.public.issueRefund();
+      },
+    );
 
-  advanceTimeAndSubmitClaims = async (claimants: number[]) => await this.advanceTimeAndDoAction(
-    async () => {
-      await this.timeline.advanceToSubmitClaimsDay();
-    },
-    async () => {
-      // Get all of the unique claimants with validation
-      const uniqueClaimants = this.filterManagerIndices({include: claimants});
-      
-      // Have each one submit a claim
-      for (const c of uniqueClaimants) {
-        await this.managers[c].write.member.submitClaim();
-      }
-    },
-  );
+  advanceTimeAndSubmitClaims = async (claimants: number[]) =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advanceToSubmitClaimsDay();
+      },
+      async () => {
+        // Get all of the unique claimants with validation
+        const uniqueClaimants = this.filterManagerIndices({
+          include: claimants,
+        });
 
-  advanceTimeAndWhitelistClaims = async (claims: boolean | bigint[]) => await this.advanceTimeAndDoAction(
-    async () => { await this.timeline.advanceToWhitelistClaimsDay() },
-    async () => {
-      // If claims === false, we aren't whitelisting any claims
-      if (claims === false)
-        return;
+        // Have each one submit a claim
+        for (const c of uniqueClaimants) {
+          await this.managers[c].write.member.submitClaim();
+        }
+      },
+    );
 
-      // Get all submitted claims
-      const periodId = await this.secretary.read.getCurrentPeriodId();
-      const allClaimIds = new Set<bigint>(await this.secretary.read.getClaimIdsInPeriod(periodId));
+  advanceTimeAndWhitelistClaims = async (claims: boolean | bigint[]) =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advanceToWhitelistClaimsDay();
+      },
+      async () => {
+        // If claims === false, we aren't whitelisting any claims
+        if (claims === false) return;
 
-      // Filter and validate the claims
-      const claimsToWhitelist = this.filterClaimIds(claims, allClaimIds);
-      
-      // Whitelist all the filtered and validated claims
-      for (const c of claimsToWhitelist) {
-        await this.secretary.write.secretary.whitelistClaim(c);
-      }
-    }
-  );
+        // Get all submitted claims
+        const periodId = await this.secretary.read.getCurrentPeriodId();
+        const allClaimIds = new Set<bigint>(
+          await this.secretary.read.getClaimIdsInPeriod(periodId),
+        );
 
-  advanceTimeAndPayPremiums = async (params: DoActionForEachManagerParams) => await this.advanceTimeAndDoAction(
-    async () => { await this.timeline.advanceToPayPremiumsDay() },
-    async () => { 
-      const indices = this.filterManagerIndices(params);
-      for (const i of indices) 
-        await this.managers[i].write.member.payPremium();
-    }
-  );
+        // Filter and validate the claims
+        const claimsToWhitelist = this.filterClaimIds(claims, allClaimIds);
 
-  advanceTimeAndAdvancePeriod = async () => await this.advanceTimeAndDoAction(
-    async () => { await this.timeline.advancePastEndOfPeriod() },
-    async () => { await this.secretary.write.secretary.advancePeriod() },
-  )
+        // Whitelist all the filtered and validated claims
+        for (const c of claimsToWhitelist) {
+          await this.secretary.write.secretary.whitelistClaim(c);
+        }
+      },
+    );
+
+  advanceTimeAndPayPremiums = async (params: DoActionForEachManagerParams) =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advanceToPayPremiumsDay();
+      },
+      async () => {
+        const indices = this.filterManagerIndices(params);
+        for (const i of indices)
+          await this.managers[i].write.member.payPremium();
+      },
+    );
+
+  advanceTimeAndAdvancePeriod = async () =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advancePastEndOfPeriod();
+      },
+      async () => {
+        await this.secretary.write.secretary.advancePeriod();
+      },
+    );
 }
-

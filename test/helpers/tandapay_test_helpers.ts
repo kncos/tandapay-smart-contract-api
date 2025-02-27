@@ -17,7 +17,13 @@ import {
   createTandaPayManager,
   WriteableTandaPayManager,
 } from "contract_managers/tandapay_manager";
-import { TEST_ACCOUNT_MNEMONIC, TEST_TRANSPORT, TEST_CHAIN, TEST_MODE, NUM_TEST_ACCOUNTS } from "../test_config";
+import {
+  TEST_ACCOUNT_MNEMONIC,
+  TEST_TRANSPORT,
+  TEST_CHAIN,
+  TEST_MODE,
+  NUM_TEST_ACCOUNTS,
+} from "../test_config";
 
 /**
  * Creates an array of accounts for use in testing

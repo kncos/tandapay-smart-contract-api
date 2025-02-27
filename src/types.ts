@@ -278,12 +278,18 @@ export function memberInfoJsonReplacer(key: string, value: unknown): unknown {
   return bigIntJsonReplacer(key, value);
 }
 
-/** 
- * Utility that allows you to retrieve a union with all public method names given an 
- * object type. Omits constructor and methods beginning with `_` (underscore) 
+/**
+ * Utility that allows you to retrieve a union with all public method names given an
+ * object type. Omits constructor and methods beginning with `_` (underscore)
  */
 export type MethodNames<T> = {
-  [K in keyof T]: K extends 'constructor' ? never : T[K] extends Function ? K extends `_${string}` ? never : K : never;
+  [K in keyof T]: K extends "constructor"
+    ? never
+    : T[K] extends Function
+      ? K extends `_${string}`
+        ? never
+        : K
+      : never;
 }[keyof T];
 
 /** Union type with all public method names on PublicWriteMethods */
@@ -301,11 +307,9 @@ export type SecretaryWriteMethodNames = MethodNames<SecretaryWriteMethods>;
 export function getMethodNames(o: object) {
   const names = Object.getOwnPropertyNames(o);
   const methodNames = names.filter((name) => {
-    if (name === 'constructor')
-      return false;
+    if (name === "constructor") return false;
     const descriptor = Object.getOwnPropertyDescriptor(o, name);
-    if (typeof descriptor?.value !== 'function')
-      return false;
+    if (typeof descriptor?.value !== "function") return false;
 
     return true;
   });
@@ -313,9 +317,14 @@ export function getMethodNames(o: object) {
 }
 
 /** runtime constant, has an array of all method names on PublicWriteMethods */
-export const publicWriteMethodNames = getMethodNames(PublicWriteMethods.prototype) as PublicWriteMethodNames[];
+export const publicWriteMethodNames = getMethodNames(
+  PublicWriteMethods.prototype,
+) as PublicWriteMethodNames[];
 /** runtime constant, has an array of all method names on MemberWriteMethods */
-export const memberWriteMethodNames = getMethodNames(MemberWriteMethods.prototype) as MemberWriteMethodNames[];
+export const memberWriteMethodNames = getMethodNames(
+  MemberWriteMethods.prototype,
+) as MemberWriteMethodNames[];
 /** runtime constant, has an array of all method names on SecretaryWriteMethods */
-export const secretaryWriteMethodNames = getMethodNames(SecretaryWriteMethods.prototype) as SecretaryWriteMethodNames[];
-
+export const secretaryWriteMethodNames = getMethodNames(
+  SecretaryWriteMethods.prototype,
+) as SecretaryWriteMethodNames[];

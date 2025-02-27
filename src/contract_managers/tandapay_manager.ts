@@ -10,7 +10,11 @@ import MemberWriteMethods from "./member_write_methods";
 import SecretaryWriteMethods from "./secretary_write_methods";
 import PublicWriteMethods from "./public_write_methods";
 
-export type TandaPayManagerKind = "readonly" | "public" | "member" | "secretary";
+export type TandaPayManagerKind =
+  | "readonly"
+  | "public"
+  | "member"
+  | "secretary";
 
 export interface BaseTandaPayManager {
   kind: TandaPayManagerKind;
@@ -102,11 +106,11 @@ export function createTandaPayManager(
   role?: TandaPayRole,
 ): WriteableTandaPayManager<TandaPayRole> | ReadOnlyTandaPayManager {
   // create read methods because a ReadableClient or ReadWriteClient will always have read functionality
-  const readMethods = new TandaPayReadMethods({client, address});
+  const readMethods = new TandaPayReadMethods({ client, address });
 
   // the base object we'll return is just a ReadOnlyTandaPayManager. This will be expanded if we can
   // also include write functionality, based on the client that was passed
-  const base = { 
+  const base = {
     read: readMethods,
     client,
     address,
@@ -123,9 +127,9 @@ export function createTandaPayManager(
         ...base,
         kind: "secretary",
         write: {
-          public: new PublicWriteMethods({client, address}),
-          member: new MemberWriteMethods({client, address}),
-          secretary: new SecretaryWriteMethods({client, address}),
+          public: new PublicWriteMethods({ client, address }),
+          member: new MemberWriteMethods({ client, address }),
+          secretary: new SecretaryWriteMethods({ client, address }),
         },
       } as WriteableTandaPayManager<TandaPayRole.Secretary>;
       // if the role of Member was passed, the writeable TandaPay manager will include
@@ -135,8 +139,8 @@ export function createTandaPayManager(
         ...base,
         kind: "member",
         write: {
-          public: new PublicWriteMethods({client, address}),
-          member: new MemberWriteMethods({client, address}),
+          public: new PublicWriteMethods({ client, address }),
+          member: new MemberWriteMethods({ client, address }),
         },
       } as WriteableTandaPayManager<TandaPayRole.Member>;
     }
@@ -146,7 +150,7 @@ export function createTandaPayManager(
       ...base,
       kind: "public",
       write: {
-        public: new PublicWriteMethods({client, address}),
+        public: new PublicWriteMethods({ client, address }),
       },
     } as WriteableTandaPayManager<TandaPayRole.None>;
   }
