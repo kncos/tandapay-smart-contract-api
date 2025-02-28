@@ -328,3 +328,10 @@ export const memberWriteMethodNames = getMethodNames(
 export const secretaryWriteMethodNames = getMethodNames(
   SecretaryWriteMethods.prototype,
 ) as SecretaryWriteMethodNames[];
+
+//! note, this seems redundant but it was here because I was using `Exclude` and some other
+//! things to narrow it down a bit and remove unused event names. That caused problems but
+//! is something to revisit at a later date
+type RawEventNames = Extract<typeof TandaPayInfo.abi[number], { type: "event" }>["name"];
+/** Raw event names for every TandaPay event */
+export type RawTandaPayEventNames = RawEventNames;

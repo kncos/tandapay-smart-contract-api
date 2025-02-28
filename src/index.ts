@@ -4,6 +4,7 @@ import {
   publicWriteMethodNames,
   secretaryWriteMethodNames,
 } from "types";
+import { TandaPayInfo } from "_contracts/TandaPay";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -32,3 +33,5 @@ export const PRIVATE_KEYS: Hex[] = [
 console.log(publicWriteMethodNames);
 console.log(memberWriteMethodNames);
 console.log(secretaryWriteMethodNames);
+let events = TandaPayInfo.abi.filter(event => event.type === "event");
+console.log(events);
