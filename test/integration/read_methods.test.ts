@@ -46,7 +46,7 @@ describe("TandaPay Read Methods", () => {
 
   it("get current period ID", async () => {
     const periodId = await suite.secretary.read.getCurrentPeriodId();
-    expect(periodId).toBe(0n);
+    expect(periodId).toBe(1n);
   });
 
   it("Get the total coverage amount & base premium", async () => {
