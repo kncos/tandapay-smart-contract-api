@@ -8,7 +8,7 @@ import { PeriodInfo } from "types";
 import { TestClientWithPublicActions } from "./tandapay_test_suite";
 import { DAYS_IN_SECONDS } from "../test_config";
 import { Address, publicActions } from "viem";
-import TandaPayReadMethods from "contract_managers/tandapay_read_methods";
+import TandaPayReadMethods from "tandapay_manager/read/tandapay_read_methods";
 
 export default class TandaPayTimeline {
   read: TandaPayReadMethods;
@@ -16,7 +16,8 @@ export default class TandaPayTimeline {
 
   public readonly REFUNDS_DAY = 3.5;
   public readonly SUBMIT_CLAIMS_DAY = 7;
-  public readonly WHITELIST_CLAIMS_DAY = 16;
+  public readonly WHITELIST_CLAIMS_DAY = 14;
+  public readonly WITHDRAW_CLAIM_FUND_DAY = 17;
   public readonly PAY_PREMIUMS_DAY = 28;
 
   // simple aliases to advance to the day constants specified above easily
@@ -26,6 +27,8 @@ export default class TandaPayTimeline {
     await this.advanceToDayInPeriod(this.SUBMIT_CLAIMS_DAY);
   advanceToWhitelistClaimsDay = async () =>
     await this.advanceToDayInPeriod(this.WHITELIST_CLAIMS_DAY);
+  advanceToWithdrawClaimFundDay = async () =>
+    await this.advanceToDayInPeriod(this.WITHDRAW_CLAIM_FUND_DAY);
   advanceToPayPremiumsDay = async () =>
     await this.advanceToDayInPeriod(this.PAY_PREMIUMS_DAY);
 

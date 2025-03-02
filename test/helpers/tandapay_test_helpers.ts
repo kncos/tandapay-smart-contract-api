@@ -16,7 +16,7 @@ import { TandaPayRole, WriteableClient } from "types";
 import {
   createTandaPayManager,
   WriteableTandaPayManager,
-} from "contract_managers/tandapay_manager";
+} from "tandapay_manager/tandapay_manager";
 import {
   TEST_ACCOUNT_MNEMONIC,
   TEST_TRANSPORT,

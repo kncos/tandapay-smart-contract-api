@@ -1,4 +1,4 @@
-import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
+import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { TandaPayRole, WriteableClient } from "types";
 import {
   TestClient,
@@ -131,7 +131,9 @@ export class TandaPayTestSuite {
     for (const m of this.managers) {
       await m.write.member.joinCommunity();
       await m.write.member.approveSubgroupAssignment(true);
+      await m.write.member.payPremium();
     }
+    await this.secretary.write.secretary.advancePeriod();
 
     // cache default state
     this.defaultStateDump = await this.testClient.dumpState();
@@ -166,11 +168,11 @@ export class TandaPayTestSuite {
    * Filter manager indices using the generic utility
    */
   private filterManagerIndices = (
-    params: DoActionForEachManagerParams,
+    params?: DoActionForEachManagerParams,
   ): Set<number> => {
     return filterAndValidate<number>({
-      include: params.include,
-      exclude: params.exclude,
+      include: params ? params.include : undefined,
+      exclude: params ? params.exclude : undefined,
       defaultInclude: () =>
         Array.from({ length: this.managers.length }, (_, i) => i),
       validators: [
@@ -267,7 +269,7 @@ export class TandaPayTestSuite {
       },
     );
 
-  advanceTimeAndPayPremiums = async (params: DoActionForEachManagerParams) =>
+  advanceTimeAndPayPremiums = async (params?: DoActionForEachManagerParams) =>
     await this.advanceTimeAndDoAction(
       async () => {
         await this.timeline.advanceToPayPremiumsDay();
@@ -286,6 +288,27 @@ export class TandaPayTestSuite {
       },
       async () => {
         await this.secretary.write.secretary.advancePeriod();
+      },
+    );
+
+  advanceTimeAndWithdrawClaimFund = async (
+    claimants: number[],
+    forfeit: boolean = false,
+  ) =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advanceToWithdrawClaimFundDay();
+      },
+      async () => {
+        // Get all of the unique claimants with validation
+        const uniqueClaimants = this.filterManagerIndices({
+          include: claimants,
+        });
+
+        // Have each one submit a claim
+        for (const c of uniqueClaimants) {
+          await this.managers[c].write.member.withdrawClaimFund(forfeit);
+        }
       },
     );
 }

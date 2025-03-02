@@ -11,7 +11,7 @@ import {
   TandaPayState,
   WriteableClient,
 } from "types";
-import { TandaPayInfo } from "../_contracts/TandaPay";
+import { TandaPayInfo } from "../../_contracts/TandaPay";
 
 export type TandaPayReadMethodParameters<
   TClient extends ReadableClient | WriteableClient = ReadableClient,

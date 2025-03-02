@@ -8,7 +8,7 @@ import {
   TransactionReceipt,
 } from "viem";
 import { TandaPayContract, WriteableClient } from "types";
-import { TandaPayInfo } from "../_contracts/TandaPay";
+import { TandaPayInfo } from "../../_contracts/TandaPay";
 import { waitForTransactionReceipt } from "viem/actions";
 
 type ExtractAbiFunctions<
