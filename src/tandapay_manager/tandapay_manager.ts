@@ -161,7 +161,6 @@ export function createTandaPayManager(
     } as WriteableTandaPayManager<TandaPayRole.None>;
   }
 
-
   // lastly, if the client passed does not meet the criteria for performing write
   // operations, we will simply return a read-only TandaPay manager
   return {

@@ -328,4 +328,3 @@ export const memberWriteMethodNames = getMethodNames(
 export const secretaryWriteMethodNames = getMethodNames(
   SecretaryWriteMethods.prototype,
 ) as SecretaryWriteMethodNames[];
-

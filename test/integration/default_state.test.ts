@@ -5,10 +5,7 @@ import {
   deployTandaPay,
   spawnAnvil,
 } from "../helpers/tandapay_test_helpers";
-import { ReadableClient, TandaPayState } from "types";
-import { TandaPayEvents } from "tandapay_manager/read/tandapay_events";
-import { publicActions } from "viem";
-import { toTandaPayLogs } from "tandapay_manager/read/tandapay_event_aliases";
+import { TandaPayState } from "types";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;

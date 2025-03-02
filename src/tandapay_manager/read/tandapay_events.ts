@@ -1,10 +1,24 @@
 import { ReadableClient, WriteableClient } from "types";
-import { AliasToRawEventNameMapping, TandaPayEventAlias, tandaPayEventAliasesToAbiEvents, tandaPayEventAliasToAbiEvent, tandaPayEventNamesToAbiEvents, tandaPayEventNameToAbiEvent } from "./tandapay_event_aliases";
-import { AbiEvent, Address, BlockNumber, BlockTag, GetLogsReturnType, Hash } from "viem";
+import {
+  AliasToRawEventNameMapping,
+  TandaPayEventAlias,
+  tandaPayEventAliasesToAbiEvents,
+  tandaPayEventAliasToAbiEvent
+} from "./tandapay_event_aliases";
+import {
+  AbiEvent,
+  Address,
+  BlockNumber,
+  BlockTag,
+  GetLogsReturnType,
+  Hash,
+} from "viem";
 import { getLogs } from "viem/actions";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
-export interface TandaPayEventsParameters<TClient extends ReadableClient | WriteableClient> {
+export interface TandaPayEventsParameters<
+  TClient extends ReadableClient | WriteableClient,
+> {
   /** any readable client */
   client: TClient;
   /** address of the tandapay smart contract */
@@ -12,11 +26,16 @@ export interface TandaPayEventsParameters<TClient extends ReadableClient | Write
 }
 
 /** argument for getLogs in TandaPayEvents */
-export type GetEventLogParameters = 
- & ({ event: TandaPayEventAlias } | { events?: TandaPayEventAlias[] })
- & ({ fromBlock?: BlockNumber | BlockTag; toBlock?: BlockNumber | BlockTag; } | { blockHash: Hash });
+export type GetEventLogParameters = (
+  | { event: TandaPayEventAlias }
+  | { events?: TandaPayEventAlias[] }
+) &
+  (
+    | { fromBlock?: BlockNumber | BlockTag; toBlock?: BlockNumber | BlockTag }
+    | { blockHash: Hash }
+  );
 
-/** 
+/**
  * thin wrapper around viem's `getLogs` that gives us an object so we don't need to keep
  * passing around the smart contract address or a client, and also allows us to use our
  * TandaPayEventName aliases for better code readability
@@ -25,7 +44,7 @@ export class TandaPayEvents<TClient extends ReadableClient | WriteableClient> {
   client: TClient;
   address: Address;
 
-  constructor (params: TandaPayEventsParameters<TClient>) {
+  constructor(params: TandaPayEventsParameters<TClient>) {
     this.client = params.client;
     this.address = params.address;
   }
@@ -37,47 +56,49 @@ export class TandaPayEvents<TClient extends ReadableClient | WriteableClient> {
    */
   async getLogs(params: GetEventLogParameters) {
     // build up options for the method call
-    let opts = {}
+    let opts = {};
 
     // if we have a singular event...
-    if ('event' in params) {
+    if ("event" in params) {
       opts = {
         ...opts,
         event: tandaPayEventAliasToAbiEvent(params.event),
-      }
-    // if we have multiple events
-    } else if ('events' in params) {
+      };
+      // if we have multiple events
+    } else if ("events" in params) {
       // if it was undefined, just default to all events
       if (params.events === undefined)
-        params.events = Object.keys(AliasToRawEventNameMapping) as TandaPayEventAlias[];
+        params.events = Object.keys(
+          AliasToRawEventNameMapping,
+        ) as TandaPayEventAlias[];
 
       opts = {
         ...opts,
         events: tandaPayEventAliasesToAbiEvents(params.events),
-      }
+      };
     }
 
     // if fromBlock or toBlock were provided (or left as undefined but no blockHash was provided)
     // then add those options in. If they're undefined, it will still work fine
-    if ('fromBlock' in params || 'toBlock' in params) {
+    if ("fromBlock" in params || "toBlock" in params) {
       opts = {
         ...opts,
         fromBlock: params.fromBlock,
         /** Here, we'll have this default to `safe` */
-        toBlock: params.toBlock ? params.toBlock : 'safe',
-      }
-    // otherwise if blockHash was provided, we'll use that
-    } else if ('blockHash' in params) {
+        toBlock: params.toBlock ? params.toBlock : "safe",
+      };
+      // otherwise if blockHash was provided, we'll use that
+    } else if ("blockHash" in params) {
       opts = {
         ...opts,
         blockHash: params.blockHash,
-      }
+      };
     }
 
     // finally, use viem's `getLogs` with our built up options
-    return await getLogs(this.client, {
+    return (await getLogs(this.client, {
       ...opts,
-      address: this.address
-    }) as GetLogsReturnType<AbiEvent>;
+      address: this.address,
+    })) as GetLogsReturnType<AbiEvent>;
   }
 }

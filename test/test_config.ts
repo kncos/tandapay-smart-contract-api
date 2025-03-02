@@ -7,9 +7,9 @@ export const DAYS_IN_SECONDS = 24 * 60 * 60;
 /** The number of test accounts we're using for all of these tests */
 export const NUM_TEST_ACCOUNTS = 15;
 /** An arbitrarily high amount of FTK we'll distribute to every client */
-export const DEFAULT_FTK_BALANCE = (10n ** 8n) * WEI_CONVERSION;
+export const DEFAULT_FTK_BALANCE = 10n ** 8n * WEI_CONVERSION;
 /** Default coverage requirement we'll set in the smart contract */
-export const DEFAULT_COVERAGE_REQUIREMENT = 1500n * (WEI_CONVERSION);
+export const DEFAULT_COVERAGE_REQUIREMENT = 1500n * WEI_CONVERSION;
 
 /** viem transport we'll use for test networks */
 export const TEST_TRANSPORT = http();
