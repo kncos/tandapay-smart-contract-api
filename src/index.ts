@@ -1,10 +1,5 @@
 import { Hex } from "viem";
-import {
-  memberWriteMethodNames,
-  publicWriteMethodNames,
-  secretaryWriteMethodNames,
-} from "types";
-import { TandaPayInfo } from "_contracts/TandaPay";
+import { AliasToRawEventNameMapping, RawEventNameToAliasMapping } from "tandapay_manager/read/tandapay_event_aliases";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -30,8 +25,11 @@ export const PRIVATE_KEYS: Hex[] = [
 //  chain: anvil,
 //});
 
-console.log(publicWriteMethodNames);
-console.log(memberWriteMethodNames);
-console.log(secretaryWriteMethodNames);
-let events = TandaPayInfo.abi.filter(event => event.type === "event");
-console.log(events);
+//console.log(publicWriteMethodNames);
+//console.log(memberWriteMethodNames);
+//console.log(secretaryWriteMethodNames);
+//let events = TandaPayInfo.abi.filter(event => event.type === "event");
+//console.log(events);
+
+console.log(RawEventNameToAliasMapping);
+console.log(AliasToRawEventNameMapping);

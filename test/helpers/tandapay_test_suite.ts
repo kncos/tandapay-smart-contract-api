@@ -1,4 +1,4 @@
-import { WriteableTandaPayManager } from "contract_managers/tandapay_manager";
+import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { TandaPayRole, WriteableClient } from "types";
 import {
   TestClient,

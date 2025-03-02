@@ -5,10 +5,11 @@ import {
   ReadableClient,
   hasWalletActions,
 } from "types";
-import TandaPayReadMethods from "./tandapay_read_methods";
-import MemberWriteMethods from "./member_write_methods";
-import SecretaryWriteMethods from "./secretary_write_methods";
-import PublicWriteMethods from "./public_write_methods";
+import TandaPayReadMethods from "./read/tandapay_read_methods";
+import MemberWriteMethods from "./write/member_write_methods";
+import SecretaryWriteMethods from "./write/secretary_write_methods";
+import PublicWriteMethods from "./write/public_write_methods";
+import { TandaPayEvents } from "./read/tandapay_events";
 
 export type TandaPayManagerKind =
   | "readonly"
@@ -19,6 +20,7 @@ export type TandaPayManagerKind =
 export interface BaseTandaPayManager {
   kind: TandaPayManagerKind;
   read: TandaPayReadMethods<ReadableClient>;
+  events: TandaPayEvents<ReadableClient>;
   client: ReadableClient | WriteableClient;
   address: Address;
 }
@@ -105,13 +107,16 @@ export function createTandaPayManager(
   address: Address,
   role?: TandaPayRole,
 ): WriteableTandaPayManager<TandaPayRole> | ReadOnlyTandaPayManager {
-  // create read methods because a ReadableClient or ReadWriteClient will always have read functionality
+  // create read methods because a ReadableClient or WriteableClient will always have read functionality
   const readMethods = new TandaPayReadMethods({ client, address });
+  // will also need event methods, all clients will always have that
+  const eventMethods = new TandaPayEvents({ client, address });
 
   // the base object we'll return is just a ReadOnlyTandaPayManager. This will be expanded if we can
   // also include write functionality, based on the client that was passed
   const base = {
     read: readMethods,
+    events: eventMethods,
     client,
     address,
   };
@@ -119,6 +124,7 @@ export function createTandaPayManager(
   // To perform write operations, the client needs to have wallet actions and a valid account.
   if (hasWalletActions(client) && client.account) {
     // TODO: should this be done? is this necessary? it might not be good to modify the client like this
+    //! meh shoudl be fine
     client.extend(publicActions);
     // If the role of Secretary was passed, then the writeable TandaPay manager will include
     // secretary write methods, member write methods, and public write methods
@@ -154,6 +160,7 @@ export function createTandaPayManager(
       },
     } as WriteableTandaPayManager<TandaPayRole.None>;
   }
+
 
   // lastly, if the client passed does not meet the criteria for performing write
   // operations, we will simply return a read-only TandaPay manager

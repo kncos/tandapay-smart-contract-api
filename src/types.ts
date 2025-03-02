@@ -18,9 +18,9 @@ import {
 } from "viem";
 import { TandaPayInfo } from "./_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
-import MemberWriteMethods from "contract_managers/member_write_methods";
-import PublicWriteMethods from "contract_managers/public_write_methods";
-import SecretaryWriteMethods from "contract_managers/secretary_write_methods";
+import MemberWriteMethods from "tandapay_manager/write/member_write_methods";
+import PublicWriteMethods from "tandapay_manager/write/public_write_methods";
+import SecretaryWriteMethods from "tandapay_manager/write/secretary_write_methods";
 
 /** Tests if a viem client has been extended with WalletActions at runtime */
 export function hasWalletActions<TClient extends Client>(client: TClient) {
@@ -329,9 +329,3 @@ export const secretaryWriteMethodNames = getMethodNames(
   SecretaryWriteMethods.prototype,
 ) as SecretaryWriteMethodNames[];
 
-//! note, this seems redundant but it was here because I was using `Exclude` and some other
-//! things to narrow it down a bit and remove unused event names. That caused problems but
-//! is something to revisit at a later date
-type RawEventNames = Extract<typeof TandaPayInfo.abi[number], { type: "event" }>["name"];
-/** Raw event names for every TandaPay event */
-export type RawTandaPayEventNames = RawEventNames;

@@ -6,8 +6,9 @@ import {
   spawnAnvil,
 } from "../helpers/tandapay_test_helpers";
 import { ReadableClient, TandaPayState } from "types";
-import { TandaPayEvents } from "contract_managers/tandapay_events";
+import { TandaPayEvents } from "tandapay_manager/read/tandapay_events";
 import { publicActions } from "viem";
+import { toTandaPayLogs } from "tandapay_manager/read/tandapay_event_aliases";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
@@ -24,13 +25,6 @@ describe("default state tests", () => {
     await suite.toDefaultState(true);
     const state = await suite.secretary.read.getCommunityState();
     expect(state).toBe(TandaPayState.Default);
-
-    let events = new TandaPayEvents({client: suite.secretaryClient.extend(publicActions) as ReadableClient, address: suite.tpAddress});
-    let logs = await events.getLogs({
-      events: ["enteredDefaultState", "addedToCommunity"],
-      fromBlock: 0n,
-    });
-    console.log(logs);
   });
 });
 
