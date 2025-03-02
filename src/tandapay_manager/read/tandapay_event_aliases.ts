@@ -5,7 +5,7 @@ import {
   BlockNumber,
   GetEventArgs,
   GetLogsReturnType,
-  Hash
+  Hash,
 } from "viem";
 
 //! note, this seems redundant but it was here because I was using `Exclude` and some other

@@ -3,7 +3,7 @@ import {
   AliasToRawEventNameMapping,
   TandaPayEventAlias,
   tandaPayEventAliasesToAbiEvents,
-  tandaPayEventAliasToAbiEvent
+  tandaPayEventAliasToAbiEvent,
 } from "./tandapay_event_aliases";
 import {
   AbiEvent,
@@ -65,7 +65,7 @@ export class TandaPayEvents<TClient extends ReadableClient | WriteableClient> {
         event: tandaPayEventAliasToAbiEvent(params.event),
       };
       // if we have multiple events
-    } else if ("events" in params) {
+    } else {
       // if it was undefined, just default to all events
       if (params.events === undefined)
         params.events = Object.keys(
