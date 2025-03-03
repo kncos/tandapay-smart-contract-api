@@ -29,16 +29,3 @@ Here is a brief summary of the major features this library includes
 When looking at the source, you may notice that the smart contract abi/bytecode has been included here as a hardcoded object. The reasoning for this is that the version of the smart contract
 that this library works with is included in the library's source, without necessarily needing to include the solidity code or a build system for solidity, as the smart contract is a different
 project written by another developer.
-
-# Smart Contract Code Quality Issues
-
-The smart contract was developed as a rush order by a contractor whose first language was not english. This has resulted in smart contract code that:
-
-- Is somewhat hard to decipher and make sense of as a developer with familiarity with what it _should_ be doing (me), let alone someone new to the project
-- Uses inconsistent code styles and naming conventions throughout
-- Lacks documentation and comments explaining code
-- Contains many spelling errors and capitalization errors throughout
-- Has dead code, duplicated code, and seemingly unused variables / features
-
-This API aims to mitigate these issues for the time being, while also allowing for improvements to be made to the smart contract later without disrupting business logic that is built on top.
-Basically, it's a way to interact with the smart contract without using the smart contract directly.

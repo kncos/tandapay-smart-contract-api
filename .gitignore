@@ -3,3 +3,4 @@ dist
 .pnpm/
 .pnpm-debug.log
 coverage/
+old.txt
