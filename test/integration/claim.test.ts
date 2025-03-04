@@ -9,7 +9,7 @@ import {
   TandaPayEventAlias,
   TandaPayLog,
   toTandaPayLogs,
-} from "tandapay_manager/read/tandapay_event_aliases";
+} from "tandapay_manager/read/types";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
@@ -79,10 +79,9 @@ describe("testing claims, defectors, etc.", () => {
       logs.find((l) => l.alias === "claimWhitelisted") ??
       fail("no claimWhitelisted log");
     // narrow the types
-    // TODO: improve this to allow for aliases instead of raw type names
-    const submitted = l1 as TandaPayLog<"ClaimSubmitted">;
-    const whitelisted = l2 as TandaPayLog<"ClaimWhiteListed">;
-    // ensure that the whitelisted claim and submitted claim are the same
+    const submitted = l1 as TandaPayLog<"claimSubmitted">
+    const whitelisted = l2 as TandaPayLog<"claimWhitelisted">
+    // ensure they're the same
     expect(submitted.args.claimId).toBe(whitelisted.args.cId);
   }, 30000);
 });

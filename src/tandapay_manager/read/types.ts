@@ -19,46 +19,10 @@ type RawEventName = Extract<
 export type RawTandaPayEventName = RawEventName;
 
 /** This is a stringed union that contains all of the aliases we use for TandaPay events */
-export type TandaPayEventAlias =
-  | "addedToCommunity"
-  | "additionalDayAdded"
-  | "approvedNewSubgroupPeer"
-  | "approvedOwnSubgroupAssignment"
-  | "assignedToSubgroup"
-  | "claimSubmitted"
-  | "claimWhitelisted"
-  | "communityCollapsed"
-  | "coverageRequirementUpdated"
-  | "enteredDefaultState"
-  | "enteredEmergencyState"
-  | "emergencyPaymentIssued"
-  | "emergencySecretaryHandover"
-  | "exitedFromSubgroup"
-  | "forfeitedClaimReward"
-  | "claimRewardClaimed"
-  | "secretaryInjectedFunds"
-  | "memberJoinedCommunity"
-  | "leftFromSubgroup"
-  | "deprecated_doNotUse_ManualCollapseCancelled"
-  | "manualCollapseCancelled"
-  | "manualCollapseInitiated"
-  | "memberDefected"
-  | "memberStatusUpdated"
-  | "advancedPeriod"
-  | "premiumPaid"
-  | "refundsIssued"
-  | "refundClaimed"
-  | "successorAcceptsSecretaryRole"
-  | "secretaryInitiatesHandover"
-  | "secretaryDefinesSuccessors"
-  | "secretaryRoleTransferred"
-  | "shortfallDivided"
-  | "newSubgroupCreated";
+export type TandaPayEventAlias = keyof typeof AliasToRawEventNameMapping;
 
 /** Maps event names with better naming conventions to the ones used in the smart contract */
-export const RawEventNameToAliasMapping: {
-  [K in RawTandaPayEventName]: TandaPayEventAlias;
-} = {
+export const RawEventNameToAliasMapping = {
   AddedToCommunity: "addedToCommunity",
   AdditionalDayAdded: "additionalDayAdded",
   ApproveNewGroupMember: "approvedNewSubgroupPeer",
@@ -78,6 +42,7 @@ export const RawEventNameToAliasMapping: {
   FundInjected: "secretaryInjectedFunds",
   JoinedToCommunity: "memberJoinedCommunity",
   LeavedFromGroup: "leftFromSubgroup",
+  /** @deprecated */
   ManualCollapseCancelled: "deprecated_doNotUse_ManualCollapseCancelled",
   ManualCollapsedCancelled: "manualCollapseCancelled",
   ManualCollapsedHappenend: "manualCollapseInitiated",
@@ -96,9 +61,7 @@ export const RawEventNameToAliasMapping: {
 } as const;
 
 /** This maps all of our aliases to their corresponding ABI event names */
-export const AliasToRawEventNameMapping: {
-  [K in TandaPayEventAlias]: RawTandaPayEventName;
-} = {
+export const AliasToRawEventNameMapping = {
   addedToCommunity: "AddedToCommunity",
   additionalDayAdded: "AdditionalDayAdded",
   approvedNewSubgroupPeer: "ApproveNewGroupMember",
@@ -118,6 +81,7 @@ export const AliasToRawEventNameMapping: {
   secretaryInjectedFunds: "FundInjected",
   memberJoinedCommunity: "JoinedToCommunity",
   leftFromSubgroup: "LeavedFromGroup",
+  /** @deprecated */
   deprecated_doNotUse_ManualCollapseCancelled: "ManualCollapseCancelled",
   manualCollapseCancelled: "ManualCollapsedCancelled",
   manualCollapseInitiated: "ManualCollapsedHappenend",
@@ -198,6 +162,19 @@ export function isValidEventArgs(
 }
 
 /**
+ * A type predicate that determines if `args` is the correct set of arguments that you would expect on the given `eventAlias`
+ * @param eventAlias an alias for a TandaPay smart contract event
+ * @param args The list of arguments you want to check
+ * @returns whether or not the `args` are the ones that go with the given `eventAlias` 
+ */
+export function isValidEventAliasArgs(
+  eventAlias: TandaPayEventAlias,
+  args: Record<string, unknown> | readonly unknown[],
+): args is TandaPayEventAliasArgs<typeof eventAlias> {
+  return isValidEventArgs(AliasToRawEventNameMapping[eventAlias], args);
+}
+
+/**
  * to be used with `TandaPayEvents`, or `events...` on TandaPayManager. Converts the output of `getLogs` to a
  * internal type for the logs instead of the viem default
  * @param logs the return type from getLogs -- expects this to be AbiEvent only. `GetLogsReturnType<AbiEvent>`
@@ -234,7 +211,7 @@ export function toTandaPayLogs(
 /** The arguments for any given TandaPay raw event name */
 export type TandaPayEventArgs<
   rawEventName extends RawTandaPayEventName = RawTandaPayEventName,
-  strict = boolean,
+  strict = boolean | undefined,
 > = Exclude<
   GetEventArgs<
     typeof TandaPayInfo.abi,
@@ -250,7 +227,7 @@ export type TandaPayEventArgs<
 
 /** Represents one log for a given TandaPayEvent */
 export type TandaPayLog<
-  rawEventName extends RawTandaPayEventName = RawTandaPayEventName,
+  eventAlias extends TandaPayEventAlias = TandaPayEventAlias,
   /** This changes whether or not the properties in args are allowed to be undefined */
   strict extends boolean | undefined = undefined,
   /** This changes whether or not the logs can be pending */
@@ -259,13 +236,13 @@ export type TandaPayLog<
   /** the smart contract address */
   address: Address;
   /** alias that we're using to refer to this event */
-  alias: (typeof RawEventNameToAliasMapping)[rawEventName];
+  alias: eventAlias;
   /** Hash of the block containing this log or `null` if pending */
   blockHash: pending extends true ? null : Hash;
   /** Number of the block containing this log or `null` if pending */
   blockNumber: pending extends true ? null : BlockNumber;
   /** original abi event name on the smart contract */
-  eventName: rawEventName;
+  eventName: (typeof AliasToRawEventNameMapping)[eventAlias];
   /** Hash of the transaction that created this log or `null` if pending */
   transactionHash: pending extends true ? null : Hash;
   /** Index of the transaction that created this log or `null` if pending */
@@ -278,5 +255,11 @@ export type TandaPayLog<
    * Arguments that were passed to the emitted event. This will include
    * useful information about the event that has been emitted
    */
-  args: TandaPayEventArgs<rawEventName, strict>;
+  args: TandaPayEventAliasArgs<eventAlias, strict>;
 };
+
+// Helper type to get specific event arguments
+export type TandaPayEventAliasArgs<
+  eventAlias extends TandaPayEventAlias,
+  strict = boolean | undefined,
+> = TandaPayEventArgs<(typeof AliasToRawEventNameMapping)[eventAlias], strict extends boolean ? strict : false>;

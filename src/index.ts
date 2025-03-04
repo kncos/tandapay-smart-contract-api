@@ -2,7 +2,7 @@ import { Hex } from "viem";
 import {
   AliasToRawEventNameMapping,
   RawEventNameToAliasMapping,
-} from "tandapay_manager/read/tandapay_event_aliases";
+} from "tandapay_manager/read/types";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [

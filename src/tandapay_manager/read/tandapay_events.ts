@@ -4,7 +4,7 @@ import {
   TandaPayEventAlias,
   tandaPayEventAliasesToAbiEvents,
   tandaPayEventAliasToAbiEvent,
-} from "./tandapay_event_aliases";
+} from "./types";
 import {
   AbiEvent,
   Address,
