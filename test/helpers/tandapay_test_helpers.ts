@@ -6,6 +6,7 @@ import {
   createWalletClient,
   getContract,
   HDAccount,
+  publicActions,
   PublicClient,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
@@ -216,6 +217,41 @@ export type ftkApproveOptions = {
   amount: bigint;
   amountToDistribute?: bigint;
 };
+
+export async function getFtkBalance(params: {ftkAddress: Address, walletAddress: Address}) {
+  const contract = getContract({
+    abi: FaucetTokenInfo.abi,
+    address: params.ftkAddress,
+    client: makeTestClient().extend(publicActions),
+  });
+  return await contract.read.balanceOf([params.walletAddress]);
+}
+
+export async function getFtkTransactions(params: {ftkAddress: Address, walletAddress: Address}) {
+  let pc = makeTestClient().extend(publicActions);
+  const outgoing = await pc.getContractEvents({
+    address: params.ftkAddress,
+    abi: FaucetTokenInfo.abi,
+    eventName: 'Transfer',
+    fromBlock: 0n,
+    toBlock: 'latest',
+    args: {
+      from: params.walletAddress,
+    },
+  });
+  const incoming = await pc.getContractEvents({
+    address: params.ftkAddress,
+    abi: FaucetTokenInfo.abi,
+    eventName: 'Transfer',
+    fromBlock: 0n,
+    toBlock: 'latest',
+    args: {
+      to: params.walletAddress,
+    }
+  });
+
+  return {incoming, outgoing};
+}
 
 /** approves spending for faucet token contract. Also distributes to each client */
 export async function ftkApprove(opts: ftkApproveOptions) {

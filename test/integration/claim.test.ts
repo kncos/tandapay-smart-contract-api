@@ -2,6 +2,7 @@ import { ChildProcess } from "child_process";
 import {
   deployFaucetToken,
   deployTandaPay,
+  getFtkTransactions,
   spawnAnvil,
 } from "../helpers/tandapay_test_helpers";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
@@ -10,6 +11,8 @@ import {
   TandaPayLog,
   toTandaPayLogs,
 } from "tandapay_manager/read/types";
+import { formatEther } from "viem";
+import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
@@ -34,34 +37,13 @@ beforeAll(async () => {
 });
 
 describe("testing claims, defectors, etc.", () => {
-  it("a claim can successfully be made, whitelisted, and paid out", async () => {
+  it("A claim can be submitted, whitelisted, and paid out", async () => {
     // first, we'll get into the default state. This should do all of the initial
     // setup, having members pay their initial premiums then advancing to the
     // first period
-    await suite.toDefaultState();
+    await suite.toPeriodAfterClaim();
 
-    const advanceTimeLogs: string[] = [];
-    // we'll advance through the period like normal now:
-    let l = await suite.advanceTimeAndIssueRefunds();
-    advanceTimeLogs.push(...l);
-    // this will be the id of our claimant
-    const claimant_id = 3;
-    // they'll submit a claim
-    l = await suite.advanceTimeAndSubmitClaims([claimant_id]);
-    advanceTimeLogs.push(...l);
-    // the secretary will whitelist it
-    l = await suite.advanceTimeAndWhitelistClaims(true);
-    advanceTimeLogs.push(...l);
-    // we'll advance time and everyone will pay their premiums like normal
-    l = await suite.advanceTimeAndPayPremiums();
-    advanceTimeLogs.push(...l);
-    // finally advance to the next period
-    l = await suite.advanceTimeAndAdvancePeriod();
-    advanceTimeLogs.push(...l);
-    // NOTE: at this point, we could advance time and have them withdraw their fund or forfeit it
-
-    expect(advanceTimeLogs.length).toBe(0);
-    // we do this just to make sure that we get all of the logs
+    // we mine just to make sure that we get all of the logs
     await suite.testClient.mine({ blocks: 100 });
     const logs = toTandaPayLogs(
       await suite.secretary.events.getLogs({
@@ -69,7 +51,6 @@ describe("testing claims, defectors, etc.", () => {
         toBlock: "latest",
       }),
     );
-    // we'll omit these since we aren't interested
 
     // we'll get the appropriate logs we're interested in
     const l1 =
@@ -81,9 +62,50 @@ describe("testing claims, defectors, etc.", () => {
     // narrow the types
     const submitted = l1 as TandaPayLog<"claimSubmitted">
     const whitelisted = l2 as TandaPayLog<"claimWhitelisted">
-    // ensure they're the same
+
+    // ensure that the claim we submitted and the claim that was whitelisted
+    // were the same
     expect(submitted.args.claimId).toBe(whitelisted.args.cId);
+
+    // let's get their balance before they withdraw their claim fund
+    const beforeBalance = await suite.getFtkBalanceOf(DEFAULT_CLAIMANT_INDEX);
+
+    // now have the claimant claim their funds
+    const possErr = await suite.advanceTimeAndWithdrawClaimFund({ include: [DEFAULT_CLAIMANT_INDEX], forfeit: false });
+    expect(possErr.length).toBe(0);
+
+    // get their balance after they withdraw their claim fund
+    const afterBalance = await suite.getFtkBalanceOf(DEFAULT_CLAIMANT_INDEX);
+
+    // get the claim info for this specific claim. We'll use the whitelisted claim Id from
+    // the event that was fetched earlier
+    const lastperiod = (await suite.secretary.read.getCurrentPeriodId()) - 1n;
+    const claimInfo = await suite.secretary.read.getClaimInfo(lastperiod, whitelisted.args.cId!);
+
+    // we expect the difference to be the claim amount
+    expect(afterBalance-claimInfo.amount).toBe(beforeBalance);
   }, 30000);
+
+  it("Defection works", async () => {
+    await suite.toPeriodAfterClaim();
+    console.log(await suite.timeline.getCurrentDayInPeriod());
+    let errs = await suite.advanceTimeAndDefect({include: [DEFAULT_DEFECTOR]});
+    console.log(await suite.timeline.getCurrentDayInPeriod());
+    errs.push(...(await suite.advanceTimeAndPayPremiums()));
+    console.log(await suite.timeline.getCurrentDayInPeriod());
+    errs.push(...(await suite.advanceTimeAndAdvancePeriod()));
+    console.log(await suite.timeline.getCurrentDayInPeriod());
+    console.log(errs);
+
+    const logs = toTandaPayLogs(
+      await suite.secretary.events.getLogs({
+        fromBlock: 0n,
+        toBlock: "latest",
+      }),
+    ).filter(e => !logsToOmit.includes(e.alias)).map(l => l.alias);
+
+    console.log(logs);
+  });
 });
 
 afterAll(() => anvil.kill());

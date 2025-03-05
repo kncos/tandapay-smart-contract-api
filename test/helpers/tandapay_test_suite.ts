@@ -14,6 +14,7 @@ import {
   makeTestClient,
   makeAccounts,
   ftkApprove,
+  getFtkBalance,
 } from "./tandapay_test_helpers";
 import TandaPayTimeline from "./tandapay_timeline";
 import { filterAndValidate, Validators } from "utils";
@@ -21,6 +22,7 @@ import {
   NUM_TEST_ACCOUNTS,
   DEFAULT_FTK_BALANCE,
   DEFAULT_COVERAGE_REQUIREMENT,
+  DEFAULT_CLAIMANT_INDEX,
 } from "../test_config";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
@@ -66,6 +68,7 @@ export class TandaPayTestSuite {
    * all of the members join the community and apporve their subgroup assignments
    */
   protected defaultStateDump: DumpStateReturnType | null = null;
+  protected periodAfterClaimDump: DumpStateReturnType | null = null;
 
   constructor(ftkAddress: Address, tpAddress: Address) {
     this.ftkAddress = ftkAddress;
@@ -88,6 +91,13 @@ export class TandaPayTestSuite {
       amount: DEFAULT_FTK_BALANCE,
       amountToDistribute: DEFAULT_FTK_BALANCE,
     });
+  }
+  
+  async getFtkBalanceOf(managerIndex: number) {
+    if (managerIndex < 0 || managerIndex >= this.managers.length)
+      throw new Error("manager index out of bounds!");
+
+    return getFtkBalance({ftkAddress: this.ftkAddress, walletAddress: this.accounts[managerIndex].address});
   }
 
   async toDefaultState(useCacheIfExists: boolean = true) {
@@ -138,6 +148,44 @@ export class TandaPayTestSuite {
     // cache default state
     this.defaultStateDump = await this.testClient.dumpState();
     return this.defaultStateDump;
+  }
+
+  async toPeriodAfterClaim(
+    useCacheIfExists: boolean = true, 
+    opts: {claimants: number[], wontPayPremiums: number[]} = {
+      claimants: [DEFAULT_CLAIMANT_INDEX],
+      wontPayPremiums: [],
+    }
+  ) {
+    if (useCacheIfExists && this.periodAfterClaimDump) {
+      await this.testClient.loadState({ state: this.periodAfterClaimDump });
+      return this.periodAfterClaimDump;
+    } else if (useCacheIfExists) {
+      await this.toDefaultState(useCacheIfExists);
+    }
+
+    const logs: string[] = [];
+    // we'll advance through the period like normal now:
+    let l = await this.advanceTimeAndIssueRefunds();
+    logs.push(...l);
+    // they'll submit a claim
+    l = await this.advanceTimeAndSubmitClaims([DEFAULT_CLAIMANT_INDEX]);
+    logs.push(...l);
+    // the secretary will whitelist it
+    l = await this.advanceTimeAndWhitelistClaims(true);
+    logs.push(...l);
+    // we'll advance time and everyone will pay their premiums like normal
+    l = await this.advanceTimeAndPayPremiums({exclude: opts.wontPayPremiums});
+    logs.push(...l);
+    // finally advance to the next period
+    l = await this.advanceTimeAndAdvancePeriod();
+    logs.push(...l);
+
+    if (l.length != 0)
+      console.warn("!!! in toPeriodAfterClaim !!!\n", l.join('\n'));
+
+    this.periodAfterClaimDump = await this.testClient.dumpState();
+    return this.periodAfterClaimDump;
   }
 
   private async advanceTimeAndDoAction(
@@ -216,6 +264,18 @@ export class TandaPayTestSuite {
     });
   };
 
+  advanceTimeAndDefect = async (params: DoActionForEachManagerParams) =>
+    await this.advanceTimeAndDoAction(
+      async () => {
+        await this.timeline.advanceToDefectDay();
+      },
+      async () => {
+        const indices = this.filterManagerIndices(params);
+        for (const i of indices)
+          await this.managers[i].write.member.defectFromCommunity();
+      },
+    );
+
   advanceTimeAndIssueRefunds = async () =>
     await this.advanceTimeAndDoAction(
       async () => {
@@ -292,22 +352,21 @@ export class TandaPayTestSuite {
     );
 
   advanceTimeAndWithdrawClaimFund = async (
-    claimants: number[],
-    forfeit: boolean = false,
+    params: DoActionForEachManagerParams & { forfeit?: boolean }
   ) =>
     await this.advanceTimeAndDoAction(
       async () => {
         await this.timeline.advanceToWithdrawClaimFundDay();
       },
       async () => {
+        const {forfeit, ...rest} = params;
+
         // Get all of the unique claimants with validation
-        const uniqueClaimants = this.filterManagerIndices({
-          include: claimants,
-        });
+        const uniqueClaimants = this.filterManagerIndices(rest);
 
         // Have each one submit a claim
         for (const c of uniqueClaimants) {
-          await this.managers[c].write.member.withdrawClaimFund(forfeit);
+          await this.managers[c].write.member.withdrawClaimFund(forfeit !== undefined ? forfeit : false);
         }
       },
     );

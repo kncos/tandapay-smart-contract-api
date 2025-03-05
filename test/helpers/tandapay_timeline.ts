@@ -14,6 +14,7 @@ export default class TandaPayTimeline {
   read: TandaPayReadMethods;
   testClient: TestClientWithPublicActions;
 
+  public readonly DEFECT_DAY = 1.5;
   public readonly REFUNDS_DAY = 3.5;
   public readonly SUBMIT_CLAIMS_DAY = 7;
   public readonly WHITELIST_CLAIMS_DAY = 14;
@@ -21,6 +22,8 @@ export default class TandaPayTimeline {
   public readonly PAY_PREMIUMS_DAY = 28;
 
   // simple aliases to advance to the day constants specified above easily
+  advanceToDefectDay = async () =>
+    await this.advanceToDayInPeriod(this.DEFECT_DAY);
   advanceToRefundsDay = async () =>
     await this.advanceToDayInPeriod(this.REFUNDS_DAY);
   advanceToSubmitClaimsDay = async () =>
@@ -67,6 +70,7 @@ export default class TandaPayTimeline {
   async advanceToDayInPeriod(day: number) {
     const currentDay = Math.floor(await this.getCurrentDayInPeriod());
     const daysToAdvance = day - currentDay;
+    console.log(`advancing to day ${day}, currentDay: ${currentDay}, days to advance: ${daysToAdvance}`);
     if (daysToAdvance <= 0) {
       return Promise.reject(
         new Error(

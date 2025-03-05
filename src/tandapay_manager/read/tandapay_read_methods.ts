@@ -91,6 +91,7 @@ export default class TandaPayReadMethods<
   getSubgroupInfo = async (subgroupId: bigint): Promise<SubgroupInfo> =>
     await this.read.getSubGroupIdToSubGroupInfo([subgroupId]);
 
+  //! add integration test
   /**
    * Get information about a claim, given a period and claim ID
    * @param periodId period Id in which the claim occurred
@@ -127,6 +128,7 @@ export default class TandaPayReadMethods<
   getClaimIdsInPeriod = async (periodId: bigint) =>
     await this.read.getPeriodIdToClaimIds([periodId]);
 
+  //! add integration test
   /**
    * Retrieve a list of defectors' member IDs in a given period
    * @param periodId The period to query for defectors
@@ -149,6 +151,7 @@ export default class TandaPayReadMethods<
   getMemberIdFromAddress = async (walletAddress: Hex) =>
     await this.read.getMemberToMemberId([walletAddress]);
 
+  //! add integration test
   /**
    * Retrieve whitelisted claims that occurred in a given period
    * @param periodId The period ID to query for whitelisted claims

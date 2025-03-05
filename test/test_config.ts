@@ -20,3 +20,6 @@ export const TEST_MODE = "anvil";
 /** mnemonic used to generate accounts used in testing */
 export const TEST_ACCOUNT_MNEMONIC =
   "test test test test test test test test test test test junk";
+
+export const DEFAULT_CLAIMANT_INDEX = 1;
+export const DEFAULT_DEFECTOR = 2;
