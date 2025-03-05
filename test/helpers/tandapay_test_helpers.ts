@@ -228,7 +228,7 @@ export async function getFtkBalance(params: {ftkAddress: Address, walletAddress:
 }
 
 export async function getFtkTransactions(params: {ftkAddress: Address, walletAddress: Address}) {
-  let pc = makeTestClient().extend(publicActions);
+  const pc = makeTestClient().extend(publicActions);
   const outgoing = await pc.getContractEvents({
     address: params.ftkAddress,
     abi: FaucetTokenInfo.abi,

@@ -70,7 +70,7 @@ export default class TandaPayTimeline {
   async advanceToDayInPeriod(day: number) {
     const currentDay = Math.floor(await this.getCurrentDayInPeriod());
     const daysToAdvance = day - currentDay;
-    console.log(`advancing to day ${day}, currentDay: ${currentDay}, days to advance: ${daysToAdvance}`);
+    //console.log(`advancing to day ${day}, currentDay: ${currentDay}, days to advance: ${daysToAdvance}`);
     if (daysToAdvance <= 0) {
       return Promise.reject(
         new Error(
@@ -87,10 +87,11 @@ export default class TandaPayTimeline {
     const periodInfo = await this.getCurrentPeriodInfo();
     const timestamp = await this.getCurrentBlockTimestamp();
     if (periodInfo.endTimestamp < timestamp) {
-      return Promise.reject(new Error(`already at the end of the period!`));
+      return Promise.reject(new Error(`already at the end of the period! eop: ${periodInfo.endTimestamp}, cur timestamp: ${timestamp}`));
     }
 
     const offset = periodInfo.endTimestamp - timestamp;
+    //console.log(`advancing to EOP, currentDay: ${await this.getCurrentDayInPeriod()}, days to advance: ${Number(offset) / DAYS_IN_SECONDS}`);
     // add an extra day for good measure
     await advanceTime(Number(offset) + DAYS_IN_SECONDS);
   }

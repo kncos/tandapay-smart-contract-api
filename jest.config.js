@@ -5,4 +5,5 @@ export default {
     "^.+.tsx?$": ["ts-jest", {}],
   },
   moduleDirectories: ["node_modules", "src"],
+  testTimeout: 30000,
 };

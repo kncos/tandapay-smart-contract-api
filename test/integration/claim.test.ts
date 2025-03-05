@@ -11,7 +11,7 @@ import {
   TandaPayLog,
   toTandaPayLogs,
 } from "tandapay_manager/read/types";
-import { formatEther } from "viem";
+import { DumpStateReturnType, formatEther } from "viem";
 import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
 
 let anvil: ChildProcess;
@@ -29,19 +29,34 @@ const logsToOmit: TandaPayEventAlias[] = [
   "enteredDefaultState",
 ];
 
-beforeAll(async () => {
+//let dump: DumpStateReturnType;
+
+//beforeAll(async () => {
+//  anvil = await spawnAnvil();
+//  const fa = await deployFaucetToken();
+//  const ta = await deployTandaPay(fa);
+//  suite = new TandaPayTestSuite(fa, ta);
+//  await suite.toDefaultState();
+//  dump = await suite.getDump();
+//}, 30000);
+
+beforeEach(async () => {
   anvil = await spawnAnvil();
   const fa = await deployFaucetToken();
   const ta = await deployTandaPay(fa);
   suite = new TandaPayTestSuite(fa, ta);
+  //await suite.toDefaultState();
 });
+afterEach(async () => {
+  anvil.kill();
+})
 
 describe("testing claims, defectors, etc.", () => {
   it("A claim can be submitted, whitelisted, and paid out", async () => {
     // first, we'll get into the default state. This should do all of the initial
     // setup, having members pay their initial premiums then advancing to the
     // first period
-    await suite.toPeriodAfterClaim();
+    await suite.toPeriodAfterClaim({alreadyInDefault: false});
 
     // we mine just to make sure that we get all of the logs
     await suite.testClient.mine({ blocks: 100 });
@@ -87,25 +102,28 @@ describe("testing claims, defectors, etc.", () => {
   }, 30000);
 
   it("Defection works", async () => {
-    await suite.toPeriodAfterClaim();
-    console.log(await suite.timeline.getCurrentDayInPeriod());
-    let errs = await suite.advanceTimeAndDefect({include: [DEFAULT_DEFECTOR]});
-    console.log(await suite.timeline.getCurrentDayInPeriod());
-    errs.push(...(await suite.advanceTimeAndPayPremiums()));
-    console.log(await suite.timeline.getCurrentDayInPeriod());
-    errs.push(...(await suite.advanceTimeAndAdvancePeriod()));
-    console.log(await suite.timeline.getCurrentDayInPeriod());
-    console.log(errs);
+    await suite.toPeriodAfterClaim({alreadyInDefault: false});
+    const block = await suite.testClient.getBlock();
 
-    const logs = toTandaPayLogs(
-      await suite.secretary.events.getLogs({
-        fromBlock: 0n,
-        toBlock: "latest",
-      }),
-    ).filter(e => !logsToOmit.includes(e.alias)).map(l => l.alias);
+    const errors: string[] = [];
+    errors.push(...(await suite.advanceTimeAndDefect({include: [DEFAULT_DEFECTOR, 5]})));
+    errors.push(...(await suite.advanceTimeAndPayPremiums()));
+    errors.push(...(await suite.advanceTimeAndAdvancePeriod()));
+    if (errors.length > 0)
+      console.log(errors.join('\n'));
 
-    console.log(logs);
+    let tandapayLogs = toTandaPayLogs((await suite.secretary.events.getLogs({
+      fromBlock: 0n,
+      toBlock: 'latest',
+    }))).filter(log => !logsToOmit.includes(log.alias));
+
+    // print all log aliases except the ones we omitted
+    console.log(tandapayLogs.find(l => l.alias === "memberDefected"));
+
+    let state = await suite.secretary.read.getCommunityState();
+    console.log(state)
   });
+
 });
 
-afterAll(() => anvil.kill());
+//afterAll(() => anvil.kill());

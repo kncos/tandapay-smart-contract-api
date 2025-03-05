@@ -33,6 +33,12 @@ export type DoActionForEachManagerParams = {
   exclude?: number[];
 };
 
+export type ToPeriodAfterClaimParameters = {
+  alreadyInDefault?: boolean;
+  claimants?: number[];
+  wontPayPremium?: number[];
+}
+
 export class TandaPayTestSuite {
   /** Address where the TandaPay smart contract has been deployed */
   public readonly tpAddress: Address;
@@ -67,8 +73,9 @@ export class TandaPayTestSuite {
    * A dump of the test network upon first getting to the default state and having
    * all of the members join the community and apporve their subgroup assignments
    */
-  protected defaultStateDump: DumpStateReturnType | null = null;
-  protected periodAfterClaimDump: DumpStateReturnType | null = null;
+  //public afterDeploymentDump: DumpStateReturnType | null = null;
+  //public defaultStateDump: DumpStateReturnType | null = null;
+  //public periodAfterClaimDump: DumpStateReturnType | null = null;
 
   constructor(ftkAddress: Address, tpAddress: Address) {
     this.ftkAddress = ftkAddress;
@@ -100,12 +107,10 @@ export class TandaPayTestSuite {
     return getFtkBalance({ftkAddress: this.ftkAddress, walletAddress: this.accounts[managerIndex].address});
   }
 
-  async toDefaultState(useCacheIfExists: boolean = true) {
-    if (useCacheIfExists && this.defaultStateDump) {
-      await this.testClient.loadState({ state: this.defaultStateDump });
-      return this.defaultStateDump;
-    }
+  loadDump = async (dump: DumpStateReturnType) => await this.testClient.loadState({state: dump});
+  getDump = async () => await this.testClient.dumpState();
 
+  async toDefaultState() {
     // in order for them to spend FTK joining the community, and later
     // paying premiums and other stuff, we'll need to make sure that they
     // have FTK and that they've approved the tandapay contract to spend
@@ -144,48 +149,36 @@ export class TandaPayTestSuite {
       await m.write.member.payPremium();
     }
     await this.secretary.write.secretary.advancePeriod();
-
-    // cache default state
-    this.defaultStateDump = await this.testClient.dumpState();
-    return this.defaultStateDump;
   }
 
-  async toPeriodAfterClaim(
-    useCacheIfExists: boolean = true, 
-    opts: {claimants: number[], wontPayPremiums: number[]} = {
-      claimants: [DEFAULT_CLAIMANT_INDEX],
-      wontPayPremiums: [],
-    }
-  ) {
-    if (useCacheIfExists && this.periodAfterClaimDump) {
-      await this.testClient.loadState({ state: this.periodAfterClaimDump });
-      return this.periodAfterClaimDump;
-    } else if (useCacheIfExists) {
-      await this.toDefaultState(useCacheIfExists);
-    }
+  async toPeriodAfterClaim(params: ToPeriodAfterClaimParameters) {
+    if (params.alreadyInDefault === undefined || params.alreadyInDefault === false)
+      await this.toDefaultState(); 
 
     const logs: string[] = [];
     // we'll advance through the period like normal now:
     let l = await this.advanceTimeAndIssueRefunds();
+    //console.log(`issuing refunds. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // they'll submit a claim
-    l = await this.advanceTimeAndSubmitClaims([DEFAULT_CLAIMANT_INDEX]);
+    l = await this.advanceTimeAndSubmitClaims(params.claimants ? params.claimants : [DEFAULT_CLAIMANT_INDEX]);
+    //console.log(`submitting claims. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // the secretary will whitelist it
     l = await this.advanceTimeAndWhitelistClaims(true);
+    //console.log(`whitelisting claims. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // we'll advance time and everyone will pay their premiums like normal
-    l = await this.advanceTimeAndPayPremiums({exclude: opts.wontPayPremiums});
+    l = await this.advanceTimeAndPayPremiums({exclude: params.wontPayPremium});
+    //console.log(`paying premiums. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // finally advance to the next period
     l = await this.advanceTimeAndAdvancePeriod();
+    //console.log(`advancing period. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
 
     if (l.length != 0)
       console.warn("!!! in toPeriodAfterClaim !!!\n", l.join('\n'));
-
-    this.periodAfterClaimDump = await this.testClient.dumpState();
-    return this.periodAfterClaimDump;
   }
 
   private async advanceTimeAndDoAction(
@@ -347,6 +340,7 @@ export class TandaPayTestSuite {
         await this.timeline.advancePastEndOfPeriod();
       },
       async () => {
+        const f = async () => await this.secretary.read.getCurrentPeriodId();
         await this.secretary.write.secretary.advancePeriod();
       },
     );
