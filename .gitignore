@@ -3,4 +3,5 @@ dist
 .pnpm/
 .pnpm-debug.log
 coverage/
-old.txt
+old.md
+member-info.json

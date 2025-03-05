@@ -13,6 +13,7 @@ import {
 } from "tandapay_manager/read/types";
 import { DumpStateReturnType, formatEther } from "viem";
 import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
+import { memberInfoJsonReplacer } from "types";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
@@ -105,9 +106,11 @@ describe("testing claims, defectors, etc.", () => {
     await suite.toPeriodAfterClaim({alreadyInDefault: false});
     const block = await suite.testClient.getBlock();
 
+    const defectors = [DEFAULT_DEFECTOR, 5];
+
     const errors: string[] = [];
-    errors.push(...(await suite.advanceTimeAndDefect({include: [DEFAULT_DEFECTOR, 5]})));
-    errors.push(...(await suite.advanceTimeAndPayPremiums()));
+    errors.push(...(await suite.advanceTimeAndDefect({include: [DEFAULT_DEFECTOR]})));
+    errors.push(...(await suite.advanceTimeAndPayPremiums({exclude: [DEFAULT_DEFECTOR]})));
     errors.push(...(await suite.advanceTimeAndAdvancePeriod()));
     if (errors.length > 0)
       console.log(errors.join('\n'));
@@ -118,10 +121,15 @@ describe("testing claims, defectors, etc.", () => {
     }))).filter(log => !logsToOmit.includes(log.alias));
 
     // print all log aliases except the ones we omitted
-    console.log(tandapayLogs.find(l => l.alias === "memberDefected"));
+    //console.log(tandapayLogs.find(l => l.alias === "memberDefected"));
+
+    for (let i = 1n; i <= 15n; i++) {
+      let mInfo = await suite.secretary.read.getMemberInfoFromId(i);
+      console.log(JSON.stringify(mInfo,memberInfoJsonReplacer,2));
+    }
 
     let state = await suite.secretary.read.getCommunityState();
-    console.log(state)
+    //console.log(state)
   });
 
 });
