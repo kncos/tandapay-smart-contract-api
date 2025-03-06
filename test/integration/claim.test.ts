@@ -57,7 +57,6 @@ describe("testing claims, defectors, etc.", () => {
     // setup, having members pay their initial premiums then advancing to the
     // first period
     await suite.toPeriodAfterClaim({alreadyInDefault: false});
-
     // we mine just to make sure that we get all of the logs
     await suite.testClient.mine({ blocks: 100 });
     const logs = toTandaPayLogs(
@@ -114,14 +113,14 @@ describe("testing claims, defectors, etc.", () => {
     const allErrors: string[] = [];
     for (const op of ops) {
       const errors = await op();
-      if (errors && errors.length > 0)
+      if (Array.isArray(errors) && errors && errors.length > 0)
         allErrors.push(...errors);
     }
 
     return allErrors;
   }
 
-  it("one defector, doesn't pay last premium, community remains in default state. *Defector should become USER_QUIT*", async () => {
+  it("one defector, doesn't pay last premium, community remains in default state.", async () => {
     // perform setup
     const claimants = [DEFAULT_CLAIMANT_INDEX];
     const defectors = [DEFAULT_DEFECTOR];
@@ -152,12 +151,12 @@ describe("testing claims, defectors, etc.", () => {
       const defectorInfo = await suite.secretary.read.getMemberInfoFromId(BigInt(DEFAULT_DEFECTOR)+1n);
       expect(isAddressEqual(defectorAddress, defectorInfo.walletAddress)).toBe(true);
 
-      //! here, we expect them to be UserQuit because we're still in the default state
-      expect(defectorInfo.memberStatus).toBe(MemberStatus.UserQuit);
+      expect(defectorInfo.subgroupId).toBe(0n);
 
       // they shouldn't have any funds in their savings or community escrow (it should all be in pending)
       expect(defectorInfo.communityEscrowAmount).toBe(0n);
       expect(defectorInfo.savingsEscrowAmount).toBe(0n);
+
       // they shouldn't have coverage this period or have their premium paid
       expect(defectorInfo.isEligibleForCoverageThisPeriod).toBe(false);
       expect(defectorInfo.isPremiumPaidThisPeriod).toBe(false);
@@ -166,7 +165,7 @@ describe("testing claims, defectors, etc.", () => {
     const communityState = await suite.secretary.read.getCommunityState();
     expect(communityState).toBe(TandaPayState.Default);
     const currentPeriod = await suite.secretary.read.getCurrentPeriodId();
-    const defectorIds = await suite.secretary.read.getClaimIdsInPeriod(currentPeriod-1n);
+    const defectorIds = await suite.secretary.read.getDefectorMemberIdsInPeriod(currentPeriod-1n);
     expect(defectorIds.length).toBe(defectors.length);
   });
 
