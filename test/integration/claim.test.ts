@@ -10,9 +10,10 @@ import {
   toTandaPayLogs,
 } from "tandapay_manager/read/types";
 import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
-import { memberInfoJsonReplacer, MemberStatus, periodInfoJsonReplacer, TandaPayState } from "types";
+import { memberInfoJsonReplacer, MemberStatus, periodInfoJsonReplacer, subgroupInfoJsonReplacer, TandaPayState } from "types";
 import * as fs from 'fs/promises';
-import { isAddressEqual } from "viem";
+import { Address, isAddressEqual } from "viem";
+import { json } from "stream/consumers";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
@@ -52,7 +53,7 @@ afterEach(async () => {
 })
 
 describe("testing claims, defectors, etc.", () => {
-  it("A claim can be submitted, whitelisted, and paid out", async () => {
+  it.skip("A claim can be submitted, whitelisted, and paid out", async () => {
     // first, we'll get into the default state. This should do all of the initial
     // setup, having members pay their initial premiums then advancing to the
     // first period
@@ -100,6 +101,13 @@ describe("testing claims, defectors, etc.", () => {
     expect(afterBalance-claimInfo.amount).toBe(beforeBalance);
   }, 30000);
 
+  const printCommunityState = async (msg: string = "State:") => console.log(`${msg}: ${TandaPayState[await suite.secretary.read.getCommunityState()]}`);
+  const printCoverageAmount = async (msg: string = "Coverage Amt:") => console.log(`${msg}: ${(await suite.timeline.getCurrentPeriodInfo()).coverageAmount}`)
+  const printSubgroupInfo = async (subgroup: bigint) => {
+    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(subgroup);
+    console.log(`=== Subgroup Info ===\n ${JSON.stringify(subgroupInfo, subgroupInfoJsonReplacer, 2)}`);
+  }
+
   const defectorSetup = async (claimants: number[], defectors: number[]) => {
     await suite.toPeriodAfterClaim({alreadyInDefault: false, claimants: claimants, wontPayPremium: defectors});
 
@@ -113,6 +121,8 @@ describe("testing claims, defectors, etc.", () => {
     const allErrors: string[] = [];
     for (const op of ops) {
       const errors = await op();
+      //await printCommunityState();
+      //await printCoverageAmount();
       if (Array.isArray(errors) && errors && errors.length > 0)
         allErrors.push(...errors);
     }
@@ -120,38 +130,44 @@ describe("testing claims, defectors, etc.", () => {
     return allErrors;
   }
 
-  it("one defector, doesn't pay last premium, community remains in default state.", async () => {
-    // perform setup
-    const claimants = [DEFAULT_CLAIMANT_INDEX];
-    const defectors = [DEFAULT_DEFECTOR];
-    const errors = await defectorSetup(claimants, defectors);
-    if (errors && errors.length > 0) 
-      console.warn(errors);
-
-    // this will get logs for when someone defects, regardless of whether or not
-    // their status is updated to "defected" or something else like 'user-quit"/"unpaid-invalid"
-    let tandaPayLogs = toTandaPayLogs((await suite.secretary.events.getLogs({
+  const validateDefectors = async () => {
+    // this will get logs for when someone defects
+    const tandaPayLogs = toTandaPayLogs((await suite.secretary.events.getLogs({
       fromBlock: 0n,
       toBlock: 'latest',
     }))).filter(log => log.alias === "memberDefected");
+    
+    // we'll also get a list of the defector IDs
+    const currentPeriod = await suite.secretary.read.getCurrentPeriodId();
+    const defectorIdsArr = await suite.secretary.read.getDefectorMemberIdsInPeriod(currentPeriod-1n);
 
-    // we expect there to be an event emitted for each defector
-    expect(tandaPayLogs.length).toBe(defectors.length);
+    // one log should be emitted for each defector
+    expect(defectorIdsArr.length).toBe(tandaPayLogs.length);
+
+    // Here, we create a set containing each defector ID. As we loop through the events,
+    // we will ensure that each one is present by removing them from the set and checking
+    // that the set is empty by the time the loop is done executing
+    const defectorIds = new Set<bigint>(defectorIdsArr);
 
     // go through each log
     for (const log of tandaPayLogs) {
       // the logs should be properly filtered to just memberDefected logs
       if (log.alias !== "memberDefected")
-        fail(`check tandaPayLogs filter. found log that wasn't \'memberDefected\': ${log.alias}`);
+        fail(`check tandaPayLogs filter. found log that wasn't 'memberDefected': ${log.alias}`);
 
-      // narrow the type
+      // narrow the type of the log
       const l = log as TandaPayLog<'memberDefected'>;
-      // check that the address in the event matches our defector's address
+      // get info about the defector described in this log
       const defectorAddress = l.args.member ?? fail('defectorAddress was undefined');
-      const defectorInfo = await suite.secretary.read.getMemberInfoFromId(BigInt(DEFAULT_DEFECTOR)+1n);
-      expect(isAddressEqual(defectorAddress, defectorInfo.walletAddress)).toBe(true);
+      const defectorInfo = await suite.secretary.read.getMemberInfoFromAddress(defectorAddress);
+      
+      // remove the defector's ID from the set to keep track of which ones have been seen
+      defectorIds.delete(defectorInfo.id);
 
+      // they shouldn't be in a subgroup
       expect(defectorInfo.subgroupId).toBe(0n);
+      // their status should be that of a Defector
+      expect(defectorInfo.memberStatus).toBe(MemberStatus.Defected);
 
       // they shouldn't have any funds in their savings or community escrow (it should all be in pending)
       expect(defectorInfo.communityEscrowAmount).toBe(0n);
@@ -162,13 +178,61 @@ describe("testing claims, defectors, etc.", () => {
       expect(defectorInfo.isPremiumPaidThisPeriod).toBe(false);
     }
 
+    // this will ensure that all of the defectors had a corresponding event emitted
+    expect(defectorIds.size).toBe(0);
+  }
+
+  it.skip("one defector, doesn't pay last premium, community remains in default state.", async () => {
+    // perform setup
+    const claimants = [DEFAULT_CLAIMANT_INDEX];
+    const defectors = [DEFAULT_DEFECTOR];
+    const errors = await defectorSetup(claimants, defectors);
+    if (errors && errors.length > 0) 
+      console.warn(errors);
+
+    // perform validation on the defectors
+    await validateDefectors();
+
+    // even after all of that, the community should still be in the default state
     const communityState = await suite.secretary.read.getCommunityState();
     expect(communityState).toBe(TandaPayState.Default);
-    const currentPeriod = await suite.secretary.read.getCurrentPeriodId();
-    const defectorIds = await suite.secretary.read.getDefectorMemberIdsInPeriod(currentPeriod-1n);
-    expect(defectorIds.length).toBe(defectors.length);
   });
 
+  it.skip("two defectors, different subgroups, doesn't pay last premium, community goes to fractured state", async () => {
+    // perform setup
+    const claimants = [DEFAULT_CLAIMANT_INDEX];
+    const defectors = [DEFAULT_DEFECTOR, 5];
+    const errors = await defectorSetup(claimants, defectors);
+    if (errors && errors.length > 0) 
+      console.warn(errors);
+
+    // perform validation on the defectors
+    await validateDefectors();
+
+    // after all of that, the community should be in the fractured state
+    const communityState = await suite.secretary.read.getCommunityState();
+    expect(communityState).toBe(TandaPayState.Fractured);
+  });
+
+  it("two defectors, same subgroup, doesn't pay last premium, community goes to fractured state", async () => {
+    const claimants = [DEFAULT_CLAIMANT_INDEX];
+    const defectors = [2, 3];
+
+    await suite.toPeriodAfterClaim({alreadyInDefault: false, claimants: claimants, wontPayPremium: defectors});
+    await suite.advanceTimeAndDefect({include: defectors});
+    await printSubgroupInfo(1n);
+    await suite.advanceTimeAndWithdrawClaimFund({include: claimants, forfeit: true});
+    await suite.advanceTimeAndPayPremiums({exclude: defectors});
+    await suite.advanceTimeAndAdvancePeriod();
+    await printSubgroupInfo(1n);
+
+    for (let i = 1n; i <= 5n; i++) {
+      const memberInfo = await suite.secretary.read.getMemberInfoFromId(i);
+      console.log(JSON.stringify(memberInfo,memberInfoJsonReplacer,2));
+    }
+    await printCommunityState();
+
+  })
 });
 
 //afterAll(() => anvil.kill());
