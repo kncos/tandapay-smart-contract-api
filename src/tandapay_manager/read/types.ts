@@ -58,6 +58,8 @@ export const RawEventNameToAliasMapping = {
   SecretaryTransferred: "secretaryRoleTransferred",
   ShortFallDivided: "shortfallDivided",
   SubGroupCreated: "newSubgroupCreated",
+  //! added by me
+  FundClaimFailed: "fundClaimFailed",
 } as const;
 
 /** This maps all of our aliases to their corresponding ABI event names */
@@ -97,6 +99,8 @@ export const AliasToRawEventNameMapping = {
   secretaryRoleTransferred: "SecretaryTransferred",
   shortfallDivided: "ShortFallDivided",
   newSubgroupCreated: "SubGroupCreated",
+  //! added by me
+  fundClaimFailed: "FundClaimFailed",
 } as const;
 
 /** Accepts a raw TandaPay event name and returns an abi item for that event */

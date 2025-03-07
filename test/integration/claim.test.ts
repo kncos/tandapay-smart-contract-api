@@ -221,7 +221,7 @@ describe("testing claims, defectors, etc.", () => {
     await suite.toPeriodAfterClaim({alreadyInDefault: false, claimants: claimants, wontPayPremium: defectors});
     await suite.advanceTimeAndDefect({include: defectors});
     await printSubgroupInfo(1n);
-    await suite.advanceTimeAndWithdrawClaimFund({include: claimants, forfeit: true});
+    await suite.advanceTimeAndWithdrawClaimFund({include: claimants, forfeit: false});
     await suite.advanceTimeAndPayPremiums({exclude: defectors});
     await suite.advanceTimeAndAdvancePeriod();
     await printSubgroupInfo(1n);
@@ -232,6 +232,14 @@ describe("testing claims, defectors, etc.", () => {
     }
     await printCommunityState();
 
+    // let's get the info from this
+    let fundClaimFailed = toTandaPayLogs(await suite.secretary.events.getLogs({
+      event: 'fundClaimFailed',
+      fromBlock: 0n,
+      toBlock: 'latest',
+    })).find(e => e.alias === "fundClaimFailed") as TandaPayLog<"fundClaimFailed">;
+
+    console.log(fundClaimFailed);
   })
 });
 
