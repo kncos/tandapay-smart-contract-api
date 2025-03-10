@@ -214,33 +214,51 @@ describe("testing claims, defectors, etc.", () => {
     expect(communityState).toBe(TandaPayState.Fractured);
   });
 
-  it("two defectors, same subgroup, doesn't pay last premium, community goes to fractured state", async () => {
+  it.skip("two defectors, same subgroup, doesn't pay last premium, community goes to fractured state", async () => {
     const claimants = [DEFAULT_CLAIMANT_INDEX];
     const defectors = [2, 3];
 
     await suite.toPeriodAfterClaim({alreadyInDefault: false, claimants: claimants, wontPayPremium: defectors});
     await suite.advanceTimeAndDefect({include: defectors});
-    await printSubgroupInfo(1n);
+    //await printSubgroupInfo(1n);
     await suite.advanceTimeAndWithdrawClaimFund({include: claimants, forfeit: false});
     await suite.advanceTimeAndPayPremiums({exclude: defectors});
     await suite.advanceTimeAndAdvancePeriod();
-    await printSubgroupInfo(1n);
+    //await printSubgroupInfo(1n);
 
-    for (let i = 1n; i <= 5n; i++) {
-      const memberInfo = await suite.secretary.read.getMemberInfoFromId(i);
-      console.log(JSON.stringify(memberInfo,memberInfoJsonReplacer,2));
+    const communityState = await suite.secretary.read.getCommunityState();
+    expect(communityState).toBe(TandaPayState.Fractured);
+  });
+
+  it("two defectors, same subgroup, subgroup members reorg, community goes to fractured state", async () => {
+    const claimants = [DEFAULT_CLAIMANT_INDEX];
+    const defectors = [2, 3];
+
+    await suite.toPeriodAfterClaim({alreadyInDefault: false, claimants: claimants, wontPayPremium: defectors});
+    await suite.advanceTimeAndDefect({include: defectors});
+    await suite.advanceTimeAndWithdrawClaimFund({include: claimants, forfeit: false});
+    await suite.advanceTimeAndPayPremiums({exclude: defectors});
+
+    // print member info for each member in the subgroup w/ defectors
+    for (let { address: a } of suite.accounts) {
+      const memberInfo = await suite.secretary.read.getMemberInfoFromAddress(a);
+      if (memberInfo.subgroupId === 1n) {
+        console.log("Member Info:")
+        console.log(JSON.stringify(memberInfo, memberInfoJsonReplacer, 2));
+        console.log("--------------------------")
+      }
     }
-    await printCommunityState();
 
-    // let's get the info from this
-    let fundClaimFailed = toTandaPayLogs(await suite.secretary.events.getLogs({
-      event: 'fundClaimFailed',
-      fromBlock: 0n,
-      toBlock: 'latest',
-    })).find(e => e.alias === "fundClaimFailed") as TandaPayLog<"fundClaimFailed">;
+    // print subgroup info
+    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(1n);
+    console.log(JSON.stringify(subgroupInfo,subgroupInfoJsonReplacer,2));
 
-    console.log(fundClaimFailed);
-  })
+    await suite.advanceTimeAndAdvancePeriod();
+
+    const communityState = await suite.secretary.read.getCommunityState();
+    expect(communityState).toBe(TandaPayState.Fractured);
+
+  });
 });
 
 //afterAll(() => anvil.kill());
