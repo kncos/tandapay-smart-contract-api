@@ -239,19 +239,24 @@ describe("testing claims, defectors, etc.", () => {
     await suite.advanceTimeAndWithdrawClaimFund({include: claimants, forfeit: false});
     await suite.advanceTimeAndPayPremiums({exclude: defectors});
 
-    // print member info for each member in the subgroup w/ defectors
-    for (let { address: a } of suite.accounts) {
-      const memberInfo = await suite.secretary.read.getMemberInfoFromAddress(a);
-      if (memberInfo.subgroupId === 1n) {
-        console.log("Member Info:")
-        console.log(JSON.stringify(memberInfo, memberInfoJsonReplacer, 2));
-        console.log("--------------------------")
-      }
+    let subgroupInfo = await suite.secretary.read.getSubgroupInfo(1n);
+    for (let i = 0; i < suite.managers.length; i++) {
+      const addr = suite.accounts[i].address;
+      if (!subgroupInfo.members.includes(addr))
+        continue;
+
+      const m = suite.managers[i];
+      await m.write.member.leaveSubgroup();
     }
 
-    // print subgroup info
-    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(1n);
-    console.log(JSON.stringify(subgroupInfo,subgroupInfoJsonReplacer,2));
+    for (let i = 0; i < suite.managers.length; i++) {
+      const addr = suite.accounts[i].address;
+      if (!subgroupInfo.members.includes(addr))
+        continue;
+
+      const memberInfo = await suite.secretary.read.getMemberInfoFromAddress(addr);
+      console.log(JSON.stringify(memberInfo,memberInfoJsonReplacer,2));
+    }
 
     await suite.advanceTimeAndAdvancePeriod();
 

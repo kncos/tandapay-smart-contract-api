@@ -59,6 +59,13 @@ export default class MemberWriteMethods extends TandaPayWriteMethods {
     return this.performOperation({ simulate, write });
   }
 
+  //! not documented by MD, added by Julian?
+  async leaveSubgroup(): TandaPayWriteMethodReturnType<"leaveFromASubGroup"> {
+    const simulate = async () => await this.simulate.leaveFromASubGroup();
+    const write = async () => await this.write.leaveFromASubGroup();
+    return this.performOperation({ simulate, write });
+  }
+
   // 5. defects  =>
   // Use case -- Member will be able to defects using this function.
   // Arguments --- none required
