@@ -37,7 +37,7 @@ export type ToPeriodAfterClaimParameters = {
   alreadyInDefault?: boolean;
   claimants?: number[];
   wontPayPremium?: number[];
-}
+};
 
 export class TandaPayTestSuite {
   /** Address where the TandaPay smart contract has been deployed */
@@ -69,6 +69,11 @@ export class TandaPayTestSuite {
    */
   public readonly timeline: TandaPayTimeline;
 
+  private addressToManagerMap = new Map<
+    Address,
+    WriteableTandaPayManager<TandaPayRole.Secretary>
+  >();
+
   /**
    * A dump of the test network upon first getting to the default state and having
    * all of the members join the community and apporve their subgroup assignments
@@ -88,6 +93,15 @@ export class TandaPayTestSuite {
     this.secretaryClient = this.clients[0];
     this.testClient = makeTestClient().extend(publicActions);
     this.timeline = new TandaPayTimeline(this.tpAddress);
+
+    for (const m of this.managers) {
+      const addr = m.client.account?.address;
+      if (addr === undefined)
+        throw new Error("undefined manager address in tandapay test suite?");
+      // we use .toLowerCase because addresses are not case sensitive and can
+      // seemingly have random casing at times
+      this.addressToManagerMap.set(addr.toLowerCase() as Address, m);
+    }
   }
 
   async approveFtkForAllAccounts() {
@@ -99,16 +113,23 @@ export class TandaPayTestSuite {
       amountToDistribute: DEFAULT_FTK_BALANCE,
     });
   }
-  
+
   async getFtkBalanceOf(managerIndex: number) {
     if (managerIndex < 0 || managerIndex >= this.managers.length)
       throw new Error("manager index out of bounds!");
 
-    return getFtkBalance({ftkAddress: this.ftkAddress, walletAddress: this.accounts[managerIndex].address});
+    return getFtkBalance({
+      ftkAddress: this.ftkAddress,
+      walletAddress: this.accounts[managerIndex].address,
+    });
   }
 
-  loadDump = async (dump: DumpStateReturnType) => await this.testClient.loadState({state: dump});
+  loadDump = async (dump: DumpStateReturnType) =>
+    await this.testClient.loadState({ state: dump });
   getDump = async () => await this.testClient.dumpState();
+
+  getManagerFromAddress = (address: Address) =>
+    this.addressToManagerMap.get(address.toLowerCase() as Address);
 
   async toDefaultState() {
     // in order for them to spend FTK joining the community, and later
@@ -152,8 +173,11 @@ export class TandaPayTestSuite {
   }
 
   async toPeriodAfterClaim(params: ToPeriodAfterClaimParameters) {
-    if (params.alreadyInDefault === undefined || params.alreadyInDefault === false)
-      await this.toDefaultState(); 
+    if (
+      params.alreadyInDefault === undefined ||
+      params.alreadyInDefault === false
+    )
+      await this.toDefaultState();
 
     const logs: string[] = [];
     // we'll advance through the period like normal now:
@@ -161,7 +185,9 @@ export class TandaPayTestSuite {
     //console.log(`issuing refunds. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // they'll submit a claim
-    l = await this.advanceTimeAndSubmitClaims(params.claimants ? params.claimants : [DEFAULT_CLAIMANT_INDEX]);
+    l = await this.advanceTimeAndSubmitClaims(
+      params.claimants ? params.claimants : [DEFAULT_CLAIMANT_INDEX],
+    );
     //console.log(`submitting claims. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // the secretary will whitelist it
@@ -169,7 +195,9 @@ export class TandaPayTestSuite {
     //console.log(`whitelisting claims. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // we'll advance time and everyone will pay their premiums like normal
-    l = await this.advanceTimeAndPayPremiums({exclude: params.wontPayPremium});
+    l = await this.advanceTimeAndPayPremiums({
+      exclude: params.wontPayPremium,
+    });
     //console.log(`paying premiums. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
     // finally advance to the next period
@@ -178,7 +206,7 @@ export class TandaPayTestSuite {
     logs.push(...l);
 
     if (l.length != 0)
-      console.warn("!!! in toPeriodAfterClaim !!!\n", l.join('\n'));
+      console.warn("!!! in toPeriodAfterClaim !!!\n", l.join("\n"));
   }
 
   private async advanceTimeAndDoAction(
@@ -346,21 +374,23 @@ export class TandaPayTestSuite {
     );
 
   advanceTimeAndWithdrawClaimFund = async (
-    params: DoActionForEachManagerParams & { forfeit?: boolean }
+    params: DoActionForEachManagerParams & { forfeit?: boolean },
   ) =>
     await this.advanceTimeAndDoAction(
       async () => {
         await this.timeline.advanceToWithdrawClaimFundDay();
       },
       async () => {
-        const {forfeit, ...rest} = params;
+        const { forfeit, ...rest } = params;
 
         // Get all of the unique claimants with validation
         const uniqueClaimants = this.filterManagerIndices(rest);
 
         // Have each one submit a claim
         for (const c of uniqueClaimants) {
-          await this.managers[c].write.member.withdrawClaimFund(forfeit !== undefined ? forfeit : false);
+          await this.managers[c].write.member.withdrawClaimFund(
+            forfeit !== undefined ? forfeit : false,
+          );
         }
       },
     );

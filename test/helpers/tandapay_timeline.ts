@@ -87,7 +87,11 @@ export default class TandaPayTimeline {
     const periodInfo = await this.getCurrentPeriodInfo();
     const timestamp = await this.getCurrentBlockTimestamp();
     if (periodInfo.endTimestamp < timestamp) {
-      return Promise.reject(new Error(`already at the end of the period! eop: ${periodInfo.endTimestamp}, cur timestamp: ${timestamp}`));
+      return Promise.reject(
+        new Error(
+          `already at the end of the period! eop: ${periodInfo.endTimestamp}, cur timestamp: ${timestamp}`,
+        ),
+      );
     }
 
     const offset = periodInfo.endTimestamp - timestamp;

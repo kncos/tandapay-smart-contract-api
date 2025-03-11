@@ -218,7 +218,10 @@ export type ftkApproveOptions = {
   amountToDistribute?: bigint;
 };
 
-export async function getFtkBalance(params: {ftkAddress: Address, walletAddress: Address}) {
+export async function getFtkBalance(params: {
+  ftkAddress: Address;
+  walletAddress: Address;
+}) {
   const contract = getContract({
     abi: FaucetTokenInfo.abi,
     address: params.ftkAddress,
@@ -227,14 +230,17 @@ export async function getFtkBalance(params: {ftkAddress: Address, walletAddress:
   return await contract.read.balanceOf([params.walletAddress]);
 }
 
-export async function getFtkTransactions(params: {ftkAddress: Address, walletAddress: Address}) {
+export async function getFtkTransactions(params: {
+  ftkAddress: Address;
+  walletAddress: Address;
+}) {
   const pc = makeTestClient().extend(publicActions);
   const outgoing = await pc.getContractEvents({
     address: params.ftkAddress,
     abi: FaucetTokenInfo.abi,
-    eventName: 'Transfer',
+    eventName: "Transfer",
     fromBlock: 0n,
-    toBlock: 'latest',
+    toBlock: "latest",
     args: {
       from: params.walletAddress,
     },
@@ -242,15 +248,15 @@ export async function getFtkTransactions(params: {ftkAddress: Address, walletAdd
   const incoming = await pc.getContractEvents({
     address: params.ftkAddress,
     abi: FaucetTokenInfo.abi,
-    eventName: 'Transfer',
+    eventName: "Transfer",
     fromBlock: 0n,
-    toBlock: 'latest',
+    toBlock: "latest",
     args: {
       to: params.walletAddress,
-    }
+    },
   });
 
-  return {incoming, outgoing};
+  return { incoming, outgoing };
 }
 
 /** approves spending for faucet token contract. Also distributes to each client */

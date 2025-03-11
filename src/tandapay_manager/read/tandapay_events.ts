@@ -34,8 +34,7 @@ export type GetEventLogParameters = (
   (
     | { fromBlock?: BlockNumber | BlockTag; toBlock?: BlockNumber | BlockTag }
     | { blockHash: Hash }
-  )
-  & { strict?: boolean };
+  ) & { strict?: boolean };
 
 /**
  * thin wrapper around viem's `getLogs` that gives us an object so we don't need to keep
@@ -64,7 +63,7 @@ export class TandaPayEvents<TClient extends ReadableClient | WriteableClient> {
     if ("strict" in params) {
       opts = {
         strict: params.strict ? params.strict : false,
-      }
+      };
     }
 
     // if we have a singular event...
