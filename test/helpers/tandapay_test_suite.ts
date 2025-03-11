@@ -24,6 +24,7 @@ import {
   DEFAULT_COVERAGE_REQUIREMENT,
   DEFAULT_CLAIMANT_INDEX,
 } from "../test_config";
+import { error } from "console";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
 export type DoActionForEachManagerParams = {
@@ -207,6 +208,26 @@ export class TandaPayTestSuite {
 
     if (l.length != 0)
       console.warn("!!! in toPeriodAfterClaim !!!\n", l.join("\n"));
+  }
+
+  async toPeriodAfterDefectors(params: ToPeriodAfterClaimParameters) {
+    await this.toPeriodAfterClaim(params);
+
+    const ops = [
+      () => this.advanceTimeAndDefect({ include: params.wontPayPremium }),
+      () => this.advanceTimeAndWithdrawClaimFund({ include: params.claimants }),
+      () => this.advanceTimeAndPayPremiums({ exclude: params.wontPayPremium }),
+      () => this.advanceTimeAndAdvancePeriod(),
+    ];
+
+    const allErrors: string[] = [];
+    for (const op of ops) {
+      const errors = await op();
+      if (Array.isArray(errors) && errors && errors.length > 0)
+        allErrors.push(...errors);
+    }
+
+    return allErrors;
   }
 
   private async advanceTimeAndDoAction(
