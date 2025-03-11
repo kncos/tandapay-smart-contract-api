@@ -14,10 +14,11 @@ beforeAll(async () => {
   const fa = await deployFaucetToken();
   const ta = await deployTandaPay(fa);
   suite = new TandaPayTestSuite(fa, ta);
+  await suite.toDefaultState();
 });
 
-beforeEach(async () => {
-  await suite.toDefaultState();
+afterAll(() => {
+  anvil.kill();
 });
 
 describe("TandaPay Read Methods", () => {
@@ -100,6 +101,3 @@ describe("TandaPay Read Methods", () => {
   });
 });
 
-afterAll(() => {
-  anvil.kill();
-});

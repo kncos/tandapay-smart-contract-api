@@ -1,5 +1,11 @@
 import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
-import { memberInfoJsonReplacer, MemberStatus, subgroupInfoJsonReplacer, TandaPayRole, WriteableClient } from "types";
+import {
+  memberInfoJsonReplacer,
+  MemberStatus,
+  subgroupInfoJsonReplacer,
+  TandaPayRole,
+  WriteableClient,
+} from "types";
 import {
   TestClient,
   PublicClient,
@@ -25,7 +31,6 @@ import {
   DEFAULT_COVERAGE_REQUIREMENT,
   DEFAULT_CLAIMANT_INDEX,
 } from "../test_config";
-import { error } from "console";
 import { TandaPayLog, toTandaPayLogs } from "tandapay_manager/read/types";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
@@ -44,8 +49,8 @@ export type ToPeriodAfterClaimParameters = {
 };
 
 export type ReorgHelperParameters = {
-  paidInvalidNewSubgroups: Map<Address, bigint>,
-}
+  paidInvalidNewSubgroups: Map<Address, bigint>;
+};
 
 export type ToPeriodAfterDefectorsParameters = ToPeriodAfterClaimParameters;
 
@@ -225,11 +230,12 @@ export class TandaPayTestSuite {
     const allErrors: string[] = [];
     let l = await this.advanceTimeAndDefect({ include: params.defectors });
     allErrors.push(...l);
-    l = await this.advanceTimeAndWithdrawClaimFund({ include: params.claimants });
+    l = await this.advanceTimeAndWithdrawClaimFund({
+      include: params.claimants,
+    });
     allErrors.push(...l);
 
     if (params.reorgPaidInvalid) {
-      
       // await this.reorgHelper();
     }
 
@@ -303,18 +309,19 @@ export class TandaPayTestSuite {
     expect(defectorIds.size).toBe(0);
   };
 
-  reorgHelper = async (
-    params: ReorgHelperParameters,
-  ) => {
-    const {paidInvalidNewSubgroups} = params;
-    // all addresses of paid invalid members
-    const paidInvalidAddrs = paidInvalidNewSubgroups.keys();
+  reorgHelper = async (params: ReorgHelperParameters) => {
+    const { paidInvalidNewSubgroups } = params;
     // the set of new subgroups they're going to. We'll use this to create a map so that
     // we can get a "peer" that is already in each said subgroup to approve the reorg-ing members.
-    const allUniqueNewSubgroupIds = new Set<bigint>(paidInvalidNewSubgroups.values());
+    const allUniqueNewSubgroupIds = new Set<bigint>(
+      paidInvalidNewSubgroups.values(),
+    );
     // this will be the map that stores a (subgroupID, peer) pair, where the peer is the writeable
     // tandapay manager associated with that peer's account
-    const subgroupPeers = new Map<bigint, WriteableTandaPayManager<TandaPayRole.Secretary>>();
+    const subgroupPeers = new Map<
+      bigint,
+      WriteableTandaPayManager<TandaPayRole.Secretary>
+    >();
 
     // build up the map for each unique subgroup id
     for (const id of allUniqueNewSubgroupIds) {
@@ -322,8 +329,12 @@ export class TandaPayTestSuite {
       const peerSubgroupInfo = await this.secretary.read.getSubgroupInfo(id);
       // verify that we actually have a peer to use
       if (peerSubgroupInfo.members.length === 0) {
-        console.warn(`in reorgHelper, encountered a peer subgroup with 0 members.`);
-        console.warn(`${JSON.stringify(peerSubgroupInfo,subgroupInfoJsonReplacer,2)}`);
+        console.warn(
+          `in reorgHelper, encountered a peer subgroup with 0 members.`,
+        );
+        console.warn(
+          `${JSON.stringify(peerSubgroupInfo, subgroupInfoJsonReplacer, 2)}`,
+        );
         continue;
       }
 
@@ -333,7 +344,7 @@ export class TandaPayTestSuite {
       // get the TandaPay manager associated with their address
       const peerManager = this.getManagerFromAddress(peerAddr);
       // this should never happen, but if it does, fail the test
-      if(peerManager === undefined)
+      if (peerManager === undefined)
         fail("no manager for peer address in reorg helper?");
 
       // finally, add the manager for this subgroup ID
@@ -342,7 +353,9 @@ export class TandaPayTestSuite {
 
     // now, let's go through each paid-invalid member and do the appropriate action with them
     for (const [address, newSubgroupId] of paidInvalidNewSubgroups) {
-      const m = this.getManagerFromAddress(address) ?? fail("failed to get manager from address");
+      const m =
+        this.getManagerFromAddress(address) ??
+        fail("failed to get manager from address");
       // they need to leave from their own subgroup
       await m.write.member.leaveSubgroup();
       let memberInfo = await m.read.getMemberInfoFromAddress(address);
@@ -352,13 +365,17 @@ export class TandaPayTestSuite {
       // if they have a new subgroup ID of 0, then they are just going to leave, so
       // we won't do anything else.
       if (newSubgroupId === 0n) {
-        console.log(`${JSON.stringify(memberInfo,memberInfoJsonReplacer,2)}
-        ^^^ newSubgroupId was set to 0n, so this guy won't be reorging`)
+        console.log(`${JSON.stringify(memberInfo, memberInfoJsonReplacer, 2)}
+        ^^^ newSubgroupId was set to 0n, so this guy won't be reorging`);
         continue;
       }
 
       // have secretary assign them to a new subgroup ID
-      await this.secretary.write.secretary.assignMemberToSubgroup(address, newSubgroupId, true);
+      await this.secretary.write.secretary.assignMemberToSubgroup(
+        address,
+        newSubgroupId,
+        true,
+      );
       memberInfo = await m.read.getMemberInfoFromAddress(address);
       // they should become reorged at this time
       expect(memberInfo.memberStatus).toBe(MemberStatus.Reorged);
@@ -369,9 +386,15 @@ export class TandaPayTestSuite {
       // finally, a peer in their new subgroup approves their joining
       const peer = subgroupPeers.get(newSubgroupId);
       if (!peer)
-        fail(`no peer was populated in the subgroupPeers map for subgroup ID ${newSubgroupId}`)
+        fail(
+          `no peer was populated in the subgroupPeers map for subgroup ID ${newSubgroupId}`,
+        );
 
-      await peer.write.member.approveNewSubgroupMember(newSubgroupId, memberInfo.id, true);
+      await peer.write.member.approveNewSubgroupMember(
+        newSubgroupId,
+        memberInfo.id,
+        true,
+      );
       memberInfo = await m.read.getMemberInfoFromAddress(address);
       // now they should go back to being valid, since they've been assigned to a new subgroup successfully
       expect(memberInfo.memberStatus).toBe(MemberStatus.Valid);
@@ -379,11 +402,14 @@ export class TandaPayTestSuite {
 
     // now, go through each subgroup and ensure the members were properly added
     for (const [address, newSubgroupId] of paidInvalidNewSubgroups) {
-      const subgroupInfo = await this.secretary.read.getSubgroupInfo(newSubgroupId);
-      const includesAddress = subgroupInfo.members.some(addr => isAddressEqual(addr, address));
+      const subgroupInfo =
+        await this.secretary.read.getSubgroupInfo(newSubgroupId);
+      const includesAddress = subgroupInfo.members.some((addr) =>
+        isAddressEqual(addr, address),
+      );
       expect(includesAddress).toBe(true);
     }
-  }
+  };
 
   private async advanceTimeAndDoAction(
     advanceTimeFunc: () => Promise<void>,
@@ -544,7 +570,7 @@ export class TandaPayTestSuite {
         await this.timeline.advancePastEndOfPeriod();
       },
       async () => {
-        const f = async () => await this.secretary.read.getCurrentPeriodId();
+        //const f = async () => await this.secretary.read.getCurrentPeriodId();
         await this.secretary.write.secretary.advancePeriod();
       },
     );

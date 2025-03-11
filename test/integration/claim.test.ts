@@ -5,30 +5,14 @@ import {
   spawnAnvil,
 } from "../helpers/tandapay_test_helpers";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
-import {
-  TandaPayEventAlias,
-  TandaPayLog,
-  toTandaPayLogs,
-} from "tandapay_manager/read/types";
+import { TandaPayLog, toTandaPayLogs } from "tandapay_manager/read/types";
 import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
-import { memberInfoJsonReplacer, MemberStatus, subgroupInfoJsonReplacer, TandaPayRole, TandaPayState } from "types";
-import { Address, isAddressEqual } from "viem";
-import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
+import { TandaPayState } from "types";
+import { Address } from "viem";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
 /** logs we'll commonly want to omit */
-const logsToOmit: TandaPayEventAlias[] = [
-  "addedToCommunity",
-  "approvedOwnSubgroupAssignment",
-  "assignedToSubgroup",
-  "memberJoinedCommunity",
-  "memberStatusUpdated",
-  "premiumPaid",
-  "newSubgroupCreated",
-  "secretaryRoleTransferred",
-  "enteredDefaultState",
-];
 
 //let dump: DumpStateReturnType;
 
@@ -48,25 +32,26 @@ beforeEach(async () => {
   suite = new TandaPayTestSuite(fa, ta);
   //await suite.toDefaultState();
 });
-afterEach(async () => {
+afterEach(() => {
   anvil.kill();
 });
 
 describe("testing claims, defectors, etc.", () => {
-  const printCommunityState = async (msg: string = "State:") =>
-    console.log(
-      `${msg}: ${TandaPayState[await suite.secretary.read.getCommunityState()]}`,
-    );
-  const printCoverageAmount = async (msg: string = "Coverage Amt:") =>
-    console.log(
-      `${msg}: ${(await suite.timeline.getCurrentPeriodInfo()).coverageAmount}`,
-    );
-  const printSubgroupInfo = async (subgroup: bigint) => {
-    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(subgroup);
-    console.log(
-      `=== Subgroup Info ===\n ${JSON.stringify(subgroupInfo, subgroupInfoJsonReplacer, 2)}`,
-    );
-  };
+  //TODO: perhaps make a helper that does different printing ops like this?
+  //  const printCommunityState = async (msg: string = "State:") =>
+  //    console.log(
+  //      `${msg}: ${TandaPayState[await suite.secretary.read.getCommunityState()]}`,
+  //    );
+  //  const printCoverageAmount = async (msg: string = "Coverage Amt:") =>
+  //    console.log(
+  //      `${msg}: ${(await suite.timeline.getCurrentPeriodInfo()).coverageAmount}`,
+  //    );
+  //  const printSubgroupInfo = async (subgroup: bigint) => {
+  //    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(subgroup);
+  //    console.log(
+  //      `=== Subgroup Info ===\n ${JSON.stringify(subgroupInfo, subgroupInfoJsonReplacer, 2)}`,
+  //    );
+  //  };
 
   it("A claim can be submitted, whitelisted, and paid out", async () => {
     // first, we'll get into the default state. This should do all of the initial
@@ -132,8 +117,7 @@ describe("testing claims, defectors, etc.", () => {
       defectors,
     });
 
-    if (errors && errors.length > 0)
-      console.warn(errors);
+    if (errors && errors.length > 0) console.warn(errors);
 
     // even after all of that, the community should still be in the default state
     const communityState = await suite.secretary.read.getCommunityState();
@@ -150,8 +134,7 @@ describe("testing claims, defectors, etc.", () => {
       defectors,
     });
 
-    if (errors && errors.length > 0)
-      console.warn(errors);
+    if (errors && errors.length > 0) console.warn(errors);
 
     // after all of that, the community should be in the fractured state
     const communityState = await suite.secretary.read.getCommunityState();
@@ -167,13 +150,11 @@ describe("testing claims, defectors, etc.", () => {
       defectors,
     });
 
-    if (errors && errors.length > 0)
-      console.warn(errors);
+    if (errors && errors.length > 0) console.warn(errors);
 
     const communityState = await suite.secretary.read.getCommunityState();
     expect(communityState).toBe(TandaPayState.Fractured);
   });
-
 
   it("3 defectors, one subgroup becomes invalid, paid-invalid members reorg into a new subgroup, community goes to fractured state", async () => {
     // we'll have the default claimant for this test
@@ -196,12 +177,13 @@ describe("testing claims, defectors, etc.", () => {
       forfeit: false,
     });
 
-    const subgroup1Members = (await suite.secretary.read.getSubgroupInfo(1n)).members;
+    const subgroup1Members = (await suite.secretary.read.getSubgroupInfo(1n))
+      .members;
     const paidInvalidNewSubgroups = new Map<Address, bigint>();
     for (const addr of subgroup1Members) {
       paidInvalidNewSubgroups.set(addr, 2n);
     }
-    await suite.reorgHelper({paidInvalidNewSubgroups});
+    await suite.reorgHelper({ paidInvalidNewSubgroups });
 
     // advance time now that all of that has been done
     await suite.advanceTimeAndPayPremiums({ exclude: defectors });
