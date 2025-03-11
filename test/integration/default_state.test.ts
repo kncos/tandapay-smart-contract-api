@@ -19,7 +19,7 @@ beforeAll(async () => {
 
 describe("default state tests", () => {
   it("can enter the default state", async () => {
-    await suite.toDefaultState(true);
+    await suite.toDefaultState();
     const state = await suite.secretary.read.getCommunityState();
     expect(state).toBe(TandaPayState.Default);
   });

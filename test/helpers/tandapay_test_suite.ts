@@ -1,5 +1,5 @@
 import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
-import { TandaPayRole, WriteableClient } from "types";
+import { memberInfoJsonReplacer, MemberStatus, subgroupInfoJsonReplacer, TandaPayRole, WriteableClient } from "types";
 import {
   TestClient,
   PublicClient,
@@ -7,6 +7,7 @@ import {
   publicActions,
   Account,
   DumpStateReturnType,
+  isAddressEqual,
 } from "viem";
 import {
   makeWriteableClients,
@@ -25,6 +26,7 @@ import {
   DEFAULT_CLAIMANT_INDEX,
 } from "../test_config";
 import { error } from "console";
+import { TandaPayLog, toTandaPayLogs } from "tandapay_manager/read/types";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
 export type DoActionForEachManagerParams = {
@@ -37,8 +39,15 @@ export type DoActionForEachManagerParams = {
 export type ToPeriodAfterClaimParameters = {
   alreadyInDefault?: boolean;
   claimants?: number[];
-  wontPayPremium?: number[];
+  defectors?: number[];
+  reorgPaidInvalid?: boolean;
 };
+
+export type ReorgHelperParameters = {
+  paidInvalidNewSubgroups: Map<Address, bigint>,
+}
+
+export type ToPeriodAfterDefectorsParameters = ToPeriodAfterClaimParameters;
 
 export class TandaPayTestSuite {
   /** Address where the TandaPay smart contract has been deployed */
@@ -197,7 +206,7 @@ export class TandaPayTestSuite {
     logs.push(...l);
     // we'll advance time and everyone will pay their premiums like normal
     l = await this.advanceTimeAndPayPremiums({
-      exclude: params.wontPayPremium,
+      exclude: params.defectors,
     });
     //console.log(`paying premiums. day: ${await this.timeline.getCurrentDayInPeriod()}`)
     logs.push(...l);
@@ -210,24 +219,170 @@ export class TandaPayTestSuite {
       console.warn("!!! in toPeriodAfterClaim !!!\n", l.join("\n"));
   }
 
-  async toPeriodAfterDefectors(params: ToPeriodAfterClaimParameters) {
+  async toPeriodAfterDefectors(params: ToPeriodAfterDefectorsParameters) {
     await this.toPeriodAfterClaim(params);
 
-    const ops = [
-      () => this.advanceTimeAndDefect({ include: params.wontPayPremium }),
-      () => this.advanceTimeAndWithdrawClaimFund({ include: params.claimants }),
-      () => this.advanceTimeAndPayPremiums({ exclude: params.wontPayPremium }),
-      () => this.advanceTimeAndAdvancePeriod(),
-    ];
-
     const allErrors: string[] = [];
-    for (const op of ops) {
-      const errors = await op();
-      if (Array.isArray(errors) && errors && errors.length > 0)
-        allErrors.push(...errors);
+    let l = await this.advanceTimeAndDefect({ include: params.defectors });
+    allErrors.push(...l);
+    l = await this.advanceTimeAndWithdrawClaimFund({ include: params.claimants });
+    allErrors.push(...l);
+
+    if (params.reorgPaidInvalid) {
+      
+      // await this.reorgHelper();
     }
 
+    l = await this.advanceTimeAndPayPremiums({ exclude: params.defectors });
+    allErrors.push(...l);
+    l = await this.advanceTimeAndAdvancePeriod();
+    allErrors.push(...l);
+
+    await this.validateDefectors();
     return allErrors;
+  }
+
+  validateDefectors = async () => {
+    // this will get logs for when someone defects
+    const tandaPayLogs = toTandaPayLogs(
+      await this.secretary.events.getLogs({
+        fromBlock: 0n,
+        toBlock: "latest",
+      }),
+    ).filter((log) => log.alias === "memberDefected");
+
+    // we'll also get a list of the defector IDs
+    const currentPeriod = await this.secretary.read.getCurrentPeriodId();
+    const defectorIdsArr =
+      await this.secretary.read.getDefectorMemberIdsInPeriod(
+        currentPeriod - 1n,
+      );
+
+    // one log should be emitted for each defector
+    expect(defectorIdsArr.length).toBe(tandaPayLogs.length);
+
+    // Here, we create a set containing each defector ID. As we loop through the events,
+    // we will ensure that each one is present by removing them from the set and checking
+    // that the set is empty by the time the loop is done executing
+    const defectorIds = new Set<bigint>(defectorIdsArr);
+
+    // go through each log
+    for (const log of tandaPayLogs) {
+      // the logs should be properly filtered to just memberDefected logs
+      if (log.alias !== "memberDefected")
+        fail(
+          `check tandaPayLogs filter. found log that wasn't 'memberDefected': ${log.alias}`,
+        );
+
+      // narrow the type of the log
+      const l = log as TandaPayLog<"memberDefected">;
+      // get info about the defector described in this log
+      const defectorAddress =
+        l.args.member ?? fail("defectorAddress was undefined");
+      const defectorInfo =
+        await this.secretary.read.getMemberInfoFromAddress(defectorAddress);
+
+      // remove the defector's ID from the set to keep track of which ones have been seen
+      defectorIds.delete(defectorInfo.id);
+
+      // they shouldn't be in a subgroup
+      expect(defectorInfo.subgroupId).toBe(0n);
+      // their status should be that of a Defector
+      expect(defectorInfo.memberStatus).toBe(MemberStatus.Defected);
+
+      // they shouldn't have any funds in their savings or community escrow (it should all be in pending)
+      expect(defectorInfo.communityEscrowAmount).toBe(0n);
+      expect(defectorInfo.savingsEscrowAmount).toBe(0n);
+
+      // they shouldn't have coverage this period or have their premium paid
+      expect(defectorInfo.isEligibleForCoverageThisPeriod).toBe(false);
+      expect(defectorInfo.isPremiumPaidThisPeriod).toBe(false);
+    }
+
+    // this will ensure that all of the defectors had a corresponding event emitted
+    expect(defectorIds.size).toBe(0);
+  };
+
+  reorgHelper = async (
+    params: ReorgHelperParameters,
+  ) => {
+    const {paidInvalidNewSubgroups} = params;
+    // all addresses of paid invalid members
+    const paidInvalidAddrs = paidInvalidNewSubgroups.keys();
+    // the set of new subgroups they're going to. We'll use this to create a map so that
+    // we can get a "peer" that is already in each said subgroup to approve the reorg-ing members.
+    const allUniqueNewSubgroupIds = new Set<bigint>(paidInvalidNewSubgroups.values());
+    // this will be the map that stores a (subgroupID, peer) pair, where the peer is the writeable
+    // tandapay manager associated with that peer's account
+    const subgroupPeers = new Map<bigint, WriteableTandaPayManager<TandaPayRole.Secretary>>();
+
+    // build up the map for each unique subgroup id
+    for (const id of allUniqueNewSubgroupIds) {
+      // get the subgroup info
+      const peerSubgroupInfo = await this.secretary.read.getSubgroupInfo(id);
+      // verify that we actually have a peer to use
+      if (peerSubgroupInfo.members.length === 0) {
+        console.warn(`in reorgHelper, encountered a peer subgroup with 0 members.`);
+        console.warn(`${JSON.stringify(peerSubgroupInfo,subgroupInfoJsonReplacer,2)}`);
+        continue;
+      }
+
+      // doesn't matter which one we got, but as long as there is someone in
+      // the list, we can just select the first one
+      const peerAddr = peerSubgroupInfo.members[0];
+      // get the TandaPay manager associated with their address
+      const peerManager = this.getManagerFromAddress(peerAddr);
+      // this should never happen, but if it does, fail the test
+      if(peerManager === undefined)
+        fail("no manager for peer address in reorg helper?");
+
+      // finally, add the manager for this subgroup ID
+      subgroupPeers.set(id, peerManager);
+    }
+
+    // now, let's go through each paid-invalid member and do the appropriate action with them
+    for (const [address, newSubgroupId] of paidInvalidNewSubgroups) {
+      const m = this.getManagerFromAddress(address) ?? fail("failed to get manager from address");
+      // they need to leave from their own subgroup
+      await m.write.member.leaveSubgroup();
+      let memberInfo = await m.read.getMemberInfoFromAddress(address);
+      // they should be Paid Invalid now
+      expect(memberInfo.memberStatus).toBe(MemberStatus.PaidInvalid);
+
+      // if they have a new subgroup ID of 0, then they are just going to leave, so
+      // we won't do anything else.
+      if (newSubgroupId === 0n) {
+        console.log(`${JSON.stringify(memberInfo,memberInfoJsonReplacer,2)}
+        ^^^ newSubgroupId was set to 0n, so this guy won't be reorging`)
+        continue;
+      }
+
+      // have secretary assign them to a new subgroup ID
+      await this.secretary.write.secretary.assignMemberToSubgroup(address, newSubgroupId, true);
+      memberInfo = await m.read.getMemberInfoFromAddress(address);
+      // they should become reorged at this time
+      expect(memberInfo.memberStatus).toBe(MemberStatus.Reorged);
+
+      // they approve their own subgroup assignment
+      await m.write.member.approveSubgroupAssignment(true);
+
+      // finally, a peer in their new subgroup approves their joining
+      const peer = subgroupPeers.get(newSubgroupId);
+      if (!peer)
+        fail(`no peer was populated in the subgroupPeers map for subgroup ID ${newSubgroupId}`)
+
+      await peer.write.member.approveNewSubgroupMember(newSubgroupId, memberInfo.id, true);
+      memberInfo = await m.read.getMemberInfoFromAddress(address);
+      // now they should go back to being valid, since they've been assigned to a new subgroup successfully
+      expect(memberInfo.memberStatus).toBe(MemberStatus.Valid);
+    }
+
+    // now, go through each subgroup and ensure the members were properly added
+    for (const [address, newSubgroupId] of paidInvalidNewSubgroups) {
+      const subgroupInfo = await this.secretary.read.getSubgroupInfo(newSubgroupId);
+      const includesAddress = subgroupInfo.members.some(addr => isAddressEqual(addr, address));
+      expect(includesAddress).toBe(true);
+    }
   }
 
   private async advanceTimeAndDoAction(

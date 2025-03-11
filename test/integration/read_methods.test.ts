@@ -17,7 +17,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await suite.toDefaultState(true);
+  await suite.toDefaultState();
 });
 
 describe("TandaPay Read Methods", () => {
