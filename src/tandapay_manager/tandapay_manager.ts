@@ -22,7 +22,7 @@ export interface BaseTandaPayManager {
   read: TandaPayReadMethods<ReadableClient>;
   events: TandaPayEvents<ReadableClient>;
   client: ReadableClient | WriteableClient;
-  address: Address;
+  tpAddress: Address;
 }
 
 /** Interface that simply defines the type of a TandaPay manager with only read operations */
@@ -118,7 +118,7 @@ export function createTandaPayManager(
     read: readMethods,
     events: eventMethods,
     client,
-    address,
+    tpAddress: address,
   };
 
   // To perform write operations, the client needs to have wallet actions and a valid account.

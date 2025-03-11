@@ -14,6 +14,7 @@ import {
   Hash,
 } from "viem";
 import { getLogs } from "viem/actions";
+import { strict } from "assert";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
 export interface TandaPayEventsParameters<
@@ -33,7 +34,7 @@ export type GetEventLogParameters = (
   (
     | { fromBlock?: BlockNumber | BlockTag; toBlock?: BlockNumber | BlockTag }
     | { blockHash: Hash }
-  );
+  ) & { strict?: boolean };
 
 /**
  * thin wrapper around viem's `getLogs` that gives us an object so we don't need to keep
@@ -57,6 +58,13 @@ export class TandaPayEvents<TClient extends ReadableClient | WriteableClient> {
   async getLogs(params: GetEventLogParameters) {
     // build up options for the method call
     let opts = {};
+
+    // enable strict mode support
+    if ("strict" in params) {
+      opts = {
+        strict: params.strict ? params.strict : false,
+      };
+    }
 
     // if we have a singular event...
     if ("event" in params) {

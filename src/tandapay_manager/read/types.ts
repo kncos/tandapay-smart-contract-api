@@ -58,6 +58,8 @@ export const RawEventNameToAliasMapping = {
   SecretaryTransferred: "secretaryRoleTransferred",
   ShortFallDivided: "shortfallDivided",
   SubGroupCreated: "newSubgroupCreated",
+  //! added by me
+  FundClaimFailed: "fundClaimFailed",
 } as const;
 
 /** This maps all of our aliases to their corresponding ABI event names */
@@ -97,6 +99,8 @@ export const AliasToRawEventNameMapping = {
   secretaryRoleTransferred: "SecretaryTransferred",
   shortfallDivided: "ShortFallDivided",
   newSubgroupCreated: "SubGroupCreated",
+  //! added by me
+  fundClaimFailed: "FundClaimFailed",
 } as const;
 
 /** Accepts a raw TandaPay event name and returns an abi item for that event */
@@ -165,7 +169,7 @@ export function isValidEventArgs(
  * A type predicate that determines if `args` is the correct set of arguments that you would expect on the given `eventAlias`
  * @param eventAlias an alias for a TandaPay smart contract event
  * @param args The list of arguments you want to check
- * @returns whether or not the `args` are the ones that go with the given `eventAlias` 
+ * @returns whether or not the `args` are the ones that go with the given `eventAlias`
  */
 export function isValidEventAliasArgs(
   eventAlias: TandaPayEventAlias,
@@ -262,4 +266,7 @@ export type TandaPayLog<
 export type TandaPayEventAliasArgs<
   eventAlias extends TandaPayEventAlias,
   strict = boolean | undefined,
-> = TandaPayEventArgs<(typeof AliasToRawEventNameMapping)[eventAlias], strict extends boolean ? strict : false>;
+> = TandaPayEventArgs<
+  (typeof AliasToRawEventNameMapping)[eventAlias],
+  strict extends boolean ? strict : false
+>;
