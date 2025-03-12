@@ -9,6 +9,7 @@ export type AutoReorgParameters = {
   paidInvalidMembers: Address[],
 }
 
+//TODO: complete
 export function autoReorg(params: AutoReorgParameters) {
   const {subgroupInfoMap, paidInvalidMembers} = params;
 
