@@ -60,7 +60,6 @@ function doTest(subgroupSizes: number[]) {
 }
 
 describe("auto reorg", () => {
-
   it("subgroup sizes: 3, 4, 4", () => {
     doTest([3,4,4]);
   });
@@ -74,6 +73,7 @@ describe("auto reorg", () => {
   });
 
   it("random tests? let's see if they work", () => {
+    let totalTests = 0;
     for (let i = 0; i < 5000; i++) {
       const numSubgroups = 3 + Math.ceil(Math.random() * 20);
       const subgroupSizes: number[] = [];
@@ -85,6 +85,8 @@ describe("auto reorg", () => {
         continue;
 
       doTest(subgroupSizes);
+      totalTests += 1;
     }
+    console.log(totalTests);
   });
 });
