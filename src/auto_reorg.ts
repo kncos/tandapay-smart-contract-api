@@ -106,7 +106,7 @@ function assignToEmptyGroups(newSubgroups: Address[][], emptySubgroups: number[]
   return solution;
 }
 
-export function ar(params: ArParams): Map<number, Address[]> {
+export function autoReorg(params: ArParams): Map<number, Address[]> {
   // removes anyone in needsAssigned from the subgroup members lists,
   // and also removes any excess members in any subgroups and adds them
   // to needsAssigned
@@ -170,7 +170,7 @@ export function ar(params: ArParams): Map<number, Address[]> {
         }
       }
     }
-    return ar({subgroups, needsAssigned});
+    return autoReorg({subgroups, needsAssigned});
   }
   return solution;
 }

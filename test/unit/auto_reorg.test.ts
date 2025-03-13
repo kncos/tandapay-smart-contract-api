@@ -1,4 +1,4 @@
-import { ar } from "auto_reorg";
+import { autoReorg } from "auto_reorg";
 import { Address } from "viem";
 
 
@@ -49,7 +49,7 @@ describe("auto reorg", () => {
   it("subgroup sizes: 3, 4, 4", () => {
     const subgroups = makeSubgroups([3, 4, 4]);
     const needsAssigned = subgroups.get(1)!;
-    const sol = ar({subgroups,needsAssigned});
+    const sol = autoReorg({subgroups,needsAssigned});
     expect(validateSubgroups(sol)).toBe(true);
     //console.log(sol);
   });
@@ -57,7 +57,7 @@ describe("auto reorg", () => {
   it("subgroup sizes: 1, 7, 7", () => {
     const subgroups = makeSubgroups([1,7,7]);
     const needsAssigned = subgroups.get(1)!;
-    const sol = ar ({subgroups,needsAssigned});
+    const sol = autoReorg ({subgroups,needsAssigned});
     expect(validateSubgroups(sol)).toBe(true);
     //console.log(sol);
   });
@@ -67,7 +67,7 @@ describe("auto reorg", () => {
     const needsAssigned = subgroups.get(1)!;
     needsAssigned.push(...subgroups.get(2)!);
     console.log(subgroups);
-    const sol = ar ({subgroups,needsAssigned});
+    const sol = autoReorg ({subgroups,needsAssigned});
     console.log(sol);
     expect(validateSubgroups(sol)).toBe(true);
   });
