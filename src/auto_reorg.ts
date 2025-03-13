@@ -1,6 +1,6 @@
 import { SubgroupInfo } from "types";
 import { Address } from "viem";
-
+ 
 const MIN_SUBGROUP_SIZE = 4 as const;
 const MAX_SUBGROUP_SIZE = 7 as const;
 
@@ -20,8 +20,7 @@ export function autoReorg(params: AutoReorgParameters) {
   const fullIds: bigint[] = [];
 
   // keep track of some other variables that will be useful
-  let paidInvalidCount = paidInvalidMembers.length;
-  let existingValidCapacity = 0;
+  let paidInvalidCount = paidInvalidMembers.length; let existingValidCapacity = 0;
 
   // store the solution
   const solution = new Map<bigint, Address[]>();
@@ -91,7 +90,7 @@ export function autoReorg(params: AutoReorgParameters) {
       // members, so it's time to add this subgroup to the newSubgroups array
       newSubgroups.push(curSubgroup);
     }
-   
+  
     //! for debugging
     if (paidInvalidMembers.length > 0)
       throw new Error("this should never appear. paidInvalidMembers length > 0 after autoReorg. (1)");
@@ -99,8 +98,81 @@ export function autoReorg(params: AutoReorgParameters) {
   // out of their group so that they can make a new valid subgroup with the paid-invalid members.
   // we'll prioritize subgroups of size 7, and if that doesn't work, we'll work our way down to 6 and 5
   } else {
-
+    // first lets calculate how many need reassigned
+    let totalNeedingReassigned = paidInvalidMembers.length; 
   }
 
   return solution;
+}
+
+interface ArParams {
+  subgroups: Map<number, Address[]>;
+  needsAssigned: Address[];
+}
+
+function filterSubgroups(params: ArParams): ArParams {
+  let {subgroups, needsAssigned} = params;
+  // we want to filter subgroups to ensure they don't have the
+  // paid-invalid members still listed in them, and to remove
+  // excess members from any subgroups that are too large, marking
+  // those excess members as needing reassigned
+  const filteredSubgorups = new Map<number, Address[]>();
+  for (let [id, members] of subgroups) {
+    const newMembers = members.filter(m => !needsAssigned.includes(m));
+    while (newMembers.length > MAX_SUBGROUP_SIZE)  {
+      const m = newMembers.pop();
+      if (m === undefined)
+        throw new Error("auto reorg error: undefined member popped from too large subgroup?")
+
+      needsAssigned.push(m); 
+    }
+    filteredSubgorups.set(id, newMembers);
+  }
+  params.subgroups = filteredSubgorups;
+  return params;
+}
+
+function sortSubgroupsBySize(subgroups: Map<number, Address[]>): Map<number, number[]> {
+  // (size, ids[])
+  const sizeSortedGroups = new Map<number, number[]>();
+  for (const [id, members] of subgroups) {
+    const size = members.length;
+    if (sizeSortedGroups.has(size)) {
+      sizeSortedGroups.get(size)!.push(id);
+    } else {
+      sizeSortedGroups.set(size, [id]);
+    }
+  }
+  return sizeSortedGroups;
+}
+
+export function ar(params: ArParams) {
+  // removes anyone in needsAssigned from the subgroup members lists,
+  // and also removes any excess members in any subgroups and adds them
+  // to needsAssigned
+  params = filterSubgroups(params);
+  const {subgroups, needsAssigned} = params;
+
+  // sorts the subgroups into (size, [ids...]) pairs
+  const sizeSortedGroups = sortSubgroupsBySize(subgroups);
+
+  if (needsAssigned.length >= MIN_SUBGROUP_SIZE) {
+    const newSubgroups: Address[][] = [];    
+    
+    let curSubgroup: Address[] = [];
+    while (needsAssigned.length > 0) {
+      const m = needsAssigned.pop();
+      if (m === undefined)
+        throw new Error("auto reorg error: undefined member popped from needsAssigned?");
+      
+      curSubgroup.push(m);
+      if (curSubgroup.length === MIN_SUBGROUP_SIZE) {
+        newSubgroups.push([...curSubgroup]);
+        curSubgroup = new Array<Address>();
+      }
+    }
+
+    if (curSubgroup.length > 0)
+      newSubgroups[0].push(...curSubgroup);
+  }
 }
