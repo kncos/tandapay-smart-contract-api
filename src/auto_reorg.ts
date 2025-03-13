@@ -1,3 +1,4 @@
+import { error } from "console";
 import { SubgroupInfo } from "types";
 import { Address } from "viem";
  
@@ -146,7 +147,69 @@ function sortSubgroupsBySize(subgroups: Map<number, Address[]>): Map<number, num
   return sizeSortedGroups;
 }
 
-export function ar(params: ArParams) {
+function getValidCapacity(sortedSubgroups: Map<number, number[]>) {
+  let capacity = 0;
+  for (let i = MIN_SUBGROUP_SIZE; i < MAX_SUBGROUP_SIZE; i++) {
+    const cap = MAX_SUBGROUP_SIZE - i;
+    const numGroupsThisSize = sortedSubgroups.get(i)?.length;
+    if (numGroupsThisSize === undefined)
+      continue;
+
+    capacity += (numGroupsThisSize * cap);
+  }
+  return capacity;
+}
+
+function makeNewGroups(needsAssigned: Address[]) {
+  if (needsAssigned.length < MIN_SUBGROUP_SIZE)
+    throw new Error("cannot make new groups when needsAssigned is smaller than the minimum subgroup size!!");
+
+  const newSubgroups: Address[][] = [];    
+  let curSubgroup: Address[] = [];
+  while (needsAssigned.length > 0) {
+    const m = needsAssigned.pop();
+    if (m === undefined)
+      throw new Error("auto reorg error: undefined member popped from needsAssigned?");
+    
+    curSubgroup.push(m);
+    if (curSubgroup.length === MIN_SUBGROUP_SIZE) {
+      newSubgroups.push([...curSubgroup]);
+      curSubgroup = new Array<Address>();
+    }
+  }
+
+  if (curSubgroup.length > 0)
+    newSubgroups[0].push(...curSubgroup);
+
+  return newSubgroups;
+}
+
+function assignToEmptyGroups(newSubgroups: Address[][], emptySubgroups: number[], maxSubgroupId: number) {
+  const solution = new Map<number, Address[]>();
+  while (emptySubgroups.length > 0 && newSubgroups.length > 0) {
+    const id = emptySubgroups.pop();
+    const members = newSubgroups.pop();
+    if (!id || !members)
+      throw new Error("got undefined when making new subgroups, popped (id, members) pair and expected a defined result");
+
+    solution.set(id, members);
+  }
+
+  if (newSubgroups.length > 0) {
+    let newSubgroupId = maxSubgroupId + 1;
+    while (newSubgroups.length > 0) {
+      const members = newSubgroups.pop();
+      if (!members)
+        throw new Error("got undefined when making new subgroups. popped member and expected a defined result");
+
+      solution.set(newSubgroupId, members);
+      newSubgroupId += 1;
+    } 
+  }
+  return solution;
+}
+
+export function ar(params: ArParams): Map<number, Address[]> {
   // removes anyone in needsAssigned from the subgroup members lists,
   // and also removes any excess members in any subgroups and adds them
   // to needsAssigned
@@ -154,25 +217,58 @@ export function ar(params: ArParams) {
   const {subgroups, needsAssigned} = params;
 
   // sorts the subgroups into (size, [ids...]) pairs
-  const sizeSortedGroups = sortSubgroupsBySize(subgroups);
+  let sizeSortedGroups = sortSubgroupsBySize(subgroups);
+  const validCapacity = getValidCapacity(sizeSortedGroups);
 
+  // stores the address and what new subgroup they should be assigned to
+  const solution = new Map<number, Address[]>(subgroups);
+
+  // make new subgroups
   if (needsAssigned.length >= MIN_SUBGROUP_SIZE) {
-    const newSubgroups: Address[][] = [];    
+    const newSubgroups = makeNewGroups(needsAssigned);
+    const emptySubgroups = sizeSortedGroups.get(0) ?? [];
+    const maxSubgroupId = subgroups.size;
+    const assignments = assignToEmptyGroups(newSubgroups, emptySubgroups, maxSubgroupId);
+    for (const [id, members] of assignments)
+      solution.set(id, members);
+
+  // assign to existing subgroups
+  } else if (validCapacity >= needsAssigned.length) {
+    for (let i = MIN_SUBGROUP_SIZE; i < MAX_SUBGROUP_SIZE; i += 1) {
+      const groups = sizeSortedGroups.get(i);
+      if (!groups || groups.length === 0)
+        continue;
+
+      for (const id of groups) {
+        const memberToAssign = needsAssigned.pop()!;
+        solution.get(id)!.push(memberToAssign);
+      }
+      sizeSortedGroups = sortSubgroupsBySize(solution);
+    }
     
-    let curSubgroup: Address[] = [];
-    while (needsAssigned.length > 0) {
-      const m = needsAssigned.pop();
-      if (m === undefined)
-        throw new Error("auto reorg error: undefined member popped from needsAssigned?");
-      
-      curSubgroup.push(m);
-      if (curSubgroup.length === MIN_SUBGROUP_SIZE) {
-        newSubgroups.push([...curSubgroup]);
-        curSubgroup = new Array<Address>();
+  // in this case, we don't have enough people needing reassigned to make new subgroups,
+  // but we also don't have enough capacity in existing valid subgroups to assign them to,
+  // so we have to remove people from a valid group (without causing that group to become
+  // smaller than the minimum size) and mark them for reassignment so we can potentially
+  // make a new subgroup with them + the members already needing reassigned.
+  } else {
+    for (let i = MAX_SUBGROUP_SIZE; i > MIN_SUBGROUP_SIZE; i--) {
+      const groups = sizeSortedGroups.get(i);
+      if (!groups || groups.length === 0)
+        continue;
+
+      for (const id of groups) {
+        const members = subgroups.get(id)!;
+        while (members.length > MIN_SUBGROUP_SIZE && needsAssigned.length < MIN_SUBGROUP_SIZE) {
+          const removedMember = members.pop();
+          if (!removedMember)
+            throw new Error("auto reorg error: removed a member and expected a defined result");
+
+          needsAssigned.push(removedMember);
+        }
       }
     }
-
-    if (curSubgroup.length > 0)
-      newSubgroups[0].push(...curSubgroup);
+    return ar({subgroups, needsAssigned});
   }
+  return solution;
 }
