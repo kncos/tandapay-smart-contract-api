@@ -2,7 +2,7 @@ import { autoReorg } from "auto_reorg";
 import { Address } from "viem";
 
 
-function validateSubgroups(subgroups: Map<number, Address[]>, countEmpty: boolean = false): boolean {
+function validateSubgroups(subgroups: Map<number, Address[]>, countEmpty: boolean, expectedMemberCount: number): boolean {
   const uniqueMembers = new Set<Address>();
   for (const [id, members] of subgroups) {
     if (members.length > 0 && members.length < 4)
@@ -19,6 +19,9 @@ function validateSubgroups(subgroups: Map<number, Address[]>, countEmpty: boolea
         uniqueMembers.add(m.toLowerCase() as Address);
     }
   }
+
+  if (uniqueMembers.size !== expectedMemberCount)
+    return false;
 
   return true;
 }
@@ -45,30 +48,43 @@ function makeSubgroups(sizes: number[]) {
   return subgroups;
 }
 
+function doTest(subgroupSizes: number[]) {
+  const subgroups = makeSubgroups(subgroupSizes);
+  const needsAssigned: Address[] = [];
+  for (const [id, members] of subgroups) {
+    if (members.length < 4)
+      needsAssigned.push(...members);
+  }
+  const sol = autoReorg({subgroups,needsAssigned});
+  expect(validateSubgroups(sol, false, subgroupSizes.reduce((acc, num) => acc + num, 0))).toBe(true);
+}
+
 describe("auto reorg", () => {
+
   it("subgroup sizes: 3, 4, 4", () => {
-    const subgroups = makeSubgroups([3, 4, 4]);
-    const needsAssigned = subgroups.get(1)!;
-    const sol = autoReorg({subgroups,needsAssigned});
-    expect(validateSubgroups(sol)).toBe(true);
-    //console.log(sol);
+    doTest([3,4,4]);
   });
 
   it("subgroup sizes: 1, 7, 7", () => {
-    const subgroups = makeSubgroups([1,7,7]);
-    const needsAssigned = subgroups.get(1)!;
-    const sol = autoReorg ({subgroups,needsAssigned});
-    expect(validateSubgroups(sol)).toBe(true);
-    //console.log(sol);
+    doTest([1,7,7]);
   });
 
   it("subgroup sizes: 2, 2, 7", () => {
-    const subgroups = makeSubgroups([2,2,7]);
-    const needsAssigned = subgroups.get(1)!;
-    needsAssigned.push(...subgroups.get(2)!);
-    console.log(subgroups);
-    const sol = autoReorg ({subgroups,needsAssigned});
-    console.log(sol);
-    expect(validateSubgroups(sol)).toBe(true);
+    doTest([2,2,7]);
+  });
+
+  it("random tests? let's see if they work", () => {
+    for (let i = 0; i < 5000; i++) {
+      const numSubgroups = 3 + Math.ceil(Math.random() * 20);
+      const subgroupSizes: number[] = [];
+      for (let i = 0; i < numSubgroups; i++) {
+        subgroupSizes.push(Math.floor(Math.random() * 10));
+      }
+      const totalMembers = subgroupSizes.reduce((acc,num) => acc+num, 0);
+      if (totalMembers < 4)
+        continue;
+
+      doTest(subgroupSizes);
+    }
   });
 });
