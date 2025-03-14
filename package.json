@@ -45,5 +45,13 @@
   "dependencies": {
     "pnpm": "^10.3.0",
     "viem": "^2.22.4"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "esbuild"
+    ],
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
