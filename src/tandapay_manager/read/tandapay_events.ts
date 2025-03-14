@@ -14,7 +14,6 @@ import {
   Hash,
 } from "viem";
 import { getLogs } from "viem/actions";
-import { strict } from "assert";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
 export interface TandaPayEventsParameters<
