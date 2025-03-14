@@ -35,8 +35,9 @@ export interface ReadOnlyTandaPayManager extends BaseTandaPayManager {
  * Further narrows this down based on what role the client plays in the TandaPay community
  * (e.g. `Member`, `Secretary`). If no role is provided, only public write methods will be available
  */
-export interface WriteableTandaPayManager<role_ extends TandaPayRole = TandaPayRole>
-  extends BaseTandaPayManager {
+export interface WriteableTandaPayManager<
+  role_ extends TandaPayRole = TandaPayRole,
+> extends BaseTandaPayManager {
   kind: role_ extends TandaPayRole.Secretary
     ? "secretary"
     : role_ extends TandaPayRole.Member

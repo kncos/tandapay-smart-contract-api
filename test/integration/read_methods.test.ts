@@ -100,4 +100,3 @@ describe("TandaPay Read Methods", () => {
     expect(periodInfo.id).toBe(0n);
   });
 });
-

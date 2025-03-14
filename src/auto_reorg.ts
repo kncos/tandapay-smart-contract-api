@@ -1,23 +1,25 @@
 import { Address } from "viem";
 
 // constants
-const MIN_SUBGROUP_SIZE = 4 as const;
-const MAX_SUBGROUP_SIZE = 7 as const;
+const MIN_SUBGROUP_SIZE = 4;
+const MAX_SUBGROUP_SIZE = 7;
 
 // types
 type SubgroupId = number;
 type Members = Address[];
 type Subgroups = Map<SubgroupId, Members>;
 type SizeToSubgroupId = Map<number, SubgroupId[]>;
-type SubroutineParameters = AutoReorgParameters & { sizeSortedGroups: SizeToSubgroupId };
+type SubroutineParameters = AutoReorgParameters & {
+  sizeSortedGroups: SizeToSubgroupId;
+};
 
 // Error messages
 const ErrorMessages = {
   UNDEFINED_MEMBER: "Auto reorg error: undefined member encountered",
-  MIN_SIZE_VIOLATION: "Cannot make new groups when needsAssigned is smaller than the minimum subgroup size",
-  UNDEFINED_ASSIGNMENT: "Got undefined when making new subgroups"
+  MIN_SIZE_VIOLATION:
+    "Cannot make new groups when needsAssigned is smaller than the minimum subgroup size",
+  UNDEFINED_ASSIGNMENT: "Got undefined when making new subgroups",
 } as const;
-
 
 export interface AutoReorgParameters {
   /** mapping between subgroup IDs and the subgroup members lists */
@@ -33,20 +35,22 @@ export interface AutoReorgParameters {
  * @returns its parameters but with the subgroups filtered and the needsAssigned array including
  * members that were excess in subgroups that were too large
  */
-function filterSubgroups({subgroups, needsAssigned}: AutoReorgParameters): AutoReorgParameters {
+function filterSubgroups({
+  subgroups,
+  needsAssigned,
+}: AutoReorgParameters): AutoReorgParameters {
   const filteredSubgroups = new Map<SubgroupId, Members>();
   const newNeedsAssigned: Members = [...needsAssigned];
 
   for (const [id, members] of subgroups) {
     // we want to ensure that only valid members are in the subgroup
-    const validMembers = members.filter(m => !needsAssigned.includes(m));
+    const validMembers = members.filter((m) => !needsAssigned.includes(m));
     const finalMembers = [...validMembers];
 
     // ensure that the subgroup is not too large
     while (finalMembers.length > MAX_SUBGROUP_SIZE) {
       const member = finalMembers.pop();
-      if (member === undefined)
-        throw new Error(ErrorMessages.UNDEFINED_MEMBER);
+      if (member === undefined) throw new Error(ErrorMessages.UNDEFINED_MEMBER);
 
       newNeedsAssigned.push(member);
     }
@@ -60,7 +64,7 @@ function filterSubgroups({subgroups, needsAssigned}: AutoReorgParameters): AutoR
   return {
     subgroups: filteredSubgroups,
     needsAssigned: newNeedsAssigned,
-  }
+  };
 }
 
 /** groups subgroups by their member count */
@@ -82,7 +86,7 @@ function sortSubgroupsBySize(subgroups: Subgroups): SizeToSubgroupId {
   return sizeSortedGroups;
 }
 
-/** 
+/**
  * Returns the total number of slots available across all existing valid
  * subgroups, for reorging members to be assigned into
  */
@@ -98,17 +102,16 @@ function getValidCapacity(sortedSubgroups: SizeToSubgroupId) {
     // this is how many of them we have
     const numGroupsThisSize = sortedSubgroups.get(i)?.length;
     // this can be undefined if there were no subgroups of this size
-    if (numGroupsThisSize === undefined)
-      continue;
+    if (numGroupsThisSize === undefined) continue;
 
     // otherwise, the slots available across all subgroups of this size will be
     // the capacity multiplied by the number of subgroups
-    slotsAvailable += (numGroupsThisSize * capacity);
+    slotsAvailable += numGroupsThisSize * capacity;
   }
   return slotsAvailable;
 }
 
-/** 
+/**
  * Accepts a list of members that need to be divided into new valid subgroups, and
  * returns a 2D array of addresses, where each subarray represents a list of members
  * that can make up a valid subgroup. Every subarray is guaranteed to be at least
@@ -130,9 +133,8 @@ function makeNewGroups(needsAssigned: Address[]) {
   while (needsAssigned.length > 0) {
     // pop them off
     const m = needsAssigned.pop();
-    if (m === undefined)
-      throw new Error(ErrorMessages.UNDEFINED_ASSIGNMENT);
-    
+    if (m === undefined) throw new Error(ErrorMessages.UNDEFINED_ASSIGNMENT);
+
     // add them to the current group
     curSubgroup.push(m);
     // if it reaches te min size, add this to the list of new
@@ -149,8 +151,7 @@ function makeNewGroups(needsAssigned: Address[]) {
   // that means it can never make a subgroup too large to simply add these
   // stragglers to one of the subgroups we just made. So, one of them will be larger
   // than the minimum size, but that's fine.
-  if (curSubgroup.length > 0)
-    newSubgroups[0].push(...curSubgroup);
+  if (curSubgroup.length > 0) newSubgroups[0].push(...curSubgroup);
 
   return newSubgroups;
 }
@@ -161,7 +162,7 @@ function makeNewGroups(needsAssigned: Address[]) {
  * empty subgroup IDs, then it will go on to making new subgroup IDs that may not exist yet
  */
 function assignToEmptyGroups(params: SubroutineParameters) {
-  const {subgroups, needsAssigned, sizeSortedGroups} = params;
+  const { subgroups, needsAssigned, sizeSortedGroups } = params;
   // divide all of the members needing assigned into separate groups
   const memberGroupings = makeNewGroups(needsAssigned);
   // get an array of all empty subgroup IDs
@@ -177,8 +178,7 @@ function assignToEmptyGroups(params: SubroutineParameters) {
     const id = emptySubgroupIds.pop();
     const members = memberGroupings.pop();
     // if either of those is invalid, throw an error
-    if (!id || !members)
-      throw new Error(ErrorMessages.UNDEFINED_ASSIGNMENT);
+    if (!id || !members) throw new Error(ErrorMessages.UNDEFINED_ASSIGNMENT);
 
     // modify the subgroups with this part of the solution
     subgroups.set(id, members);
@@ -192,18 +192,17 @@ function assignToEmptyGroups(params: SubroutineParameters) {
     // get a member grouping to make a new subgroup for
     const members = memberGroupings.pop();
     // it should never be undefined but if it is throw an error
-    if (!members)
-      throw new Error(ErrorMessages.UNDEFINED_ASSIGNMENT);
+    if (!members) throw new Error(ErrorMessages.UNDEFINED_ASSIGNMENT);
 
     // create new subgroup for them as part of the solution
     subgroups.set(newSubgroupId, members);
     newSubgroupId += 1;
-  } 
+  }
 
   // return modified params; subgroups will have been modified
   // with the members needing assigned being placed in their new
   // valid subgroups
-  return {subgroups, needsAssigned, sizeSortedGroups};
+  return { subgroups, needsAssigned, sizeSortedGroups };
 }
 
 /**
@@ -212,7 +211,7 @@ function assignToEmptyGroups(params: SubroutineParameters) {
  * within existing valid subgroups to add them to.
  */
 function distributeToExistingSubgroups(params: SubroutineParameters) {
-  let {subgroups, needsAssigned, sizeSortedGroups} = params;
+  let { subgroups, needsAssigned, sizeSortedGroups } = params;
 
   // go through every valid subgroup size that is not max capacity
   for (let i = MIN_SUBGROUP_SIZE; i < MAX_SUBGROUP_SIZE; i += 1) {
@@ -220,17 +219,14 @@ function distributeToExistingSubgroups(params: SubroutineParameters) {
     const groups = sizeSortedGroups.get(i);
 
     // if there are none, just skip it
-    if (!groups || groups.length === 0)
-      continue;
+    if (!groups || groups.length === 0) continue;
     // if nobody else needs assigned, we can exit
-    if (needsAssigned.length === 0)
-      break;
+    if (needsAssigned.length === 0) break;
 
     // otherwise, go through each subgroup of this size
     for (const id of groups) {
       // if nobody else needs assigned, we can exit
-      if (needsAssigned.length === 0)
-        break;
+      if (needsAssigned.length === 0) break;
 
       // assign a member to this subgroup
       const memberToAssign = needsAssigned.pop()!;
@@ -243,7 +239,7 @@ function distributeToExistingSubgroups(params: SubroutineParameters) {
 
   // subgroups will have been modified with the new assignments
   // being reflected
-  return {subgroups, needsAssigned, sizeSortedGroups};
+  return { subgroups, needsAssigned, sizeSortedGroups };
 }
 
 /**
@@ -254,7 +250,7 @@ function distributeToExistingSubgroups(params: SubroutineParameters) {
  * can make a valid subgroup of their own
  */
 function rebalanceGroupsForNewFormation(params: SubroutineParameters) {
-  let {subgroups, needsAssigned, sizeSortedGroups} = params;
+  let { subgroups, needsAssigned, sizeSortedGroups } = params;
 
   // we'll start with the biggest subgroups and work our way down through
   // each valid subgroup that is big enough that removing a member won't
@@ -263,8 +259,7 @@ function rebalanceGroupsForNewFormation(params: SubroutineParameters) {
     // get all of the groups of this size
     const groups = sizeSortedGroups.get(i);
     // if there are none, just continue to the next smallest size
-    if (!groups || groups.length === 0)
-      continue;
+    if (!groups || groups.length === 0) continue;
 
     // go through each group
     for (const id of groups) {
@@ -273,11 +268,13 @@ function rebalanceGroupsForNewFormation(params: SubroutineParameters) {
       // so long as we have enough members to pop out of this group and we don't have
       // enough needing assignment to make a valid subgroup yet, then remove members and
       // mark them as needing assignment
-      while (members.length > MIN_SUBGROUP_SIZE && needsAssigned.length < MIN_SUBGROUP_SIZE) {
+      while (
+        members.length > MIN_SUBGROUP_SIZE &&
+        needsAssigned.length < MIN_SUBGROUP_SIZE
+      ) {
         const removedMember = members.pop();
         // should never happen but if it does throw an error
-        if (!removedMember)
-          throw new Error(ErrorMessages.UNDEFINED_MEMBER);
+        if (!removedMember) throw new Error(ErrorMessages.UNDEFINED_MEMBER);
 
         // mark as needs assignment
         needsAssigned.push(removedMember);
@@ -288,7 +285,7 @@ function rebalanceGroupsForNewFormation(params: SubroutineParameters) {
   // since subgroup sizes have changed, redo sorting
   sizeSortedGroups = sortSubgroupsBySize(subgroups);
   // subgroups has been modified to reflect the new changes
-  return {subgroups, needsAssigned, sizeSortedGroups};
+  return { subgroups, needsAssigned, sizeSortedGroups };
 }
 
 /** internal auto-reorg method that is the entry point for the actual algoritm */
@@ -300,14 +297,14 @@ function ar(params: SubroutineParameters): Map<SubgroupId, Members> {
   // case 1: make new subgroups
   if (params.needsAssigned.length >= MIN_SUBGROUP_SIZE) {
     params = assignToEmptyGroups(params);
-  // case 2: assign to existing subgroups
+    // case 2: assign to existing subgroups
   } else if (validCapacity >= params.needsAssigned.length) {
     params = distributeToExistingSubgroups(params);
-  // case 3: we don't have enough people needing reassigned to make new subgroups,
-  // but we also don't have enough capacity in existing valid subgroups to assign them to,
-  // so we have to remove people from a valid group (without causing that group to become
-  // smaller than the minimum size) and mark them for reassignment so we can potentially
-  // make a new subgroup with them + the members already needing reassigned.
+    // case 3: we don't have enough people needing reassigned to make new subgroups,
+    // but we also don't have enough capacity in existing valid subgroups to assign them to,
+    // so we have to remove people from a valid group (without causing that group to become
+    // smaller than the minimum size) and mark them for reassignment so we can potentially
+    // make a new subgroup with them + the members already needing reassigned.
   } else {
     params = rebalanceGroupsForNewFormation(params);
     return ar(params);

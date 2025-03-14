@@ -1,8 +1,12 @@
-import { ReadOnlyTandaPayManager, WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
+import {
+  ReadOnlyTandaPayManager,
+  WriteableTandaPayManager,
+} from "tandapay_manager/tandapay_manager";
 import { SubgroupInfo } from "types";
 
-
-export async function getAllSubgroupInfo(manager: ReadOnlyTandaPayManager | WriteableTandaPayManager) {
+export async function getAllSubgroupInfo(
+  manager: ReadOnlyTandaPayManager | WriteableTandaPayManager,
+) {
   const subgroupCount = await manager.read.getCurrentSubgroupCount();
   const subgroupInfo = new Map<bigint, SubgroupInfo>();
 
