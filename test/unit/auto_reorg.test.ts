@@ -72,6 +72,14 @@ describe("auto reorg", () => {
     doTest([2,2,7]);
   });
 
+  it("all valid subgroups", () => {
+    doTest([4,4,4]);
+  })
+
+  it("valid subgroups and one too large", () => {
+    doTest([4,4,8]);
+  })
+
   it("random tests? let's see if they work", () => {
     let totalTests = 0;
     for (let i = 0; i < 5000; i++) {
@@ -87,6 +95,5 @@ describe("auto reorg", () => {
       doTest(subgroupSizes);
       totalTests += 1;
     }
-    console.log(totalTests);
   });
 });
