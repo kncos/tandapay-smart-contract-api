@@ -1,9 +1,9 @@
-import { Address, publicActions } from "viem";
+import { Address, publicActions, PublicClient, WalletClient } from "viem";
 import {
   TandaPayRole,
   WriteableClient,
   ReadableClient,
-  hasWalletActions,
+  isWriteableClient,
 } from "types";
 import TandaPayReadMethods from "./read/tandapay_read_methods";
 import MemberWriteMethods from "./write/member_write_methods";
@@ -19,8 +19,8 @@ export type TandaPayManagerKind =
 
 export interface BaseTandaPayManager {
   kind: TandaPayManagerKind;
-  read: TandaPayReadMethods<ReadableClient>;
-  events: TandaPayEvents<ReadableClient>;
+  read: TandaPayReadMethods;
+  events: TandaPayEvents;
   client: ReadableClient | WriteableClient;
   tpAddress: Address;
 }
@@ -123,10 +123,7 @@ export function createTandaPayManager(
   };
 
   // To perform write operations, the client needs to have wallet actions and a valid account.
-  if (hasWalletActions(client) && client.account) {
-    // TODO: should this be done? is this necessary? it might not be good to modify the client like this
-    //! meh shoudl be fine
-    client.extend(publicActions);
+  if (isWriteableClient(client)) {
     // If the role of Secretary was passed, then the writeable TandaPay manager will include
     // secretary write methods, member write methods, and public write methods
     if (role === TandaPayRole.Secretary) {

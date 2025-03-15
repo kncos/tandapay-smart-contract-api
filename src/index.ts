@@ -35,8 +35,6 @@ let publicClient = createPublicClient({
   chain: anvil
 });
 
-publicClient.call
-
 let walletClient = createWalletClient({
   transport: http(),
   chain: anvil,
@@ -73,7 +71,6 @@ publicClient = createPublicClient({
 const ftk = await deployFaucetToken();
 const tp = await deployTandaPay(ftk);
 
-
 let tpClient = createClient({
   batch: {
     multicall: true
@@ -81,13 +78,23 @@ let tpClient = createClient({
   transport: http(),
   chain: modifiedChain,
   account: privateKeyToAccount(PRIVATE_KEYS[0]),
-}).extend(walletActions).extend(publicActions);
+}).extend(publicActions).extend(walletActions);
 
-const tpm = createTandaPayManager(publicClient, tp);
+let contract = getContract({
+  abi: TandaPayInfo.abi,
+  address: tp,
+  client: {
+    public: publicClient,
+    wallet: tpClient,
+  },
+});
+
+const tpm = createTandaPayManager(tpClient, tp);
+console.log(tpClient.batch);
 
 let [secretary, state] = await Promise.all([
-  tpm.read.getSecretaryAddress(),
-  tpm.read.getCommunityState(),
+  contract.read.secretary(),
+  contract.read.getCommunityState(),
 ]);
 
 console.log(`${secretary}\n${TandaPayState[state]}`);
