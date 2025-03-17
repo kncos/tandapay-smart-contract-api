@@ -20,20 +20,16 @@ import SecretaryWriteMethods from "tandapay_manager/write/secretary_write_method
 
 /** Tests if a viem client has been extended with WalletActions at runtime */
 export function isWriteableClient(client: Client): client is WriteableClient {
-  if (!isReadableClient(client))
-    return false;
-  if (!('account' in client) || !(client.account))
-    return false;
+  if (!isReadableClient(client)) return false;
+  if (!("account" in client) || !client.account) return false;
 
   return true;
 }
 
 /** Tests if a viem client has been extended with PublicActions at runtime */
 export function isReadableClient(client: Client): client is ReadableClient {
-  if (!('transport' in client) || !('chain' in client))
-    return false;
-  if (!client.transport || !client.chain)
-    return false;
+  if (!("transport" in client) || !("chain" in client)) return false;
+  if (!client.transport || !client.chain) return false;
 
   return true;
 }
