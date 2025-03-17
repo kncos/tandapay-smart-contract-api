@@ -11,6 +11,8 @@ import {
   Client,
   GetContractReturnType,
   Hex,
+  PublicClient,
+  WalletClient,
 } from "viem";
 import { TandaPayInfo } from "./_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
@@ -38,18 +40,16 @@ export function isReadableClient(client: Client): client is ReadableClient {
  * Any viem client that at least has: A defined transport, a defined chain, a defined account,
  * and is extended with `WalletActions`.
  */
-export interface WriteableClient extends Client {
+export type WriteableClient = WalletClient & {
   account: Account;
   chain: Chain;
-}
+};
 
 /**
  * Any viem client that at least has: A defined transport, a defined chain, and
  * is extended with PublicActions. Account is optional.
  */
-export interface ReadableClient extends Client {
-  chain: Chain;
-}
+export type ReadableClient = PublicClient & { chain: Chain };
 
 /**
  * Generic type representing instances of the TandaPay smart contract, given by Viem's getContract method.

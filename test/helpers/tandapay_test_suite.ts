@@ -2,9 +2,7 @@ import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import {
   memberInfoJsonReplacer,
   MemberStatus,
-  subgroupInfoJsonReplacer,
-  TandaPayRole,
-  WriteableClient,
+  subgroupInfoJsonReplacer, WriteableClient
 } from "types";
 import {
   TestClient,
@@ -67,13 +65,13 @@ export class TandaPayTestSuite {
    * so it's easier to work with the types and iterate over them all. This is a use case that will only
    * be seen in the test suite ideally.
    */
-  public readonly managers: WriteableTandaPayManager<TandaPayRole.Secretary>[];
+  public readonly managers: WriteableTandaPayManager<'secretary'>[];
   /** An array of clients that are used to create the managers */
   public readonly clients: WriteableClient[];
   /** a test client that has also been extended with publicActions */
   public readonly testClient: TestClientWithPublicActions;
   /** An alias for managers[0], this is the secretary of the community */
-  public readonly secretary: WriteableTandaPayManager<TandaPayRole.Secretary>;
+  public readonly secretary: WriteableTandaPayManager<'secretary'>;
 
   public readonly secretaryAccount: Account;
 
@@ -86,7 +84,7 @@ export class TandaPayTestSuite {
 
   private addressToManagerMap = new Map<
     Address,
-    WriteableTandaPayManager<TandaPayRole.Secretary>
+    WriteableTandaPayManager<'secretary'>
   >();
 
   /**
@@ -110,7 +108,15 @@ export class TandaPayTestSuite {
     this.timeline = new TandaPayTimeline(this.tpAddress);
 
     for (const m of this.managers) {
-      const addr = m.client.account?.address;
+      const addr = (() => {
+        if ('wallet' in m.client && m.client.wallet)
+          return m.client.wallet.account.address;
+        else if ('account' in m.client && m.client.account)
+          return m.client.account.address;
+        else
+          throw new Error("in tp test suite: could not extract client account!!");
+      })();
+
       if (addr === undefined)
         throw new Error("undefined manager address in tandapay test suite?");
       // we use .toLowerCase because addresses are not case sensitive and can
@@ -320,7 +326,7 @@ export class TandaPayTestSuite {
     // tandapay manager associated with that peer's account
     const subgroupPeers = new Map<
       bigint,
-      WriteableTandaPayManager<TandaPayRole.Secretary>
+      WriteableTandaPayManager<'secretary'>
     >();
 
     // build up the map for each unique subgroup id
