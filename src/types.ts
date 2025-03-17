@@ -11,9 +11,7 @@ import {
   Client,
   GetContractReturnType,
   Hex,
-  publicActions,
   PublicClient,
-  walletActions,
   WalletClient,
 } from "viem";
 import { TandaPayInfo } from "./_contracts/TandaPay";
@@ -23,37 +21,35 @@ import PublicWriteMethods from "tandapay_manager/write/public_write_methods";
 import SecretaryWriteMethods from "tandapay_manager/write/secretary_write_methods";
 
 /** Tests if a viem client has been extended with WalletActions at runtime */
-export function hasWalletActions<TClient extends Client>(client: TClient) {
-  const wa = walletActions(client);
-  return Object.keys(wa).every(
-    (key) => typeof (client as Record<string, unknown>)[key] !== "undefined",
-  );
+export function isWriteableClient(client: Client): client is WriteableClient {
+  if (!isReadableClient(client)) return false;
+  if (!("account" in client) || !client.account) return false;
+
+  return true;
 }
 
 /** Tests if a viem client has been extended with PublicActions at runtime */
-export function hasPublicActions<TClient extends Client>(client: TClient) {
-  const pa = publicActions(client);
-  return Object.keys(pa).every(
-    (key) => typeof (client as Record<string, unknown>)[key] !== "undefined",
-  );
+export function isReadableClient(client: Client): client is ReadableClient {
+  if (!("transport" in client) || !("chain" in client)) return false;
+  if (!client.transport || !client.chain) return false;
+
+  return true;
 }
 
 /**
  * Any viem client that at least has: A defined transport, a defined chain, a defined account,
  * and is extended with `WalletActions`.
  */
-export interface WriteableClient extends WalletClient {
+export type WriteableClient = WalletClient & {
   account: Account;
   chain: Chain;
-}
+};
 
 /**
  * Any viem client that at least has: A defined transport, a defined chain, and
  * is extended with PublicActions. Account is optional.
  */
-export interface ReadableClient extends PublicClient {
-  chain: Chain;
-}
+export type ReadableClient = PublicClient & { chain: Chain };
 
 /**
  * Generic type representing instances of the TandaPay smart contract, given by Viem's getContract method.

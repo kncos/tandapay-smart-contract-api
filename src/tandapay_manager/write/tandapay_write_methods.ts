@@ -38,11 +38,9 @@ export type TandaPayWriteMethodReturnType<
   >,
 > = Promise<Hash | TransactionReceipt | TSimulateReturnType>;
 
-export type TandaPayWriteMethodParameters<
-  TClient extends WriteableClient = WriteableClient,
-> = {
+export type TandaPayWriteMethodParameters = {
   /** A writeable client; this is any client with WalletActions, and a defined transport/chain/account */
-  client: TClient;
+  client: WriteableClient;
   /** Address of the TandaPay smart contract */
   address: Address;
   /** should we wait for transaction receipts? Default = `true` if not specified */
@@ -61,13 +59,11 @@ export type performOperationParams<
 };
 
 /** Abstract class template for all TandaPay smart contract write interactions. */
-export abstract class TandaPayWriteMethods<
-  TClient extends WriteableClient = WriteableClient,
-> {
+export abstract class TandaPayWriteMethods {
   /** client used to construct the contract instance. */
-  protected client: TClient;
+  protected client: WriteableClient;
   /** instance of the tandapay contract we are interacting with */
-  protected contractInstance: TandaPayContract<TClient>;
+  protected contractInstance: TandaPayContract<WriteableClient>;
   /** If true, all write methods will wait for the transaction to be included in a block (one confirmation) */
   public waitForTransactionReceipts: boolean = true;
   /** If true, all write methods will only simulate the transaction. They won't actually write */
@@ -98,7 +94,7 @@ export abstract class TandaPayWriteMethods<
     return receipt;
   }
 
-  constructor(params: TandaPayWriteMethodParameters<TClient>) {
+  constructor(params: TandaPayWriteMethodParameters) {
     this.client = params.client;
     this.contractInstance = getContract({
       abi: TandaPayInfo.abi,

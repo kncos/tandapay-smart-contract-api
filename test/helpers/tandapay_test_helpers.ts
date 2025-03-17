@@ -4,16 +4,16 @@ import {
   createPublicClient,
   createTestClient,
   createWalletClient,
+  defineChain,
   getContract,
   HDAccount,
-  publicActions,
-  PublicClient,
+  publicActions
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { FaucetTokenInfo } from "../../src/_contracts/FaucetToken";
-import { waitForTransactionReceipt } from "viem/actions";
+import { deployContract, waitForTransactionReceipt } from "viem/actions";
 import { TandaPayInfo } from "../../src/_contracts/TandaPay";
-import { TandaPayRole, WriteableClient } from "types";
+import { ReadableClient, WriteableClient } from "types";
 import {
   createTandaPayManager,
   WriteableTandaPayManager,
@@ -25,6 +25,7 @@ import {
   TEST_MODE,
   NUM_TEST_ACCOUNTS,
 } from "../test_config";
+import { MultiCallInfo } from "_contracts/Multicall3";
 
 /**
  * Creates an array of accounts for use in testing
@@ -123,10 +124,10 @@ export function makeWriteableClients(
  * @param n number of public clients to make
  * @returns an array containing the specified number of public clients
  */
-export function makePublicClients(n: number = 1): PublicClient[] {
+export function makePublicClients(n: number = 1): ReadableClient[] {
   if (n < 1) n = 1;
 
-  const pc: PublicClient[] = [];
+  const pc: ReadableClient[] = [];
   for (let i = 0; i < n; i++) {
     pc.push(
       createPublicClient({
@@ -139,6 +140,45 @@ export function makePublicClients(n: number = 1): PublicClient[] {
 }
 
 /**
+ * Deploys the multicall3 smart contract.
+ */
+export async function deployMulticall() {
+  const [wc] = makeWriteableClients(1);
+  const hash = await wc.deployContract({
+    abi: MultiCallInfo.abi,
+    bytecode: MultiCallInfo.bytecode.object,
+    account: wc.account,
+    chain: TEST_CHAIN,
+  });
+
+  const receipt = await waitForTransactionReceipt(wc, { hash });
+
+  if (!receipt || !receipt.contractAddress)
+    throw new Error(
+      "failed to deploy TandaPay smart contract. receipt or receipt.contractAddress is missing!",
+    );
+
+  // return the address of the faucet token
+  return receipt.contractAddress;
+}
+
+export async function makeModifiedChain(mc3Address?: Address) {
+  if (!mc3Address)
+    mc3Address = await deployMulticall();
+
+  const publicClient = makePublicClients(1)[0];
+  return defineChain({
+    ...TEST_CHAIN,
+    contracts: {
+      multicall3: {
+        address: mc3Address,
+        blockCreated: Number(await publicClient.getBlockNumber()),
+      },
+    },
+  });
+}
+
+/**
  * Deploys the ERC-20 faucet token smart contract. Uses the 0-th account in the test mnemonic for deployment
  * @returns Address of the faucet token smart contract
  */
@@ -146,7 +186,7 @@ export async function deployFaucetToken() {
   // create wallet client for deploying it
   const [wc] = makeWriteableClients(1);
   // deploy the faucet token contract
-  const hash = await wc.deployContract({
+  const hash = await deployContract(wc, {
     abi: FaucetTokenInfo.abi,
     bytecode: FaucetTokenInfo.bytecode.object,
     account: wc.account,
@@ -176,7 +216,7 @@ export async function deployTandaPay(ftk_address: Address): Promise<Address> {
   // deploy tandapay contract. The parameters passed to the smart contract constructor are
   // the address (of the ERC-20 token it's using for payments) and then the account address of
   // the individual who deployed it (who will become the secretary of the community).
-  const hash = await wc.deployContract({
+  const hash = await deployContract(wc, {
     abi: TandaPayInfo.abi,
     bytecode: TandaPayInfo.bytecode.object,
     account: wc.account,
@@ -202,10 +242,20 @@ export async function deployTandaPay(ftk_address: Address): Promise<Address> {
 export function makeManagers(
   writeableClients: WriteableClient[],
   tpAddress: Address,
+  publicClient?: ReadableClient
 ) {
-  const managers: WriteableTandaPayManager<TandaPayRole.Secretary>[] = [];
+  const pc = publicClient ? publicClient : makePublicClients(1)[0];
+
+  const managers: WriteableTandaPayManager<'secretary'>[] = [];
   for (const wc of writeableClients) {
-    managers.push(createTandaPayManager(wc, tpAddress, TandaPayRole.Secretary));
+    managers.push(createTandaPayManager({
+      client: {
+        public: pc,
+        wallet: wc,
+      },
+      tpAddress,
+      kind: 'secretary',
+    }));
   }
   return managers;
 }

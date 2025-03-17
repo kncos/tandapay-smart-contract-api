@@ -9,14 +9,11 @@ import {
   SubgroupInfo,
   TandaPayContract,
   TandaPayState,
-  WriteableClient,
 } from "types";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
 
-export type TandaPayReadMethodParameters<
-  TClient extends ReadableClient | WriteableClient = ReadableClient,
-> = {
-  client: TClient;
+export type TandaPayReadMethodParameters = {
+  client: ReadableClient;
   address: Address;
 };
 
@@ -25,11 +22,9 @@ export type TandaPayReadMethodParameters<
  * mapping raw data from the smart contract onto cleaner types, and providing quality of life functions that automate
  * complex tasks involving multiple readonly method calls that might be useful in other areas of the code base
  */
-export default class TandaPayReadMethods<
-  TClient extends ReadableClient | WriteableClient = ReadableClient,
-> {
-  protected contractInstance: TandaPayContract<TClient>;
-  protected client: TClient;
+export default class TandaPayReadMethods {
+  protected contractInstance: TandaPayContract<ReadableClient>;
+  protected client: ReadableClient;
 
   protected get read() {
     return this.contractInstance.read;
@@ -38,7 +33,7 @@ export default class TandaPayReadMethods<
   /**
    * @param contractInstance a TandaPay contract instance with .read functionality
    */
-  constructor(params: TandaPayReadMethodParameters<TClient>) {
+  constructor(params: TandaPayReadMethodParameters) {
     this.client = params.client;
     this.contractInstance = getContract({
       abi: TandaPayInfo.abi,

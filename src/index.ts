@@ -1,8 +1,25 @@
-import { Hex } from "viem";
 import {
-  AliasToRawEventNameMapping,
-  RawEventNameToAliasMapping,
-} from "tandapay_manager/read/types";
+  Address,
+  createClient,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  getContract,
+  Hex,
+  http,
+  publicActions,
+  walletActions,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { anvil } from "viem/chains";
+import {
+  deployFaucetToken,
+  deployTandaPay,
+} from "../test/helpers/tandapay_test_helpers";
+import { TandaPayInfo } from "_contracts/TandaPay";
+import { TandaPayState } from "types";
+import { MultiCallInfo } from "_contracts/Multicall3";
+import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 
 // private keys we can use for testing purposes here
 export const PRIVATE_KEYS: Hex[] = [
@@ -23,16 +40,86 @@ export const PRIVATE_KEYS: Hex[] = [
   "0xc526ee95bf44d8fc405a158bb884d9d1238d99f0612e9f33d006bb0789009aaa",
 ];
 
-//const pc = createPublicClient({
-//  transport: http(),
-//  chain: anvil,
-//});
+let publicClient = createPublicClient({
+  batch: {
+    multicall: true,
+  },
+  transport: http(),
+  chain: anvil,
+});
 
-//console.log(publicWriteMethodNames);
-//console.log(memberWriteMethodNames);
-//console.log(secretaryWriteMethodNames);
-//let events = TandaPayInfo.abi.filter(event => event.type === "event");
-//console.log(events);
+const walletClient = createWalletClient({
+  transport: http(),
+  chain: anvil,
+  account: privateKeyToAccount(PRIVATE_KEYS[0]),
+});
 
-console.log(RawEventNameToAliasMapping);
-console.log(AliasToRawEventNameMapping);
+const multicallDeploymentHash = await walletClient.deployContract({
+  abi: MultiCallInfo.abi,
+  bytecode: MultiCallInfo.bytecode.object,
+});
+
+const receipt = await publicClient.waitForTransactionReceipt({
+  hash: multicallDeploymentHash,
+});
+const mcAddress = receipt.contractAddress as Address;
+
+const modifiedChain = defineChain({
+  ...anvil,
+  contracts: {
+    multicall3: {
+      address: mcAddress,
+      blockCreated: Number(await publicClient.getBlockNumber()),
+    },
+  },
+});
+
+publicClient = createPublicClient({
+  batch: {
+    multicall: true,
+  },
+  transport: http(),
+  chain: modifiedChain,
+});
+
+//Const anvilInstance = await spawnAnvil(15);
+const ftk = await deployFaucetToken();
+const tp = await deployTandaPay(ftk);
+
+const tpClient = createClient({
+  batch: {
+    multicall: true,
+  },
+  transport: http(),
+  chain: modifiedChain,
+  account: privateKeyToAccount(PRIVATE_KEYS[0]),
+})
+  .extend(publicActions)
+  .extend(walletActions);
+
+const contract = getContract({
+  abi: TandaPayInfo.abi,
+  address: tp,
+  client: {
+    public: publicClient,
+    wallet: tpClient,
+  },
+});
+
+const tpm = createTandaPayManager({
+  client: {
+    public: publicClient,
+    wallet: walletClient,
+  },
+  tpAddress: tp,
+  kind: "member",
+});
+
+console.log(tpClient.batch);
+
+const [secretary, state] = await Promise.all([
+  tpm.read.getSecretaryAddress(),
+  tpm.read.getCommunityState(),
+]);
+
+console.log(`${secretary}\n${TandaPayState[state]}`);

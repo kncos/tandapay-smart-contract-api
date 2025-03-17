@@ -1,4 +1,4 @@
-import { ReadableClient, WriteableClient } from "types";
+import { ReadableClient } from "types";
 import {
   AliasToRawEventNameMapping,
   TandaPayEventAlias,
@@ -14,14 +14,11 @@ import {
   Hash,
 } from "viem";
 import { getLogs } from "viem/actions";
-import { strict } from "assert";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
-export interface TandaPayEventsParameters<
-  TClient extends ReadableClient | WriteableClient,
-> {
+export interface TandaPayEventsParameters {
   /** any readable client */
-  client: TClient;
+  client: ReadableClient;
   /** address of the tandapay smart contract */
   address: Address;
 }
@@ -41,11 +38,11 @@ export type GetEventLogParameters = (
  * passing around the smart contract address or a client, and also allows us to use our
  * TandaPayEventName aliases for better code readability
  */
-export class TandaPayEvents<TClient extends ReadableClient | WriteableClient> {
-  client: TClient;
+export class TandaPayEvents {
+  client: ReadableClient;
   address: Address;
 
-  constructor(params: TandaPayEventsParameters<TClient>) {
+  constructor(params: TandaPayEventsParameters) {
     this.client = params.client;
     this.address = params.address;
   }
