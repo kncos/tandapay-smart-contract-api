@@ -1,9 +1,9 @@
 import { Address } from "viem";
 import { WriteableClient, ReadableClient } from "types";
-import TandaPayReadMethods from "./read/tandapay_read_methods";
-import MemberWriteMethods from "./write/member_write_methods";
-import SecretaryWriteMethods from "./write/secretary_write_methods";
-import PublicWriteMethods from "./write/public_write_methods";
+import { TandaPayReadMethods } from "./read/tandapay_read_methods";
+import { MemberWriteMethods } from "./write/member_write_methods";
+import { SecretaryWriteMethods } from "./write/secretary_write_methods";
+import { PublicWriteMethods } from "./write/public_write_methods";
 import { TandaPayEvents } from "./read/tandapay_events";
 
 export type TandaPayManagerKind =

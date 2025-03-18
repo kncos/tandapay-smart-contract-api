@@ -8,9 +8,9 @@ import { PeriodInfo } from "types";
 import { TestClientWithPublicActions } from "./tandapay_test_suite";
 import { DAYS_IN_SECONDS } from "../test_config";
 import { Address, publicActions } from "viem";
-import TandaPayReadMethods from "tandapay_manager/read/tandapay_read_methods";
+import { TandaPayReadMethods } from "tandapay_manager/read/tandapay_read_methods";
 
-export default class TandaPayTimeline {
+export class TandaPayTimeline {
   read: TandaPayReadMethods;
   testClient: TestClientWithPublicActions;
 

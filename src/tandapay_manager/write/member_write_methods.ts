@@ -4,7 +4,7 @@ import {
   TandaPayWriteMethods,
 } from "./tandapay_write_methods";
 
-export default class MemberWriteMethods extends TandaPayWriteMethods {
+export class MemberWriteMethods extends TandaPayWriteMethods {
   // 1.  joinToCommunity  =>
   // Use case -- The user will join the community and transfer the 11/12th of the individual savings amount's fund.
   // Arguments --- none required

@@ -22,7 +22,7 @@ export type TandaPayReadMethodParameters = {
  * mapping raw data from the smart contract onto cleaner types, and providing quality of life functions that automate
  * complex tasks involving multiple readonly method calls that might be useful in other areas of the code base
  */
-export default class TandaPayReadMethods {
+export class TandaPayReadMethods {
   protected contractInstance: TandaPayContract<ReadableClient>;
   protected client: ReadableClient;
 

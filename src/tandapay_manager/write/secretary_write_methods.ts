@@ -7,7 +7,7 @@ import {
 // TODO: create some hook for approving spending automatically
 
 /** methods within the TandaPay smart contract that only the secretary may call */
-export default class SecretaryWriteMethods extends TandaPayWriteMethods {
+export class SecretaryWriteMethods extends TandaPayWriteMethods {
   /**
    * Add a member to the TandaPay community (as the secretary)
    * @param memberWalletAddress Wallet address of the member to add to the community
