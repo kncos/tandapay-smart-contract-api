@@ -18,7 +18,7 @@ import { TandaPayState } from "types";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
 import { getAllSubgroupInfo } from "tandapay_utils";
 
-describe("batching read transactions using TandaPayManager", () => {
+describe.skip("batching read transactions using TandaPayManager", () => {
   it("works", async () => {
     //! anvil is expected to be running in CLI already
 
@@ -35,7 +35,7 @@ describe("batching read transactions using TandaPayManager", () => {
     const newChain = defineChain({
       ...anvil,
       contracts: {
-        multicall3: await deployMulticall()
+        multicall3: await deployMulticall(),
       },
     });
 

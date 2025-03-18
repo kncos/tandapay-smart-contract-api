@@ -8,7 +8,7 @@ import {
   defineChain,
   getContract,
   HDAccount,
-  publicActions
+  publicActions,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { FaucetTokenInfo } from "../../src/_contracts/FaucetToken";
@@ -170,13 +170,12 @@ export async function deployMulticall(): Promise<ChainContract> {
 }
 
 export async function makeModifiedChain(mc3info?: ChainContract) {
-  if (!mc3info)
-    mc3info = await deployMulticall();
+  if (!mc3info) mc3info = await deployMulticall();
 
   return defineChain({
     ...TEST_CHAIN,
     contracts: {
-      multicall3: mc3info
+      multicall3: mc3info,
     },
   });
 }
@@ -245,20 +244,22 @@ export async function deployTandaPay(ftk_address: Address): Promise<Address> {
 export function makeManagers(
   writeableClients: WriteableClient[],
   tpAddress: Address,
-  publicClient?: ReadableClient
+  publicClient?: ReadableClient,
 ) {
   const pc = publicClient ? publicClient : makePublicClients(1)[0];
 
-  const managers: WriteableTandaPayManager<'secretary'>[] = [];
+  const managers: WriteableTandaPayManager<"secretary">[] = [];
   for (const wc of writeableClients) {
-    managers.push(createTandaPayManager({
-      client: {
-        public: pc,
-        wallet: wc,
-      },
-      tpAddress,
-      kind: 'secretary',
-    }));
+    managers.push(
+      createTandaPayManager({
+        client: {
+          public: pc,
+          wallet: wc,
+        },
+        tpAddress,
+        kind: "secretary",
+      }),
+    );
   }
   return managers;
 }

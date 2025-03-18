@@ -2,7 +2,8 @@ import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import {
   memberInfoJsonReplacer,
   MemberStatus,
-  subgroupInfoJsonReplacer, WriteableClient
+  subgroupInfoJsonReplacer,
+  WriteableClient,
 } from "types";
 import {
   TestClient,
@@ -65,13 +66,13 @@ export class TandaPayTestSuite {
    * so it's easier to work with the types and iterate over them all. This is a use case that will only
    * be seen in the test suite ideally.
    */
-  public readonly managers: WriteableTandaPayManager<'secretary'>[];
+  public readonly managers: WriteableTandaPayManager<"secretary">[];
   /** An array of clients that are used to create the managers */
   public readonly clients: WriteableClient[];
   /** a test client that has also been extended with publicActions */
   public readonly testClient: TestClientWithPublicActions;
   /** An alias for managers[0], this is the secretary of the community */
-  public readonly secretary: WriteableTandaPayManager<'secretary'>;
+  public readonly secretary: WriteableTandaPayManager<"secretary">;
 
   public readonly secretaryAccount: Account;
 
@@ -84,7 +85,7 @@ export class TandaPayTestSuite {
 
   private addressToManagerMap = new Map<
     Address,
-    WriteableTandaPayManager<'secretary'>
+    WriteableTandaPayManager<"secretary">
   >();
 
   /**
@@ -109,12 +110,12 @@ export class TandaPayTestSuite {
 
     for (const m of this.managers) {
       const addr = (() => {
-        if ('wallet' in m.client && m.client.wallet)
+        if ("wallet" in m.client && m.client.wallet)
           return m.client.wallet.account.address;
-        else if ('account' in m.client && m.client.account)
-          return m.client.account.address;
         else
-          throw new Error("in tp test suite: could not extract client account!!");
+          throw new Error(
+            "in tp test suite: could not extract client account!!",
+          );
       })();
 
       if (addr === undefined)
@@ -326,7 +327,7 @@ export class TandaPayTestSuite {
     // tandapay manager associated with that peer's account
     const subgroupPeers = new Map<
       bigint,
-      WriteableTandaPayManager<'secretary'>
+      WriteableTandaPayManager<"secretary">
     >();
 
     // build up the map for each unique subgroup id

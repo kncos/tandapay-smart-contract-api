@@ -6,6 +6,7 @@ import { SecretaryWriteMethods } from "./write/secretary_write_methods";
 import { PublicWriteMethods } from "./write/public_write_methods";
 import { TandaPayEvents } from "./read/tandapay_events";
 
+/** Possible types of TandaPayManager */
 export type TandaPayManagerKind =
   | "readonly"
   | "public"
@@ -17,6 +18,7 @@ type KeyedClient = {
   wallet?: WriteableClient;
 };
 
+/** Parameters for creating a TandaPay manager */
 export type CreateTandaPayManagerParameters<
   kind_ extends TandaPayManagerKind = TandaPayManagerKind,
 > = (kind_ extends "readonly"
@@ -32,16 +34,8 @@ export type CreateTandaPayManagerParameters<
   tpAddress: Address;
 };
 
-export interface BaseTandaPayManager<kind_ extends TandaPayManagerKind = TandaPayManagerKind> {
-  kind: kind_;
-  read: TandaPayReadMethods;
-  events: TandaPayEvents;
-  client: ReadableClient | WriteableClient | KeyedClient;
-  tpAddress: Address;
-}
-
 /** Interface that simply defines the type of a TandaPay manager with only read operations */
-export type ReadOnlyTandaPayManager = BaseTandaPayManager<"readonly">;
+export type ReadOnlyTandaPayManager = TandaPayManager<"readonly">;
 
 /**
  * Interface that defines the type of a TandaPay manager with both read and write operations.
@@ -50,29 +44,44 @@ export type ReadOnlyTandaPayManager = BaseTandaPayManager<"readonly">;
  */
 export type WriteableTandaPayManager<
   kind_ extends Exclude<TandaPayManagerKind, "readonly"> = "secretary",
-> = BaseTandaPayManager<kind_> & {
-  write: (kind_ extends "secretary"
-    ? { member: MemberWriteMethods; secretary: SecretaryWriteMethods }
-    : kind_ extends "member"
-      ? { member: MemberWriteMethods }
-      : unknown) & { public: PublicWriteMethods };
-};
+> = TandaPayManager<kind_>;
 
-export type CreateTandaPayManagerReturnType<kind_ extends TandaPayManagerKind> =
-  kind_ extends "readonly"
-    ? ReadOnlyTandaPayManager
-    : kind_ extends "public"
-      ? WriteableTandaPayManager<"public">
-      : kind_ extends "member"
-        ? WriteableTandaPayManager<"member">
-        : kind_ extends "secretary"
-          ? WriteableTandaPayManager<"secretary">
-          : never;
+/** TandaPay manager type. could be readable or writeable. */
+export type TandaPayManager<
+  kind_ extends TandaPayManagerKind = TandaPayManagerKind,
+> = {
+  kind: kind_;
+  read: TandaPayReadMethods;
+  events: TandaPayEvents;
+  client: KeyedClient;
+  tpAddress: Address;
+} & (kind_ extends "readonly"
+  ? unknown
+  : {
+      write: kind_ extends "secretary"
+        ? {
+            public: PublicWriteMethods;
+            member: MemberWriteMethods;
+            secretary: SecretaryWriteMethods;
+          }
+        : kind_ extends "member"
+          ? { public: PublicWriteMethods; member: MemberWriteMethods }
+          : kind_ extends "public"
+            ? { public: PublicWriteMethods }
+            : never;
+    });
 
-/** Implementation signature for createTandaPayManager */
+/**
+ * Creates a new TandaPay manager of a specified `kind`. With `"readonly"` it will only have
+ * read operations, and may be constructed with just a single client that serves as the public
+ * client. With `"public"`, `"member"`, or `"secretary"`, it requires a keyedclient (both a
+ * public and wallet client) to be specified and will have write operations
+ * @param params CreateTandaPayManagerParameters
+ * @returns A new tandapay managers with capabilities dependent on the parameters passed
+ */
 export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
   params: CreateTandaPayManagerParameters<kind_>,
-): CreateTandaPayManagerReturnType<kind_> {
+): TandaPayManager<kind_> {
   const { kind, client, tpAddress } = params;
 
   const publicClient = "public" in client ? client.public : client;
@@ -91,7 +100,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
 
   if (kind === "readonly") {
     return baseManager as kind_ extends "readonly"
-      ? ReadOnlyTandaPayManager
+      ? TandaPayManager<kind_>
       : never;
   } else {
     if (!walletClient)
@@ -108,7 +117,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
             address: tpAddress,
           }),
         },
-      } as CreateTandaPayManagerReturnType<kind_>;
+      } as kind_ extends "public" ? TandaPayManager<kind_> : never;
     } else if (kind === "member") {
       return {
         ...baseManager,
@@ -122,7 +131,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
             address: tpAddress,
           }),
         },
-      } as CreateTandaPayManagerReturnType<kind_>;
+      } as kind_ extends "member" ? TandaPayManager<kind_> : never;
     } else {
       return {
         ...baseManager,
@@ -140,7 +149,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
             address: tpAddress,
           }),
         },
-      } as CreateTandaPayManagerReturnType<kind_>;
+      } as kind_ extends "secretary" ? TandaPayManager<kind_> : never;
     }
   }
 }

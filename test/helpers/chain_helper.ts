@@ -1,8 +1,6 @@
 import { Chain, defineChain } from "viem";
 import { deployMulticall } from "./tandapay_test_helpers";
 
-
-
 export class ChainHelper {
   chain: Chain;
 
@@ -11,14 +9,13 @@ export class ChainHelper {
   }
 
   async deployMulticall() {
-    let {contracts} = this.chain;
-    if (contracts && contracts.multicall3)
-      return;
+    let { contracts } = this.chain;
+    if (contracts && contracts.multicall3) return;
 
     contracts = {
       ...contracts,
       multicall3: await deployMulticall(),
-    }
+    };
     this.chain.contracts = contracts;
   }
 }
