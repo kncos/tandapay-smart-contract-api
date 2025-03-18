@@ -87,6 +87,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
   const publicClient = "public" in client ? client.public : client;
   const walletClient = "wallet" in client ? client.wallet : undefined;
 
+  // every tandapay manager will have these properties
   const baseManager = {
     kind,
     client: {
@@ -98,16 +99,22 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
     events: new TandaPayEvents({ address: tpAddress, client: publicClient }),
   };
 
+  // if we are constructing a readonly manager
   if (kind === "readonly") {
     return baseManager as kind_ extends "readonly"
       ? TandaPayManager<kind_>
       : never;
+  // otherwise, we are making a writeable manager
   } else {
+    // for a writeable manager, this should always be defined, as enforced by the
+    // `CreateTandaPayManagerParameters` type
     if (!walletClient)
       throw new TypeError(
         "trying to create writeable tandapay manager but walletClient is undefined!",
       );
 
+    // make the appropriate type of client (public, member, or secretary) and
+    // populate the corresponding write methods
     if (kind === "public") {
       return {
         ...baseManager,
