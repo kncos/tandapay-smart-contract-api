@@ -1,6 +1,7 @@
 import { ChildProcess, spawn } from "child_process";
 import {
   Address,
+  ChainContract,
   createPublicClient,
   createTestClient,
   createWalletClient,
@@ -145,7 +146,7 @@ export function makePublicClients(n: number = 1): ReadableClient[] {
 /**
  * Deploys the multicall3 smart contract.
  */
-export async function deployMulticall() {
+export async function deployMulticall(): Promise<ChainContract> {
   const [wc] = makeWriteableClients(1);
   const hash = await wc.deployContract({
     abi: MultiCallInfo.abi,
@@ -162,21 +163,20 @@ export async function deployMulticall() {
     );
 
   // return the address of the faucet token
-  return receipt.contractAddress;
+  return {
+    address: receipt.contractAddress,
+    blockCreated: Number(receipt.blockNumber),
+  };
 }
 
-export async function makeModifiedChain(mc3Address?: Address) {
-  if (!mc3Address)
-    mc3Address = await deployMulticall();
+export async function makeModifiedChain(mc3info?: ChainContract) {
+  if (!mc3info)
+    mc3info = await deployMulticall();
 
-  const publicClient = makePublicClients(1)[0];
   return defineChain({
     ...TEST_CHAIN,
     contracts: {
-      multicall3: {
-        address: mc3Address,
-        blockCreated: Number(await publicClient.getBlockNumber()),
-      },
+      multicall3: mc3info
     },
   });
 }

@@ -22,9 +22,6 @@ describe("batching read transactions using TandaPayManager", () => {
   it("works", async () => {
     //! anvil is expected to be running in CLI already
 
-    // deploy multicall 3
-    const mc3 = await deployMulticall();
-
     // create a public client and get the current block number.
     // this is needed to define a new chain, which will be anvil
     // but just with an MC3 address
@@ -32,17 +29,13 @@ describe("batching read transactions using TandaPayManager", () => {
       transport: http(),
       chain: anvil,
     });
-    const block = await pc_.getBlockNumber();
 
     // new chain we will use for clients going forward, since it
     // has mc3 defined batching should work
     const newChain = defineChain({
       ...anvil,
       contracts: {
-        multicall3: {
-          address: mc3,
-          blockCreated: Number(block),
-        },
+        multicall3: await deployMulticall()
       },
     });
 
