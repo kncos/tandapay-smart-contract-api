@@ -15,8 +15,10 @@ import { TEST_TRANSPORT } from "../test_config";
 import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { anvil } from "viem/chains";
 import { TandaPayState } from "types";
+import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
+import { getAllSubgroupInfo } from "tandapay_utils";
 
-describe.skip("batching read transactions using TandaPayManager", () => {
+describe("batching read transactions using TandaPayManager", () => {
   it("works", async () => {
     //! anvil is expected to be running in CLI already
 
@@ -69,7 +71,7 @@ describe.skip("batching read transactions using TandaPayManager", () => {
         wallet: wc,
       },
       tpAddress: tp,
-      kind: "public",
+      kind: "secretary",
     });
 
     // this will work, and we should witness only one `eth_call`
@@ -79,6 +81,13 @@ describe.skip("batching read transactions using TandaPayManager", () => {
       tpm.read.getCommunityState(),
     ]);
 
+    for (let i = 0; i < 16; i++) {
+      await tpm.write.secretary.createSubgroup();
+    }
+
     console.log(`${secretary}\n${TandaPayState[communityState]}`);
+
+    const subgroupInfo = await getAllSubgroupInfo(tpm);
+    console.log(subgroupInfo.size);
   });
 });

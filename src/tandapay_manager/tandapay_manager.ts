@@ -32,7 +32,7 @@ export type CreateTandaPayManagerParameters<
   tpAddress: Address;
 };
 
-export interface BaseTandaPayManager<kind_ extends TandaPayManagerKind> {
+export interface BaseTandaPayManager<kind_ extends TandaPayManagerKind = TandaPayManagerKind> {
   kind: kind_;
   read: TandaPayReadMethods;
   events: TandaPayEvents;

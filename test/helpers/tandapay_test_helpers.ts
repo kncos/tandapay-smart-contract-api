@@ -131,6 +131,9 @@ export function makePublicClients(n: number = 1): ReadableClient[] {
   for (let i = 0; i < n; i++) {
     pc.push(
       createPublicClient({
+        batch: {
+          multicall: true,
+        },
         transport: TEST_TRANSPORT,
         chain: TEST_CHAIN,
       }),

@@ -1,20 +1,21 @@
 import {
-  ReadOnlyTandaPayManager,
-  WriteableTandaPayManager,
+  BaseTandaPayManager,
 } from "tandapay_manager/tandapay_manager";
 import { SubgroupInfo } from "types";
 
 export async function getAllSubgroupInfo(
-  manager: ReadOnlyTandaPayManager | WriteableTandaPayManager,
-) {
+  manager: BaseTandaPayManager
+): Promise<Map<bigint, SubgroupInfo>> {
   const subgroupCount = await manager.read.getCurrentSubgroupCount();
-  const subgroupInfo = new Map<bigint, SubgroupInfo>();
+  // make an array of subgroupIds from 1..subgroupCount (inclusive)
+  const subgroupIds = Array.from({length: Number(subgroupCount)}, (_, i) => BigInt(i+1));
 
-  // subgroup IDs begin at 1
-  for (let i = 1n; i <= subgroupCount; i++) {
-    const info = await manager.read.getSubgroupInfo(i);
-    subgroupInfo.set(i, info);
-  }
+  const subgroupInfoArray = await Promise.all(
+    subgroupIds.map(async (id) => {
+      const info = await manager.read.getSubgroupInfo(id);
+      return {id, info};
+    })
+  );
 
-  return subgroupInfo;
+  return new Map<bigint, SubgroupInfo>(subgroupInfoArray.map(({id, info}) => [id, info]));
 }
