@@ -16,9 +16,9 @@ import {
 } from "viem";
 import { TandaPayInfo } from "./_contracts/TandaPay";
 import { bigIntJsonReplacer } from "./utils";
-import MemberWriteMethods from "tandapay_manager/write/member_write_methods";
-import PublicWriteMethods from "tandapay_manager/write/public_write_methods";
-import SecretaryWriteMethods from "tandapay_manager/write/secretary_write_methods";
+import { MemberWriteMethods } from "tandapay_manager/write/member_write_methods";
+import { PublicWriteMethods } from "tandapay_manager/write/public_write_methods";
+import { SecretaryWriteMethods } from "tandapay_manager/write/secretary_write_methods";
 
 /** Tests if a viem client has been extended with WalletActions at runtime */
 export function isWriteableClient(client: Client): client is WriteableClient {

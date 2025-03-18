@@ -21,7 +21,7 @@ import {
   ftkApprove,
   getFtkBalance,
 } from "./tandapay_test_helpers";
-import TandaPayTimeline from "./tandapay_timeline";
+import { TandaPayTimeline } from "./tandapay_timeline";
 import { filterAndValidate, Validators } from "utils";
 import {
   NUM_TEST_ACCOUNTS,
