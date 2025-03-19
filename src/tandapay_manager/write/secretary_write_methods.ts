@@ -34,13 +34,11 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods {
     return this.performOperation({ simulate, write });
   }
 
-  // TODO
   /**
    * This function is used to assign a member to a SubGroup.
    * @param memberWalletAddress wallet address of the member you want to assign to a subgroup
    * @param subgroupID which subgroup to assign the member to
    * @param isReorging whether or not the member is PAID-INVALID and now reorging to a new subgroup
-   * @todo omit isReorging and figure this automatically, maybe in L2?
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */

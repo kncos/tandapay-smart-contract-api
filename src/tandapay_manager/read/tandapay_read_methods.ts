@@ -228,6 +228,13 @@ export class TandaPayReadMethods {
   };
 
   //! Methods below are custom methods added by me
+
+  /**
+   * Get information about a member based on their Id and a given period
+   * @param memberId member Id of the member you want to get information about
+   * @param periodId what period you want to get information from. Uses current period if 0 is passed. Default = 0
+   * @returns information about a member given their Id and an optional periodID
+   */
   getMemberInfoFromId = async (memberId: bigint, periodId: bigint = 0n) => {
     const memberInfo = await this.read.getMemberInfoFromId([
       memberId,
@@ -236,7 +243,7 @@ export class TandaPayReadMethods {
 
     // if 0 was passed, let's get the actual period that this information is going to be associated with
     let curPeriod = periodId;
-    if (periodId === 0n) curPeriod = await this.read.getPeriodId();
+    if (periodId === 0n) curPeriod = await this.getCurrentPeriodId();
 
     // Mapping the object returned by the smart contract to an internal object in this code
     // base that has better naming conventions and works with everything else. In theory, the
@@ -257,6 +264,56 @@ export class TandaPayReadMethods {
       assignmentStatus: memberInfo.assignment as AssignmentStatus,
     };
   };
+
+  /**
+   * Get information about every subgroup in the community all at once
+   * @param numSubgroups how many subgroups are there? optional, will request the subgroup count if
+   * no value is passed.
+   * @returns an array of subgroupInfo
+   */
+  getAllSubgroupInfo = async (numSubgroups?: bigint | number): Promise<SubgroupInfo[]> => {
+    if (!numSubgroups)
+      numSubgroups = await this.getCurrentSubgroupCount();  
+
+    // create an array of subgroup IDs given the number of subgroups that we have.
+    // subgroupIds go from 1...subgroupCount, inclusive
+    const subgroupIds = Array.from({length: Number(numSubgroups)}, (_,i) => BigInt(i+1));
+
+    // get all subgroup info
+    const subgroupInfo = await Promise.all(
+      subgroupIds.map((v) => this.getSubgroupInfo(v))
+    )
+
+    return subgroupInfo;
+  }
+
+  /**
+   * Get information about all community members at once
+   * @param numMembers how many members in the community? optional, by default it looks this up
+   * @param periodId what period do you want to query for information? if none is passed, uses the current period
+   * @returns An array of MemberInfo
+   */
+  getAllMemberInfo = async (numMembers?: bigint | number, periodId?: bigint | number): Promise<MemberInfo[]> => {
+    if (!numMembers)
+      numMembers = await this.getCurrentMemberCount();
+    if (!periodId)
+      periodId = await this.getCurrentPeriodId();
+
+    const memberIds = Array.from({length: Number(numMembers)}, (_,i) => BigInt(i+1));
+    const memberInfo = await Promise.all(
+      memberIds.map((id) => this.getMemberInfoFromId(id, BigInt(periodId)))
+    )
+
+    return memberInfo;
+  }
+
+  /** Returns information about the current period */
+  getCurrentPeriodInfo = async (): Promise<PeriodInfo> => {
+    const periodId = await this.getCurrentPeriodId();
+    return await this.getPeriodInfo(periodId);
+  }
+
+
 }
 
 // NOTE: saAmount refers to the amount required by the savings escrow
