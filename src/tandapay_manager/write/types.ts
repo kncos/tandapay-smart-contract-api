@@ -101,12 +101,14 @@ type ExtractWriteMethodNames<T extends readonly any[]> = {
     : never;
 }[number];
 
-// get all write method names for TandaPay's abi
-type AbiWriteMethodNames = ExtractWriteMethodNames<typeof TandaPayInfo.abi>;
+/** All raw write method names from TandaPay's smart contract ABI */
+export type RawTandaPayWriteMethodNames = ExtractWriteMethodNames<typeof TandaPayInfo.abi>;
+/** All tandapay write method aliases used in this codebase */
+export type TandaPayWriteMethodAliases = keyof typeof AliasToRawWriteMethodMapping;
 
 // check that all write methods have an alias
 type AllWriteMethodsMappedCheck = Exclude<
-  AbiWriteMethodNames, 
+  RawTandaPayWriteMethodNames, 
   keyof typeof RawWriteMethodToAliasMapping
 > extends never ? true : { error: "Missing write methods in RawWriteMethodToAliasMapping" };
 
