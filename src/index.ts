@@ -6,6 +6,8 @@ import {
   http,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { deployFaucetToken, deployTandaPay, makeAccounts, spawnAnvil } from "../test/helpers/tandapay_test_helpers";
+import { TandaPayTestSuite } from "../test/helpers/tandapay_test_suite";
 
 const writeMethods = TandaPayInfo.abi
   .filter((m) => m.type === "function" && m.stateMutability !== "view")
@@ -53,3 +55,14 @@ console.log(writeMethods.join("\n"));
 //    wallet: createWalletClient({transport: http(), account: privateKeyToAccount('0x0')}),
 //  }
 //})
+
+
+let a = await spawnAnvil();
+const ftk = await deployFaucetToken();
+const tp = await deployTandaPay(ftk);
+let suite = new TandaPayTestSuite(ftk,tp);
+const acc = makeAccounts(30)[29];
+const info = await suite.secretary.read.getMemberInfoFromAddress(acc.address);
+console.log(info);
+
+a.kill();

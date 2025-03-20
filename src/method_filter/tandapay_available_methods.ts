@@ -2,11 +2,72 @@ import { TandaPayWriteMethodAliases } from "tandapay_interface/write_method_type
 import { MemberStatus, TandaPayRole, TandaPayState } from "types";
 import { canAcceptSecretaryRole, canAdvancePeriod, canApproveNewSubgroupMember, canApproveSugroupAssignment, canDefectFromCommunity, canJoinCommunity, canRequestEmergencySecretaryHandoff, canSubmitClaim, CustomFilterParameters, CustomFilterReturnType } from "./custom_filter_procedures";
 import { daysToSeconds } from "utils";
+import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
+import { TandaPayInfo } from "_contracts/TandaPay";
+import { isAddress, isAddressEqual } from "viem";
+import { curtis } from "viem/chains";
 
 const I = TandaPayState.Initialization;
 const D = TandaPayState.Default;
 const F = TandaPayState.Fractured;
 const C = TandaPayState.Collapsed;
+
+//TODO: refactor
+export async function getAvailableMethods(manager: WriteableTandaPayManager) {
+  const methods = TandaPayInfo.abi.filter((m) => m.type === "function" && m.stateMutability !== "view").map(m => m.name);
+  const address = manager.client.wallet.account.address;
+  const periodInfo = await manager.read.getCurrentPeriodInfo();
+  const currentState = await manager.read.getCommunityState();
+  const secretary = await manager.read.getSecretaryAddress();
+  const memberInfo = await manager.read.getMemberInfoFromAddress(address);
+
+  const curBlock = await manager.client.public.getBlock();
+  const curTime = curBlock.timestamp;
+
+  let ourRole = TandaPayRole.None;
+  if (isAddressEqual(address, secretary))
+    ourRole = TandaPayRole.Secretary;
+  else if (memberInfo.id !== 0n)
+    ourRole = TandaPayRole.Member;
+
+  const res: TandaPayWriteMethodAliases[] = [];
+
+  for (const m of methods) {
+    if (m in TandaPayWriteMethodFilters) {
+      const filter = TandaPayWriteMethodFilters[m as TandaPayWriteMethodAliases];
+      if (filter.allowableRoles && !filter.allowableRoles.some((r) => r === ourRole))
+        continue;
+
+      if (filter.allowableStates && !filter.allowableStates.some((s) => s === currentState))
+        continue;
+
+      if (filter.allowableTimeInPeriod !== undefined) {
+        const {startSecond, endSecond} = filter.allowableTimeInPeriod;
+        if (startSecond !== undefined) {
+          const startTime = periodInfo.startTimestamp + BigInt(startSecond);
+          if (curTime < startTime)
+            continue;
+        }
+        if (endSecond !== undefined) {
+          const endTime = periodInfo.startTimestamp + BigInt(endSecond);
+          if (curTime > endTime)
+            continue;
+        }
+      }
+
+      if (filter.allowedByCustomProcedure) {
+        const customProcedureResult = await filter.allowedByCustomProcedure({manager});
+        if (customProcedureResult.result === false) {
+          console.log(customProcedureResult.reason);
+          continue;
+        }
+      }
+
+      res.push(m as TandaPayWriteMethodAliases);
+    }
+  }
+  return res;
+}
 
 export type MethodFilter = {
   /** Assumed all if undefined */
@@ -156,4 +217,4 @@ export const TandaPayWriteMethodFilters: Record<TandaPayWriteMethodAliases, Meth
     allowableStates: [],
     allowedByCustomProcedure: () => Promise.resolve({ result: false, reason: "not implemented"}),
   },
-}
+};
