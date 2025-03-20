@@ -120,3 +120,15 @@ export function filterAndValidate<T>({
 
   return filtered;
 }
+/**
+ * Contains a `result` which is either true or false, as well as a reason
+ * which is optional when `result` is true, but required when `result` is false.
+ */
+
+export type BooleanResult = {
+  result: true;
+  reason?: string;
+} | {
+  result: false;
+  reason: string;
+};

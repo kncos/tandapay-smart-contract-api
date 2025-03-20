@@ -3,8 +3,8 @@ import {
   AliasToRawEventNameMapping,
   TandaPayEventAlias,
   tandaPayEventAliasesToAbiEvents,
-  tandaPayEventAliasToAbiEvent,
-} from "./types";
+  tandaPayEventAliasToAbiEvent
+} from "tandapay_interface/event_types";
 import {
   AbiEvent,
   Address,
@@ -13,7 +13,6 @@ import {
   GetLogsReturnType,
   Hash,
 } from "viem";
-import { getLogs } from "viem/actions";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
 export interface TandaPayEventsParameters {
@@ -101,7 +100,7 @@ export class TandaPayEvents {
     }
 
     // finally, use viem's `getLogs` with our built up options
-    return (await getLogs(this.client, {
+    return (await this.client.getLogs({
       ...opts,
       address: this.address,
     })) as GetLogsReturnType<AbiEvent>;

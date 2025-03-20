@@ -1,11 +1,11 @@
-// three main narrowings:
-// we want to narrow based on community state
-// we want to narrow based on current time in the period
-// we want to narrow based on the user's role
-
-import { TandaPayManager } from "tandapay_manager/tandapay_manager";
-import { TandaPayWriteMethodAliases } from "tandapay_manager/write/types";
+import { TandaPayWriteMethodAliases } from "tandapay_interface/write_method_types";
 import { TandaPayRole, TandaPayState } from "types";
+import { canAdvancePeriod, canApproveNewSubgroupMember, canApproveSugroupAssignment, CustomFilterParameters, CustomFilterReturnType } from "./custom_filter_procedures";
+
+const I = TandaPayState.Initialization;
+const D = TandaPayState.Default;
+const F = TandaPayState.Fractured;
+const C = TandaPayState.Collapsed;
 
 export type MethodFilter = {
   /** Assumed all if undefined */
@@ -17,27 +17,36 @@ export type MethodFilter = {
     startSecond?: number,
     endSecond?: number,
   },
-  allowedByCustomProcedure?: (manager: TandaPayManager) => Promise<boolean>,
+  allowedByCustomProcedure?: (params: CustomFilterParameters) => Promise<CustomFilterReturnType>,
 }
 
 export const TandaPayWriteMethodFilters: Record<TandaPayWriteMethodAliases, MethodFilter> = {
   advancePeriod: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableStates: [D, F],
+    allowableRoles: [TandaPayRole.Secretary],
+    allowedByCustomProcedure: canAdvancePeriod,
   },
   extendPeriodByOneDay: {
+    allowableStates: [D, F],
     allowableRoles: [TandaPayRole.Secretary]
   },
   addMemberToCommunity: {
+    allowableStates: [I, D],
     allowableRoles: [TandaPayRole.Secretary]
   },
   approveNewSubgroupMember: {
-    //
+    allowableStates: [I, D, F],
+    allowableRoles: [TandaPayRole.Member, TandaPayRole.Secretary],
+    allowedByCustomProcedure: canApproveNewSubgroupMember,
   },
   approveSubgroupAssignment: {
-    //
+    allowableStates: [I, D, F],
+    allowableRoles: [TandaPayRole.Member, TandaPayRole.Secretary],
+    allowedByCustomProcedure: canApproveSugroupAssignment,
   },
   assignMemberToSubgroup: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableStates: [I, D, F],
+    allowableRoles: [TandaPayRole.Secretary],
   },
   cancelManualCollapse: {
     allowableRoles: [TandaPayRole.Secretary]
@@ -108,26 +117,26 @@ export const TandaPayWriteMethodFilters: Record<TandaPayWriteMethodAliases, Meth
   deprecated_beginEmergency: {
     allowableRoles: [],
     allowableStates: [],
-    allowedByCustomProcedure: () => Promise.resolve(false),
+    allowedByCustomProcedure: () => Promise.resolve({ result: false, reason: "not implemented"}),
   },
   deprecated_emergencyRefund: {
     allowableRoles: [],
     allowableStates: [],
-    allowedByCustomProcedure: () => Promise.resolve(false),
+    allowedByCustomProcedure: () => Promise.resolve({ result: false, reason: "not implemented"}),
   },
-  deprecated_emergencyWidthaw: {
+  deprecated_emergencyWithdraw: {
     allowableRoles: [],
     allowableStates: [],
-    allowedByCustomProcedure: () => Promise.resolve(false),
+    allowedByCustomProcedure: () => Promise.resolve({ result: false, reason: "not implemented"}),
   },
   deprecated_endEmergency: {
     allowableRoles: [],
     allowableStates: [],
-    allowedByCustomProcedure: () => Promise.resolve(false),
+    allowedByCustomProcedure: () => Promise.resolve({result: false, reason: "not implemented"}),
   },
   deprecated_updateMemberStatus: {
     allowableRoles: [],
     allowableStates: [],
-    allowedByCustomProcedure: () => Promise.resolve(false),
+    allowedByCustomProcedure: () => Promise.resolve({ result: false, reason: "not implemented"}),
   },
 }

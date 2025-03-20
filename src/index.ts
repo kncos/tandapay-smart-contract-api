@@ -1,5 +1,6 @@
 import { TandaPayInfo } from "_contracts/TandaPay";
-import { getContract } from "viem";
+import { createPublicClient, createWalletClient, getContract, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 
 const writeMethods = TandaPayInfo.abi.filter((m) => m.type === "function" && m.stateMutability !== "view").map((m) => m.name);
@@ -37,3 +38,13 @@ console.log(writeMethods.join('\n'));
 //whitelistClaim
 //withdrawClaimFund
 //withdrawRefund
+
+
+//const c = getContract({
+//  abi: TandaPayInfo.abi,
+//  address: '0x0',
+//  client: {
+//    public: createPublicClient({transport: http()}),
+//    wallet: createWalletClient({transport: http(), account: privateKeyToAccount('0x0')}),
+//  }
+//})

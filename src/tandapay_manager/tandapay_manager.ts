@@ -44,7 +44,7 @@ export type ReadOnlyTandaPayManager = TandaPayManager<"readonly">;
  */
 export type WriteableTandaPayManager<
   kind_ extends Exclude<TandaPayManagerKind, "readonly"> = "secretary",
-> = TandaPayManager<kind_>;
+> = TandaPayManager<kind_> & { client: { public: ReadableClient, wallet: WriteableClient } };
 
 /** TandaPay manager type. could be readable or writeable. */
 export type TandaPayManager<

@@ -2,6 +2,7 @@ import { Address, getContract, Hex } from "viem";
 import {
   AssignmentStatus,
   ClaimInfo,
+  ManualCollapseInfo,
   MemberInfo,
   MemberStatus,
   PeriodInfo,
@@ -227,6 +228,10 @@ export class TandaPayReadMethods {
     };
   };
 
+  isManuallyCollapsed = async () => await this.read.getIsManuallyCollapsed();
+
+  getManuallyCollapsedPeriodId = async () => await this.read.getManuallyCollapsedPeriod();
+
   //! Methods below are custom methods added by me
 
   /**
@@ -313,7 +318,18 @@ export class TandaPayReadMethods {
     return await this.getPeriodInfo(periodId);
   }
 
+  getManuallyCollapsedInfo = async (): Promise<ManualCollapseInfo> => {
+    const periodId = await this.getManuallyCollapsedPeriodId();
+    if (periodId === 0n)
+      return { isManuallyCollapsed: false };
 
+    const manuallyCollapsedInfo = await this.read.getPeriodIdToManualCollapse([periodId]);
+    return {
+      isManuallyCollapsed: true,
+      initiatedTimestamp: manuallyCollapsedInfo.startedAT,
+      cancelDeadlineTimestamp: manuallyCollapsedInfo.availableToTurnTill,
+    };
+  }
 }
 
 // NOTE: saAmount refers to the amount required by the savings escrow
