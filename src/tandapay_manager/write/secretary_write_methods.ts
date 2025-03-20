@@ -4,8 +4,6 @@ import {
   TandaPayWriteMethods,
 } from "./tandapay_write_methods";
 
-// TODO: create some hook for approving spending automatically
-
 /** methods within the TandaPay smart contract that only the secretary may call */
 export class SecretaryWriteMethods extends TandaPayWriteMethods {
   /**
