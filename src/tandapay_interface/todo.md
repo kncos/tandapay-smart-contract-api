@@ -1,0 +1,2 @@
+- encapsulate all aliases here and map those onto raw ABI types
+- create simple getters for fetching tandapay method/event info for use with viem methods

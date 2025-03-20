@@ -53,6 +53,7 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // 4. exitSubGroup  =>
   // Use case -- Member will be able to exit from a SubGroup using this function.
   // Arguments --- none required
+  /** @deprecated */
   async exitSubgroup(): TandaPayWriteMethodReturnType<"exitSubGroup"> {
     const simulate = async () => await this.simulate.exitSubGroup();
     const write = async () => await this.write.exitSubGroup();

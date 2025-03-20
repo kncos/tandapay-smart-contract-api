@@ -60,6 +60,7 @@ export const AliasToRawWriteMethodMapping = {
   defectFromCommunity: "defects",
   defineSecretarySuccesorList: "defineSecretarySuccessor",
   divideShortfall: "divideShortFall",
+  // ensure that this is a member method
   emergencySecretaryHandoff: "emergencyHandOverSecretary",
   exitSubgroup: "exitSubGroup",
   handoverSecretaryRoleToSuccessor: "handoverSecretary",
