@@ -1,10 +1,16 @@
 import { TandaPayInfo } from "_contracts/TandaPay";
-import { createPublicClient, createWalletClient, getContract, http } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  getContract,
+  http,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-
-const writeMethods = TandaPayInfo.abi.filter((m) => m.type === "function" && m.stateMutability !== "view").map((m) => m.name);
-console.log(writeMethods.join('\n'));
+const writeMethods = TandaPayInfo.abi
+  .filter((m) => m.type === "function" && m.stateMutability !== "view")
+  .map((m) => m.name);
+console.log(writeMethods.join("\n"));
 
 //AdvanceToTheNextPeriod
 //EmergencyWithdrawal
@@ -38,7 +44,6 @@ console.log(writeMethods.join('\n'));
 //whitelistClaim
 //withdrawClaimFund
 //withdrawRefund
-
 
 //const c = getContract({
 //  abi: TandaPayInfo.abi,

@@ -3,7 +3,7 @@ import {
   AliasToRawEventNameMapping,
   TandaPayEventAlias,
   tandaPayEventAliasesToAbiEvents,
-  tandaPayEventAliasToAbiEvent
+  tandaPayEventAliasToAbiEvent,
 } from "tandapay_interface/event_types";
 import {
   AbiEvent,

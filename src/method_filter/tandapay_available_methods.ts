@@ -1,6 +1,7 @@
 import { TandaPayWriteMethodAliases } from "tandapay_interface/write_method_types";
-import { TandaPayRole, TandaPayState } from "types";
-import { canAdvancePeriod, canApproveNewSubgroupMember, canApproveSugroupAssignment, CustomFilterParameters, CustomFilterReturnType } from "./custom_filter_procedures";
+import { MemberStatus, TandaPayRole, TandaPayState } from "types";
+import { canAcceptSecretaryRole, canAdvancePeriod, canApproveNewSubgroupMember, canApproveSugroupAssignment, canDefectFromCommunity, canJoinCommunity, canRequestEmergencySecretaryHandoff, canSubmitClaim, CustomFilterParameters, CustomFilterReturnType } from "./custom_filter_procedures";
+import { daysToSeconds } from "utils";
 
 const I = TandaPayState.Initialization;
 const D = TandaPayState.Default;
@@ -14,8 +15,8 @@ export type MethodFilter = {
   allowableRoles?: TandaPayRole[],
   /** Assumed any time if undefined */
   allowableTimeInPeriod?: {
-    startSecond?: number,
-    endSecond?: number,
+    startSecond?: number | bigint,
+    endSecond?: number | bigint,
   },
   allowedByCustomProcedure?: (params: CustomFilterParameters) => Promise<CustomFilterReturnType>,
 }
@@ -48,69 +49,85 @@ export const TandaPayWriteMethodFilters: Record<TandaPayWriteMethodAliases, Meth
     allowableStates: [I, D, F],
     allowableRoles: [TandaPayRole.Secretary],
   },
-  cancelManualCollapse: {
-    allowableRoles: [TandaPayRole.Secretary]
-  },
   createSubgroup: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableStates: [I, D, F],
+    allowableRoles: [TandaPayRole.Secretary],
   },
   defectFromCommunity: {
-    //
+    allowableRoles: [TandaPayRole.Member, TandaPayRole.Secretary],
+    allowedByCustomProcedure: canDefectFromCommunity,
   },
-  defineSecretarySuccesorList: {
+  defineSecretarySuccessorList: {
     allowableRoles: [TandaPayRole.Secretary]
   },
   divideShortfall: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableRoles: [TandaPayRole.Secretary],
+    allowableTimeInPeriod: {
+      endSecond: daysToSeconds(3),
+    }
   },
   emergencySecretaryHandoff: {
-    //! ensure this is a member method
-  },
-  exitSubgroup: {
-    // should this be enabled at all?
-
+    allowableRoles: [TandaPayRole.Member],
+    allowedByCustomProcedure: canRequestEmergencySecretaryHandoff,
   },
   handoverSecretaryRoleToSuccessor: {
     allowableRoles: [TandaPayRole.Secretary]
   },
   initiateDefaultState: {
+    allowableStates: [I],
     allowableRoles: [TandaPayRole.Secretary]
   },
   injectFunds: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableRoles: [TandaPayRole.Secretary],
+    allowableTimeInPeriod: {
+      endSecond: daysToSeconds(3),
+    }
   },
   issueRefund: {
-    // anyone
+    allowableTimeInPeriod: {
+      startSecond: daysToSeconds(3),
+      endSecond: daysToSeconds(4),
+    }
   },
   joinCommunity: {
-    // anyone
+    allowableStates: [D],
+    allowedByCustomProcedure: canJoinCommunity,
   },
   leaveSubgroup: {
-    // anyone
-  },
-  manuallyCollapseCommunity: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableRoles: [TandaPayRole.Member, TandaPayRole.Secretary],
   },
   payPremium: {
-    // anyone
+    allowableRoles: [TandaPayRole.Member, TandaPayRole.Secretary],
+    allowableTimeInPeriod: {
+      startSecond: daysToSeconds(27),
+    }
   },
   acceptSecretaryRole: {
-    // anyone
+    allowableRoles: [TandaPayRole.Member],
+    allowedByCustomProcedure: canAcceptSecretaryRole,
   },
   submitClaim: {
-    // anyone
+    allowableRoles: [TandaPayRole.Member, TandaPayRole.Secretary],
+    allowableTimeInPeriod: {
+      endSecond: daysToSeconds(14),
+    },
+    allowedByCustomProcedure: canSubmitClaim,
   },
   updateCoverageAmount: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableRoles: [TandaPayRole.Secretary],
+    allowableStates: [I, D],
   },
   whitelistClaim: {
-    allowableRoles: [TandaPayRole.Secretary]
+    allowableRoles: [TandaPayRole.Secretary],
+    allowableTimeInPeriod: {
+      endSecond: daysToSeconds(15),
+    },
   },
   withdrawClaimFund: {
-    // anyone
+    // no check for noW
   },
   withdrawRefund: {
-    // anyone
+    // no check for now
   },
 
   // deprecated methods below

@@ -6,7 +6,8 @@ import { GetLogsReturnType, AbiEvent, GetEventArgs } from "viem";
 //! things to narrow it down a bit and remove unused event names. That caused problems but
 //! is something to revisit at a later date
 type RawEventName = Extract<
-  (typeof TandaPayInfo.abi)[number], { type: "event"; }
+  (typeof TandaPayInfo.abi)[number],
+  { type: "event" }
 >["name"];
 
 /** Raw event names for every TandaPay event */
@@ -100,18 +101,18 @@ export const AliasToRawEventNameMapping = {
 /** Accepts a raw TandaPay event name and returns an abi item for that event */
 export function tandaPayEventNameToAbiEvent(eventName: RawTandaPayEventName) {
   const [e] = TandaPayInfo.abi.filter(
-    (item) => item.type === "event" && item.name === eventName
+    (item) => item.type === "event" && item.name === eventName,
   );
   return e;
 }
 
 /** Accepts an array of raw TandaPay event names and returns an array of abi items for those events */
 export function tandaPayEventNamesToAbiEvents(
-  eventNames: RawTandaPayEventName[]
+  eventNames: RawTandaPayEventName[],
 ) {
   const rawNames = new Set<RawTandaPayEventName>(eventNames);
   return TandaPayInfo.abi.filter(
-    (item) => item.type === "event" && rawNames.has(item.name)
+    (item) => item.type === "event" && rawNames.has(item.name),
   );
 }
 
@@ -123,13 +124,13 @@ export function tandaPayEventAliasToAbiEvent(alias: TandaPayEventAlias) {
 /** Accepts an array of TandaPay event aliases and returns the abi items for the corresponding events */
 export function tandaPayEventAliasesToAbiEvents(aliases: TandaPayEventAlias[]) {
   return tandaPayEventNamesToAbiEvents(
-    aliases.map((alias) => AliasToRawEventNameMapping[alias])
+    aliases.map((alias) => AliasToRawEventNameMapping[alias]),
   );
 }
 
 /** A type predicate that returns whether or not a given string is a raw TandaPay event name */
 export function isRawTandaPayEventName(
-  eventName: string
+  eventName: string,
 ): eventName is RawTandaPayEventName {
   return eventName in RawEventNameToAliasMapping;
 }
@@ -152,7 +153,7 @@ export function getRawTandaPayEventArgs(rawEventName: RawTandaPayEventName) {
  */
 export function isValidEventArgs(
   eventName: RawTandaPayEventName,
-  args: Record<string, unknown> | readonly unknown[]
+  args: Record<string, unknown> | readonly unknown[],
 ): args is TandaPayEventArgs<typeof eventName> {
   const expectedArgNames = getRawTandaPayEventArgs(eventName);
   const hasAllProps = expectedArgNames.every((name) => name in args);
@@ -167,7 +168,7 @@ export function isValidEventArgs(
  */
 export function isValidEventAliasArgs(
   eventAlias: TandaPayEventAlias,
-  args: Record<string, unknown> | readonly unknown[]
+  args: Record<string, unknown> | readonly unknown[],
 ): args is TandaPayEventAliasArgs<typeof eventAlias> {
   return isValidEventArgs(AliasToRawEventNameMapping[eventAlias], args);
 }
@@ -180,7 +181,7 @@ export function isValidEventAliasArgs(
  * logs with the TandaPay smart contract events
  */
 export function toTandaPayLogs(
-  logs: GetLogsReturnType<AbiEvent>
+  logs: GetLogsReturnType<AbiEvent>,
 ): TandaPayLog[] {
   const tandaPayLogs: TandaPayLog[] = [];
   for (const l of logs) {
@@ -209,21 +210,25 @@ export function toTandaPayLogs(
 /** The arguments for any given TandaPay raw event name */
 export type TandaPayEventArgs<
   rawEventName extends RawTandaPayEventName = RawTandaPayEventName,
-  strict = boolean | undefined
+  strict = boolean | undefined,
 > = Exclude<
   GetEventArgs<
-    typeof TandaPayInfo.abi, rawEventName, {
+    typeof TandaPayInfo.abi,
+    rawEventName,
+    {
       EnableUnion: false;
       IndexedOnly: false;
       Required: strict extends boolean ? strict : false;
     }
-  >, readonly unknown[]
+  >,
+  readonly unknown[]
 >;
 
 // Helper type to get specific event arguments
 export type TandaPayEventAliasArgs<
   eventAlias extends TandaPayEventAlias,
-  strict = boolean | undefined
+  strict = boolean | undefined,
 > = TandaPayEventArgs<
-  (typeof AliasToRawEventNameMapping)[eventAlias], strict extends boolean ? strict : false
+  (typeof AliasToRawEventNameMapping)[eventAlias],
+  strict extends boolean ? strict : false
 >;

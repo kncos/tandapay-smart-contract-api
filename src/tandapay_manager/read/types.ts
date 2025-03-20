@@ -1,4 +1,11 @@
-import { TandaPayEventAlias, AliasToRawEventNameMapping, TandaPayEventAliasArgs, isRawTandaPayEventName, isValidEventArgs, RawEventNameToAliasMapping } from "tandapay_interface/event_types";
+import {
+  TandaPayEventAlias,
+  AliasToRawEventNameMapping,
+  TandaPayEventAliasArgs,
+  isRawTandaPayEventName,
+  isValidEventArgs,
+  RawEventNameToAliasMapping,
+} from "tandapay_interface/event_types";
 import { Address, Hash, BlockNumber, AbiEvent, GetLogsReturnType } from "viem";
 
 /** Represents one log for a given TandaPayEvent */
@@ -7,7 +14,7 @@ export type TandaPayLog<
   /** This changes whether or not the properties in args are allowed to be undefined */
   strict extends boolean | undefined = undefined,
   /** This changes whether or not the logs can be pending */
-  pending extends boolean = boolean
+  pending extends boolean = boolean,
 > = {
   /** the smart contract address */
   address: Address;
@@ -42,7 +49,7 @@ export type TandaPayLog<
  * logs with the TandaPay smart contract events
  */
 export function toTandaPayLogs(
-  logs: GetLogsReturnType<AbiEvent>
+  logs: GetLogsReturnType<AbiEvent>,
 ): TandaPayLog[] {
   const tandaPayLogs: TandaPayLog[] = [];
   for (const l of logs) {

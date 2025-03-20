@@ -15,12 +15,9 @@ import {
 import { TEST_TRANSPORT } from "../test_config";
 import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { anvil } from "viem/chains";
-import { TandaPayState } from "types";
-import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
-import { getAllSubgroupInfo } from "tandapay_utils";
 
 describe.skip("batching read transactions using TandaPayManager", () => {
-  it("works", async () => {
+  it.skip("works", async () => {
     //! anvil is expected to be running in CLI already
 
     // create a public client and get the current block number.
@@ -72,7 +69,7 @@ describe.skip("batching read transactions using TandaPayManager", () => {
     for (let i = 0; i < 90; i++)
       await tpm.write.secretary.addMemberToCommunity(accs[i].address);
 
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     const memberInfoArr = await tpm.read.getAllMemberInfo(90, 0);
     console.log(memberInfoArr);

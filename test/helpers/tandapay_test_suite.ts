@@ -388,7 +388,7 @@ export class TandaPayTestSuite {
       memberInfo = await m.read.getMemberInfoFromAddress(address);
       // they should become reorged at this time
       expect(memberInfo.memberStatus).toBe(MemberStatus.Reorged);
-      
+
       //console.log(`before self-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // they approve their own subgroup assignment
       await m.write.member.approveSubgroupAssignment(true);
@@ -399,7 +399,7 @@ export class TandaPayTestSuite {
         fail(
           `no peer was populated in the subgroupPeers map for subgroup ID ${newSubgroupId}`,
         );
-     
+
       //TODO: remove
       //memberInfo = await m.read.getMemberInfoFromAddress(address);
       //console.log(`before peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);

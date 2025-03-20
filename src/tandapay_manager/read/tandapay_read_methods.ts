@@ -228,9 +228,9 @@ export class TandaPayReadMethods {
     };
   };
 
-  isManuallyCollapsed = async () => await this.read.getIsManuallyCollapsed();
-
-  getManuallyCollapsedPeriodId = async () => await this.read.getManuallyCollapsedPeriod();
+  /** Returns a list of the secretary successors */
+  getSecretarySuccessorList = async () =>
+    await this.read.getSecretarySuccessors();
 
   //! Methods below are custom methods added by me
 
@@ -276,21 +276,24 @@ export class TandaPayReadMethods {
    * no value is passed.
    * @returns an array of subgroupInfo
    */
-  getAllSubgroupInfo = async (numSubgroups?: bigint | number): Promise<SubgroupInfo[]> => {
-    if (!numSubgroups)
-      numSubgroups = await this.getCurrentSubgroupCount();  
+  getAllSubgroupInfo = async (
+    numSubgroups?: bigint | number,
+  ): Promise<SubgroupInfo[]> => {
+    if (!numSubgroups) numSubgroups = await this.getCurrentSubgroupCount();
 
     // create an array of subgroup IDs given the number of subgroups that we have.
     // subgroupIds go from 1...subgroupCount, inclusive
-    const subgroupIds = Array.from({length: Number(numSubgroups)}, (_,i) => BigInt(i+1));
+    const subgroupIds = Array.from({ length: Number(numSubgroups) }, (_, i) =>
+      BigInt(i + 1),
+    );
 
     // get all subgroup info
     const subgroupInfo = await Promise.all(
-      subgroupIds.map((v) => this.getSubgroupInfo(v))
-    )
+      subgroupIds.map((v) => this.getSubgroupInfo(v)),
+    );
 
     return subgroupInfo;
-  }
+  };
 
   /**
    * Get information about all community members at once
@@ -298,38 +301,28 @@ export class TandaPayReadMethods {
    * @param periodId what period do you want to query for information? if none is passed, uses the current period
    * @returns An array of MemberInfo
    */
-  getAllMemberInfo = async (numMembers?: bigint | number, periodId?: bigint | number): Promise<MemberInfo[]> => {
-    if (!numMembers)
-      numMembers = await this.getCurrentMemberCount();
-    if (!periodId)
-      periodId = await this.getCurrentPeriodId();
+  getAllMemberInfo = async (
+    numMembers?: bigint | number,
+    periodId?: bigint | number,
+  ): Promise<MemberInfo[]> => {
+    if (!numMembers) numMembers = await this.getCurrentMemberCount();
+    if (!periodId) periodId = await this.getCurrentPeriodId();
 
-    const memberIds = Array.from({length: Number(numMembers)}, (_,i) => BigInt(i+1));
+    const memberIds = Array.from({ length: Number(numMembers) }, (_, i) =>
+      BigInt(i + 1),
+    );
     const memberInfo = await Promise.all(
-      memberIds.map((id) => this.getMemberInfoFromId(id, BigInt(periodId)))
-    )
+      memberIds.map((id) => this.getMemberInfoFromId(id, BigInt(periodId))),
+    );
 
     return memberInfo;
-  }
+  };
 
   /** Returns information about the current period */
   getCurrentPeriodInfo = async (): Promise<PeriodInfo> => {
     const periodId = await this.getCurrentPeriodId();
     return await this.getPeriodInfo(periodId);
-  }
-
-  getManuallyCollapsedInfo = async (): Promise<ManualCollapseInfo> => {
-    const periodId = await this.getManuallyCollapsedPeriodId();
-    if (periodId === 0n)
-      return { isManuallyCollapsed: false };
-
-    const manuallyCollapsedInfo = await this.read.getPeriodIdToManualCollapse([periodId]);
-    return {
-      isManuallyCollapsed: true,
-      initiatedTimestamp: manuallyCollapsedInfo.startedAT,
-      cancelDeadlineTimestamp: manuallyCollapsedInfo.availableToTurnTill,
-    };
-  }
+  };
 }
 
 // NOTE: saAmount refers to the amount required by the savings escrow
@@ -363,7 +356,7 @@ export class TandaPayReadMethods {
 //TODO: - if any of them are unused or have no utility to us here
 // - [x] this.read.secretary                                (no clue why it wasn't documented)
 // - [ ] this.read.getUpcomingSecretary
-// - [ ] this.read.getSecretarySuccessors
+// - [x] this.read.getSecretarySuccessors                   (definitely needed for filters)
 // - [x] this.read.getPeriodIdToPeriodInfo                  (I think this is necessary, not sure why MD didn't document it)
 // - [ ] this.read.getIsHandingOver
 // - [x] this.read.getIsAllMemberNotPaidInPeriod            (not sure why MD didn't document it, we'll need to test it though)

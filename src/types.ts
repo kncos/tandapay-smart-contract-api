@@ -141,13 +141,15 @@ export type PeriodInfo = {
   claimIds: readonly bigint[];
 };
 
-export type ManualCollapseInfo = {
-  isManuallyCollapsed: false;
-} | {
-  isManuallyCollapsed: true;
-  initiatedTimestamp: bigint;
-  cancelDeadlineTimestamp: bigint;
-}
+export type ManualCollapseInfo =
+  | {
+      isManuallyCollapsed: false;
+    }
+  | {
+      isManuallyCollapsed: true;
+      initiatedTimestamp: bigint;
+      cancelDeadlineTimestamp: bigint;
+    };
 
 /** enum type representing the different states the TandaPay community can be in */
 export enum TandaPayState {

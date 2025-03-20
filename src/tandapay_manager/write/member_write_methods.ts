@@ -8,9 +8,9 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // 1.  joinToCommunity  =>
   // Use case -- The user will join the community and transfer the 11/12th of the individual savings amount's fund.
   // Arguments --- none required
-  async joinCommunity(): TandaPayWriteMethodReturnType<"joinToCommunity"> {
-    const simulate = async () => await this.simulate.joinToCommunity();
-    const write = async () => await this.write.joinToCommunity();
+  async joinCommunity(): TandaPayWriteMethodReturnType<"joinCommunity"> {
+    const simulate = async () => await this.simulate.joinCommunity();
+    const write = async () => await this.write.joinCommunity();
     return this.performOperation({ simulate, write });
   }
 
@@ -19,11 +19,11 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // Arguments --- members will have to pass a boolean value of if they want to join or not.
   async approveSubgroupAssignment(
     approve: boolean = true,
-  ): TandaPayWriteMethodReturnType<"approveSubGroupAssignment"> {
+  ): TandaPayWriteMethodReturnType<"approveSubgroupAssignment"> {
     const simulate = async () =>
-      await this.simulate.approveSubGroupAssignment([approve]);
+      await this.simulate.approveSubgroupAssignment([approve]);
     const write = async () =>
-      await this.write.approveSubGroupAssignment([approve]);
+      await this.write.approveSubgroupAssignment([approve]);
     return this.performOperation({ simulate, write });
   }
 
@@ -54,25 +54,25 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // Use case -- Member will be able to exit from a SubGroup using this function.
   // Arguments --- none required
   /** @deprecated */
-  async exitSubgroup(): TandaPayWriteMethodReturnType<"exitSubGroup"> {
-    const simulate = async () => await this.simulate.exitSubGroup();
-    const write = async () => await this.write.exitSubGroup();
-    return this.performOperation({ simulate, write });
-  }
+  //  async exitSubgroup(): TandaPayWriteMethodReturnType<"exitSubGroup"> {
+  //    const simulate = async () => await this.simulate.exitSubGroup();
+  //    const write = async () => await this.write.exitSubGroup();
+  //    return this.performOperation({ simulate, write });
+  //  }
 
   //! not documented by MD, added by Julian?
-  async leaveSubgroup(): TandaPayWriteMethodReturnType<"leaveFromASubGroup"> {
-    const simulate = async () => await this.simulate.leaveFromASubGroup();
-    const write = async () => await this.write.leaveFromASubGroup();
+  async leaveSubgroup(): TandaPayWriteMethodReturnType<"leaveSubgroup"> {
+    const simulate = async () => await this.simulate.leaveSubgroup();
+    const write = async () => await this.write.leaveSubgroup();
     return this.performOperation({ simulate, write });
   }
 
   // 5. defects  =>
   // Use case -- Member will be able to defects using this function.
   // Arguments --- none required
-  async defectFromCommunity(): TandaPayWriteMethodReturnType<"defects"> {
-    const simulate = async () => await this.simulate.defects();
-    const write = async () => await this.write.defects();
+  async defectFromCommunity(): TandaPayWriteMethodReturnType<"defectFromCommunity"> {
+    const simulate = async () => await this.simulate.defectFromCommunity();
+    const write = async () => await this.write.defectFromCommunity();
     return this.performOperation({ simulate, write });
   }
 
@@ -92,9 +92,9 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // 7. secretaryAcceptance  =>
   // Use case -- The valid members who are in line of the secretary successors list and are being voted for the secretary can accept the secretary using this function.
   // Arguments --- none required
-  async acceptSecretaryRole(): TandaPayWriteMethodReturnType<"secretaryAcceptance"> {
-    const simulate = async () => await this.simulate.secretaryAcceptance();
-    const write = async () => await this.write.secretaryAcceptance();
+  async acceptSecretaryRole(): TandaPayWriteMethodReturnType<"acceptSecretaryRole"> {
+    const simulate = async () => await this.simulate.acceptSecretaryRole();
+    const write = async () => await this.write.acceptSecretaryRole();
     return this.performOperation({ simulate, write });
   }
 
@@ -105,13 +105,13 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // emergency. For it to actually work, multiple successors have to send this while specifying the same new secretary
   async emergencySecretaryHandoff(
     newSecretaryWalletAddress: Hex,
-  ): TandaPayWriteMethodReturnType<"emergencyHandOverSecretary"> {
+  ): TandaPayWriteMethodReturnType<"emergencySecretaryHandoff"> {
     const simulate = async () =>
-      await this.simulate.emergencyHandOverSecretary([
+      await this.simulate.emergencySecretaryHandoff([
         newSecretaryWalletAddress,
       ]);
     const write = async () =>
-      await this.write.emergencyHandOverSecretary([newSecretaryWalletAddress]);
+      await this.write.emergencySecretaryHandoff([newSecretaryWalletAddress]);
     return this.performOperation({ simulate, write });
   }
 
