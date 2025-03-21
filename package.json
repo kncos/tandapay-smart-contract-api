@@ -43,6 +43,8 @@
     "typescript-eslint": "^8.20.0"
   },
   "dependencies": {
+    "eslint-plugin-neverthrow": "^1.1.4",
+    "neverthrow": "^8.2.0",
     "pnpm": "^10.3.0",
     "viem": "^2.22.4"
   },

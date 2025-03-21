@@ -5,7 +5,8 @@ import {
   spawnAnvil,
 } from "../helpers/tandapay_test_helpers";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
-import { TandaPayLog, toTandaPayLogs } from "tandapay_manager/read/types";
+import { toTandaPayLogs } from "tandapay_manager/read/types";
+import { TandaPayLog } from "tandapay_manager/read/types";
 import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
 import { TandaPayState } from "types";
 import { Address } from "viem";

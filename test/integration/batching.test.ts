@@ -9,17 +9,15 @@ import {
   deployFaucetToken,
   deployMulticall,
   deployTandaPay,
+  makeAccounts,
   makeWriteableClients,
 } from "../helpers/tandapay_test_helpers";
 import { TEST_TRANSPORT } from "../test_config";
 import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { anvil } from "viem/chains";
-import { TandaPayState } from "types";
-import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
-import { getAllSubgroupInfo } from "tandapay_utils";
 
 describe.skip("batching read transactions using TandaPayManager", () => {
-  it("works", async () => {
+  it.skip("works", async () => {
     //! anvil is expected to be running in CLI already
 
     // create a public client and get the current block number.
@@ -67,20 +65,13 @@ describe.skip("batching read transactions using TandaPayManager", () => {
       kind: "secretary",
     });
 
-    // this will work, and we should witness only one `eth_call`
-    // output in the terminal
-    const [secretary, communityState] = await Promise.all([
-      tpm.read.getSecretaryAddress(),
-      tpm.read.getCommunityState(),
-    ]);
+    const accs = makeAccounts(90);
+    for (let i = 0; i < 90; i++)
+      await tpm.write.secretary.addMemberToCommunity(accs[i].address);
 
-    for (let i = 0; i < 16; i++) {
-      await tpm.write.secretary.createSubgroup();
-    }
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    console.log(`${secretary}\n${TandaPayState[communityState]}`);
-
-    const subgroupInfo = await getAllSubgroupInfo(tpm);
-    console.log(subgroupInfo.size);
+    const memberInfoArr = await tpm.read.getAllMemberInfo(90, 0);
+    console.log(memberInfoArr);
   });
 });

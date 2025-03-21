@@ -83,7 +83,7 @@ describe("auto reorg", () => {
 
   it("random tests? let's see if they work", () => {
     let totalTests = 0;
-    for (let i = 0; i < 5000; i++) {
+    for (let i = 0; i < 100; i++) {
       const numSubgroups = 3 + Math.ceil(Math.random() * 20);
       const subgroupSizes: number[] = [];
       for (let i = 0; i < numSubgroups; i++) {

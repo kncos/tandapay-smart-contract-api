@@ -120,3 +120,38 @@ export function filterAndValidate<T>({
 
   return filtered;
 }
+
+/**
+ * Contains a `result` which is either true or false, as well as a reason
+ * which is optional when `result` is true, but required when `result` is false.
+ */
+export type BooleanResult =
+  | {
+      result: true;
+      reason?: string;
+    }
+  | {
+      result: false;
+      reason: string;
+    };
+
+/**
+ * Converts days to seconds. Returns a bigint since this method is likely
+ * going to be used with smart contract api, also deals with large numbers,
+ * and we also don't need sub-second precision
+ * @param days number of days you want in seconds
+ * @returns the number of seconds as a `bigint`
+ */
+export function daysToSeconds(days: number | bigint): bigint {
+  return BigInt(days) * 60n * 60n * 24n;
+}
+
+/**
+ * Converts seconds to days. Returns a number so that we can have decimals,
+ * and also because this method would likely be used for display rather than logic
+ * @param seconds number of seconds to convert into days. Accepts number or bigint
+ * @returns returns the number of days as a floating point number
+ */
+export function secondsToDays(seconds: number | bigint): number {
+  return Number(seconds) / (60 * 60 * 24);
+}

@@ -1,5 +1,6 @@
 import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import {
+  AssignmentStatus,
   memberInfoJsonReplacer,
   MemberStatus,
   subgroupInfoJsonReplacer,
@@ -30,7 +31,8 @@ import {
   DEFAULT_COVERAGE_REQUIREMENT,
   DEFAULT_CLAIMANT_INDEX,
 } from "../test_config";
-import { TandaPayLog, toTandaPayLogs } from "tandapay_manager/read/types";
+import { toTandaPayLogs } from "tandapay_manager/read/types";
+import { TandaPayLog } from "tandapay_manager/read/types";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
 export type DoActionForEachManagerParams = {
@@ -387,6 +389,7 @@ export class TandaPayTestSuite {
       // they should become reorged at this time
       expect(memberInfo.memberStatus).toBe(MemberStatus.Reorged);
 
+      //console.log(`before self-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // they approve their own subgroup assignment
       await m.write.member.approveSubgroupAssignment(true);
 
@@ -397,12 +400,17 @@ export class TandaPayTestSuite {
           `no peer was populated in the subgroupPeers map for subgroup ID ${newSubgroupId}`,
         );
 
+      //TODO: remove
+      //memberInfo = await m.read.getMemberInfoFromAddress(address);
+      //console.log(`before peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
+      //TODO: end removal
       await peer.write.member.approveNewSubgroupMember(
         newSubgroupId,
         memberInfo.id,
         true,
       );
       memberInfo = await m.read.getMemberInfoFromAddress(address);
+      //console.log(`after peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // now they should go back to being valid, since they've been assigned to a new subgroup successfully
       expect(memberInfo.memberStatus).toBe(MemberStatus.Valid);
     }

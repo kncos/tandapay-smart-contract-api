@@ -44,7 +44,9 @@ export type ReadOnlyTandaPayManager = TandaPayManager<"readonly">;
  */
 export type WriteableTandaPayManager<
   kind_ extends Exclude<TandaPayManagerKind, "readonly"> = "secretary",
-> = TandaPayManager<kind_>;
+> = TandaPayManager<kind_> & {
+  client: { public: ReadableClient; wallet: WriteableClient };
+};
 
 /** TandaPay manager type. could be readable or writeable. */
 export type TandaPayManager<
@@ -53,7 +55,7 @@ export type TandaPayManager<
   kind: kind_;
   read: TandaPayReadMethods;
   events: TandaPayEvents;
-  client: KeyedClient;
+  client: kind_ extends "readonly" ? KeyedClient : (KeyedClient & { wallet: WriteableClient });
   tpAddress: Address;
 } & (kind_ extends "readonly"
   ? unknown
@@ -104,7 +106,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
     return baseManager as kind_ extends "readonly"
       ? TandaPayManager<kind_>
       : never;
-  // otherwise, we are making a writeable manager
+    // otherwise, we are making a writeable manager
   } else {
     // for a writeable manager, this should always be defined, as enforced by the
     // `CreateTandaPayManagerParameters` type
