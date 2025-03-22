@@ -45,6 +45,8 @@ export type WriteableClient = WalletClient & {
   chain: Chain;
 };
 
+export type ApiNumericType = bigint | number;
+
 /**
  * Any viem client that at least has: A defined transport, a defined chain, and
  * is extended with PublicActions. Account is optional.

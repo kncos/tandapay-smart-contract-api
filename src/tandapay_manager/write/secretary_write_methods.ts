@@ -3,6 +3,7 @@ import {
   TandaPayWriteMethodReturnType,
   TandaPayWriteMethods,
 } from "./tandapay_write_methods";
+import { ApiNumericType } from "types";
 
 /** methods within the TandaPay smart contract that only the secretary may call */
 export class SecretaryWriteMethods extends TandaPayWriteMethods {
@@ -43,19 +44,19 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods {
    */
   async assignMemberToSubgroup(
     memberWalletAddress: Hex,
-    subgroupID: bigint,
+    subgroupID: ApiNumericType,
     isReorging: boolean = false,
   ): TandaPayWriteMethodReturnType<"assignMemberToSubgroup"> {
     const simulate = async () =>
       await this.simulate.assignMemberToSubgroup([
         memberWalletAddress,
-        subgroupID,
+        BigInt(subgroupID),
         isReorging,
       ]);
     const write = async () =>
       await this.write.assignMemberToSubgroup([
         memberWalletAddress,
-        subgroupID,
+        BigInt(subgroupID),
         isReorging,
       ]);
     return this.performOperation({ simulate, write });
@@ -81,15 +82,15 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods {
 
   /**
    * This function is used to whitelist a claim submitted by the claimants.
-   * @param claimID unique identifier for the claim that the secretary wants to whitelist
+   * @param claimId unique identifier for the claim that the secretary wants to whitelist
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
   async whitelistClaim(
-    claimID: bigint,
+    claimId: ApiNumericType,
   ): TandaPayWriteMethodReturnType<"whitelistClaim"> {
-    const simulate = async () => await this.simulate.whitelistClaim([claimID]);
-    const write = async () => await this.write.whitelistClaim([claimID]);
+    const simulate = async () => await this.simulate.whitelistClaim([BigInt(claimId)]);
+    const write = async () => await this.write.whitelistClaim([BigInt(claimId)]);
     return this.performOperation({ simulate, write });
   }
 

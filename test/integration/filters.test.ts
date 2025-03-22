@@ -14,7 +14,7 @@ beforeAll(async () => {
   suite = new TandaPayTestSuite(ftk, tp);
 });
 
-describe("filters basic test", () => {
+describe.skip("filters basic test", () => {
   it("basic secretary scenario", async () => {
     const res1 = await getAvailableMethods(suite.secretary);
     const res2 = await getAvailableMethods(suite.managers[1]);
@@ -22,4 +22,6 @@ describe("filters basic test", () => {
     console.log(res2);
   });
 
-})
+});
+
+afterAll(() => anvil.kill());

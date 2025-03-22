@@ -3,6 +3,7 @@ import {
   TandaPayWriteMethodReturnType,
   TandaPayWriteMethods,
 } from "./tandapay_write_methods";
+import { ApiNumericType } from "types";
 
 export class MemberWriteMethods extends TandaPayWriteMethods {
   // 1.  joinToCommunity  =>
@@ -31,20 +32,20 @@ export class MemberWriteMethods extends TandaPayWriteMethods {
   // Use case -- This function will be used to approve a new SubGroup member by the existing SubGroup member if the new member is being re-orged.
   // Arguments --- The member will have to pass the SubGroup ID, the new member's ID, and a boolean value of whether the new member is accepted or not.
   async approveNewSubgroupMember(
-    subgroupId: bigint,
-    newMemberId: bigint,
+    subgroupId: ApiNumericType,
+    newMemberId: ApiNumericType,
     approve: boolean = true,
   ): TandaPayWriteMethodReturnType<"approveNewSubgroupMember"> {
     const simulate = async () =>
       await this.simulate.approveNewSubgroupMember([
-        subgroupId,
-        newMemberId,
+        BigInt(subgroupId),
+        BigInt(newMemberId),
         approve,
       ]);
     const write = async () =>
       await this.write.approveNewSubgroupMember([
-        subgroupId,
-        newMemberId,
+        BigInt(subgroupId),
+        BigInt(newMemberId),
         approve,
       ]);
     return this.performOperation({ simulate, write });

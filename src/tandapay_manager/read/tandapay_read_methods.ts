@@ -1,15 +1,14 @@
 import { Address, getContract, Hex } from "viem";
 import {
+  ApiNumericType,
   AssignmentStatus,
-  ClaimInfo,
-  ManualCollapseInfo,
-  MemberInfo,
+  ClaimInfo, MemberInfo,
   MemberStatus,
   PeriodInfo,
   ReadableClient,
   SubgroupInfo,
   TandaPayContract,
-  TandaPayState,
+  TandaPayState
 } from "types";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
 
@@ -84,8 +83,8 @@ export class TandaPayReadMethods {
    * @param subgroupId Subgroup ID you want information about
    * @returns A promise resolving to an object containing information about the subgroup
    */
-  getSubgroupInfo = async (subgroupId: bigint): Promise<SubgroupInfo> =>
-    await this.read.getSubGroupIdToSubGroupInfo([subgroupId]);
+  getSubgroupInfo = async (subgroupId: ApiNumericType | number): Promise<SubgroupInfo> =>
+    await this.read.getSubGroupIdToSubGroupInfo([BigInt(subgroupId)]);
 
   //! add integration test
   /**
@@ -95,19 +94,19 @@ export class TandaPayReadMethods {
    * @returns A promise that resolves to an object containing information about the claim
    */
   getClaimInfo = async (
-    periodId: bigint,
-    claimId: bigint,
+    periodId: ApiNumericType,
+    claimId: ApiNumericType,
   ): Promise<ClaimInfo> => {
     const claimInformation = await this.read.getPeriodIdToClaimIdToClaimInfo([
-      periodId,
-      claimId,
+      BigInt(periodId),
+      BigInt(claimId),
     ]);
     // Mapping the object returned by the smart contract to an internal object in this code
     // base that has better naming conventions and works with everything else. In theory, the
     // actual type returned from the smart contract should never need to be used elsewhere.
     return {
       id: claimInformation.id,
-      periodId: periodId,
+      periodId: BigInt(periodId),
       amount: claimInformation.claimAmount,
       isWhitelisted: claimInformation.isWhitelistd,
       claimantWalletAddress: claimInformation.claimant,
@@ -121,8 +120,8 @@ export class TandaPayReadMethods {
    * @param periodId The period to retrieve claim IDs from
    * @returns A promise resolving to an array of claim IDs in the given period
    */
-  getClaimIdsInPeriod = async (periodId: bigint) =>
-    await this.read.getPeriodIdToClaimIds([periodId]);
+  getClaimIdsInPeriod = async (periodId: ApiNumericType) =>
+    await this.read.getPeriodIdToClaimIds([BigInt(periodId)]);
 
   //! add integration test
   /**
@@ -130,8 +129,8 @@ export class TandaPayReadMethods {
    * @param periodId The period to query for defectors
    * @returns A promise resolving to an array of member IDs for members who defected in the given period
    */
-  getDefectorMemberIdsInPeriod = async (periodId: bigint) =>
-    await this.read.getPeriodIdToDefectorsId([periodId]);
+  getDefectorMemberIdsInPeriod = async (periodId: ApiNumericType) =>
+    await this.read.getPeriodIdToDefectorsId([BigInt(periodId)]);
 
   // 15. getPeriodIdToManualCollapse =>
   // Use case -- This function will return the manual collapse information.
@@ -153,8 +152,8 @@ export class TandaPayReadMethods {
    * @param periodId The period ID to query for whitelisted claims
    * @returns A promise resolving to an array of claim IDs for whitelisted claims in the given period
    */
-  getWhitelistedClaimIdsInPeriod = async (periodId: bigint) =>
-    await this.read.getPeriodIdWhiteListedClaims([periodId]);
+  getWhitelistedClaimIdsInPeriod = async (periodId: ApiNumericType) =>
+    await this.read.getPeriodIdWhiteListedClaims([BigInt(periodId)]);
 
   /**
    * Retrieve information about a member given their wallet address and a period Id.
@@ -165,15 +164,15 @@ export class TandaPayReadMethods {
    */
   getMemberInfoFromAddress = async (
     memberWalletAddress: Hex,
-    periodId: bigint = 0n,
+    periodId: ApiNumericType = 0n,
   ): Promise<MemberInfo> => {
     const memberInfo = await this.read.getMemberToMemberInfo([
       memberWalletAddress,
-      periodId,
+      BigInt(periodId),
     ]);
 
     // if 0 was passed, let's get the actual period that this information is going to be associated with
-    let curPeriod = periodId;
+    let curPeriod = BigInt(periodId);
     if (periodId === 0n) curPeriod = await this.read.getPeriodId();
 
     // Mapping the object returned by the smart contract to an internal object in this code
@@ -203,18 +202,18 @@ export class TandaPayReadMethods {
 
   /** temp: this is an experimental method */
   // TODO: figure out why this doesn't work?
-  //haveAllMembersPaid = async (periodId: bigint) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
+  //haveAllMembersPaid = async (periodId: ApiNumericType) => await this.read.getIsAllMemberNotPaidInPeriod([periodId]);
 
   /**
    * Retrieve information about a given period
    * @param periodId period ID to query
    * @returns A promise resolving to an object containing information about the given period
    */
-  getPeriodInfo = async (periodId: bigint): Promise<PeriodInfo> => {
-    const periodInfo = await this.read.getPeriodIdToPeriodInfo([periodId]);
+  getPeriodInfo = async (periodId: ApiNumericType): Promise<PeriodInfo> => {
+    const periodInfo = await this.read.getPeriodIdToPeriodInfo([BigInt(periodId)]);
     return {
       /** period Id associated with this information */
-      id: periodId,
+      id: BigInt(periodId),
       /** The timestamp when the period begins */
       startTimestamp: periodInfo.startedAt,
       /** This is the timestamp that the period ended at, or is currently scheduled to end at. Warning: for current periods, the secretary can push this back. */
@@ -240,10 +239,10 @@ export class TandaPayReadMethods {
    * @param periodId what period you want to get information from. Uses current period if 0 is passed. Default = 0
    * @returns information about a member given their Id and an optional periodID
    */
-  getMemberInfoFromId = async (memberId: bigint, periodId: bigint = 0n) => {
+  getMemberInfoFromId = async (memberId: ApiNumericType, periodId: ApiNumericType = 0n): Promise<MemberInfo> => {
     const memberInfo = await this.read.getMemberInfoFromId([
-      memberId,
-      periodId,
+      BigInt(memberId),
+      BigInt(periodId),
     ]);
 
     // if 0 was passed, let's get the actual period that this information is going to be associated with
@@ -255,7 +254,7 @@ export class TandaPayReadMethods {
     // actual type returned from the smart contract should never need to be used elsewhere.
     return {
       id: memberInfo.memberId,
-      periodId: curPeriod, // if 0 was passed, this will be the current period
+      periodId: BigInt(curPeriod), // if 0 was passed, this will be the current period
       subgroupId: memberInfo.associatedGroupId,
       walletAddress: memberInfo.member,
       communityEscrowAmount: memberInfo.cEscrowAmount,
@@ -277,7 +276,7 @@ export class TandaPayReadMethods {
    * @returns an array of subgroupInfo
    */
   getAllSubgroupInfo = async (
-    numSubgroups?: bigint | number,
+    numSubgroups?: ApiNumericType,
   ): Promise<SubgroupInfo[]> => {
     if (!numSubgroups) numSubgroups = await this.getCurrentSubgroupCount();
 
@@ -302,8 +301,8 @@ export class TandaPayReadMethods {
    * @returns An array of MemberInfo
    */
   getAllMemberInfo = async (
-    numMembers?: bigint | number,
-    periodId?: bigint | number,
+    numMembers?: ApiNumericType,
+    periodId?: ApiNumericType,
   ): Promise<MemberInfo[]> => {
     if (!numMembers) numMembers = await this.getCurrentMemberCount();
     if (!periodId) periodId = await this.getCurrentPeriodId();
