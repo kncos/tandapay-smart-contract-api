@@ -22,4 +22,6 @@ describe("filters basic test", () => {
     console.log(res2);
   });
 
-})
+});
+
+afterAll(() => anvil.kill());
