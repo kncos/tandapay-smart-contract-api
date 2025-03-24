@@ -12,7 +12,9 @@ import {
   BlockTag,
   GetLogsReturnType,
   Hash,
+  WatchEventParameters,
 } from "viem";
+import { TandaPayLog, toTandaPayLogs } from "./types";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
 export interface TandaPayEventsParameters {
@@ -23,7 +25,7 @@ export interface TandaPayEventsParameters {
 }
 
 /** argument for getLogs in TandaPayEvents */
-export type GetEventLogParameters = (
+export type GetTandaPayEventLogParameters = (
   | { event: TandaPayEventAlias }
   | { events?: TandaPayEventAlias[] }
 ) &
@@ -31,6 +33,12 @@ export type GetEventLogParameters = (
     | { fromBlock?: BlockNumber | BlockTag; toBlock?: BlockNumber | BlockTag }
     | { blockHash: Hash }
   ) & { strict?: boolean };
+
+
+export type WatchTandaPayEventParameters = (
+  | ({ event: TandaPayEventAlias } & Omit<WatchEventParameters<AbiEvent>, 'event' | 'events' | 'address' | 'onLogs'>)
+  | ({ events?: TandaPayEventAlias[] } & Omit<WatchEventParameters<undefined, AbiEvent[]>, 'event' | 'events' | 'address' | 'onLogs'>)
+) & { onLogs: (logs: TandaPayLog[]) => void};
 
 /**
  * thin wrapper around viem's `getLogs` that gives us an object so we don't need to keep
@@ -51,7 +59,7 @@ export class TandaPayEvents {
    * @param params event or events to retrieve, as well as a fromBlock/toBlock range or a block hash to look up
    * @returns A list of viem `Log[]` with all of the logs for the corresponding events
    */
-  async getLogs(params: GetEventLogParameters) {
+  async getLogs(params: GetTandaPayEventLogParameters) {
     // build up options for the method call
     let opts = {};
 
@@ -104,5 +112,49 @@ export class TandaPayEvents {
       ...opts,
       address: this.address,
     })) as GetLogsReturnType<AbiEvent>;
+  }
+
+  /**
+   * watches for the specified event or events on the TandaPay smart contract instance. When events occur, the
+   * `onLogs` callback is invoked. 
+   * @param params event or events to watch, an `onLogs` callback which accepts `TandaPayLog[]`, and others. See `WatchTandaPayEventParameters`
+   * @returns a method which can be called to stop watching for events.
+   */
+  watchEvent(params: WatchTandaPayEventParameters) {
+    let opts = {};
+
+    // build opts based on whether we have event or events
+    if ("event" in params) {
+      // if we have `event`, we just need to convert the alias to
+      // a tandapay ABI event
+      const {event, ...rest} = params;
+      opts = {
+        ...rest,
+        event: tandaPayEventAliasToAbiEvent(event),
+      }
+    } else {
+      // otherwise, we have events. `events` is optional, so if neither `event`
+      // or `events` is defined, it defaults to this branch where we'll fill it out
+      // with every TandaPay event by default
+      let {events, ...rest} = params;
+      // fill out with every tandapay event by default, if left undefined
+      if (events === undefined)
+        events = Object.keys(AliasToRawEventNameMapping) as TandaPayEventAlias[];
+
+      // convert the events into raw abi events
+      opts = {
+        ...rest,
+        events: tandaPayEventAliasesToAbiEvents(events),
+      }
+    }
+
+    // invoke underlying watchEvent method, with our custom `onLogs` function that converts the
+    // viem log into a more specific TandaPayLog. We also use the address we already know here rather
+    // than requiring it to be supplemented by the programmer again
+    return this.client.watchEvent({
+      ...opts,
+      onLogs: (logs) => params.onLogs(toTandaPayLogs(logs as GetLogsReturnType<AbiEvent>)),
+      address: this.address,
+    });
   }
 }
