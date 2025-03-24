@@ -15,7 +15,6 @@ import {
 import { TEST_TRANSPORT } from "../test_config";
 import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { anvil } from "viem/chains";
-import { TandaPayLog } from "tandapay_manager/read/types";
 
 describe.skip("batching read transactions using TandaPayManager", () => {
   it.skip("works", async () => {
