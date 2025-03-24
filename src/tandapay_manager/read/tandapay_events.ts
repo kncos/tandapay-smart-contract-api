@@ -12,7 +12,9 @@ import {
   BlockTag,
   GetLogsReturnType,
   Hash,
+  WatchEventParameters,
 } from "viem";
+import { TandaPayLog, toTandaPayLogs } from "./types";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
 export interface TandaPayEventsParameters {
@@ -23,7 +25,7 @@ export interface TandaPayEventsParameters {
 }
 
 /** argument for getLogs in TandaPayEvents */
-export type GetEventLogParameters = (
+export type GetTandaPayEventLogParameters = (
   | { event: TandaPayEventAlias }
   | { events?: TandaPayEventAlias[] }
 ) &
@@ -31,6 +33,12 @@ export type GetEventLogParameters = (
     | { fromBlock?: BlockNumber | BlockTag; toBlock?: BlockNumber | BlockTag }
     | { blockHash: Hash }
   ) & { strict?: boolean };
+
+
+export type WatchTandaPayEventParameters = (
+  | ({ event: TandaPayEventAlias } & Omit<WatchEventParameters<AbiEvent>, 'event' | 'events' | 'address' | 'onLogs'>)
+  | ({ events?: TandaPayEventAlias[] } & Omit<WatchEventParameters<undefined, AbiEvent[]>, 'event' | 'events' | 'address' | 'onLogs'>)
+) & { onLogs: (logs: TandaPayLog[]) => void};
 
 /**
  * thin wrapper around viem's `getLogs` that gives us an object so we don't need to keep
@@ -51,7 +59,7 @@ export class TandaPayEvents {
    * @param params event or events to retrieve, as well as a fromBlock/toBlock range or a block hash to look up
    * @returns A list of viem `Log[]` with all of the logs for the corresponding events
    */
-  async getLogs(params: GetEventLogParameters) {
+  async getLogs(params: GetTandaPayEventLogParameters) {
     // build up options for the method call
     let opts = {};
 
@@ -104,5 +112,41 @@ export class TandaPayEvents {
       ...opts,
       address: this.address,
     })) as GetLogsReturnType<AbiEvent>;
+  }
+
+  watchEvent(params: WatchTandaPayEventParameters) {
+    const {event, events, ...rest} = {
+      event: undefined,
+      events: undefined,
+      ...params,
+    };
+
+    let opts = {};
+
+    console.log("got here");
+
+    if ("event" in params) {
+      console.log("got here 1");
+      opts = {
+        ...rest,
+        event: tandaPayEventAliasToAbiEvent(params.event),
+      }
+
+    } else {
+      console.log("got here 2");
+      if (params.events === undefined)
+        params.events = Object.keys(AliasToRawEventNameMapping) as TandaPayEventAlias[];
+
+      opts = {
+        ...rest,
+        events: tandaPayEventAliasesToAbiEvents(params.events),
+      }
+    }
+
+    return this.client.watchEvent({
+      ...opts,
+      onLogs: (logs) => params.onLogs(toTandaPayLogs(logs as GetLogsReturnType<AbiEvent>)),
+      address: this.address,
+    });
   }
 }

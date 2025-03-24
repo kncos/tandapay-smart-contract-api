@@ -15,9 +15,10 @@ import {
 import { TEST_TRANSPORT } from "../test_config";
 import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { anvil } from "viem/chains";
+import { TandaPayLog } from "tandapay_manager/read/types";
 
-describe.skip("batching read transactions using TandaPayManager", () => {
-  it.skip("works", async () => {
+describe("batching read transactions using TandaPayManager", () => {
+  it("works", async () => {
     //! anvil is expected to be running in CLI already
 
     // create a public client and get the current block number.
@@ -65,13 +66,19 @@ describe.skip("batching read transactions using TandaPayManager", () => {
       kind: "secretary",
     });
 
+    const unwatch = tpm.events.watchEvent({
+      onLogs: (l) => console.log(`${l.map(log => log.alias)}`),
+    });
+
     const accs = makeAccounts(90);
-    for (let i = 0; i < 90; i++)
+    for (let i = 0; i < 15; i++)
       await tpm.write.secretary.addMemberToCommunity(accs[i].address);
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    const memberInfoArr = await tpm.read.getAllMemberInfo(90, 0);
-    console.log(memberInfoArr);
+    const memberInfoArr = await tpm.read.getAllMemberInfo(15, 0);
+    //console.log(memberInfoArr);
+
+    unwatch();
   });
 });

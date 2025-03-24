@@ -57,10 +57,10 @@ console.log(writeMethods.join("\n"));
 //})
 
 
-let a = await spawnAnvil();
+const a = await spawnAnvil();
 const ftk = await deployFaucetToken();
 const tp = await deployTandaPay(ftk);
-let suite = new TandaPayTestSuite(ftk,tp);
+const suite = new TandaPayTestSuite(ftk,tp);
 const acc = makeAccounts(30)[29];
 const info = await suite.secretary.read.getMemberInfoFromAddress(acc.address);
 console.log(info);
