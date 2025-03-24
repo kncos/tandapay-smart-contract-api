@@ -115,31 +115,22 @@ export class TandaPayEvents {
   }
 
   watchEvent(params: WatchTandaPayEventParameters) {
-    const {event, events, ...rest} = {
-      event: undefined,
-      events: undefined,
-      ...params,
-    };
-
     let opts = {};
 
-    console.log("got here");
-
     if ("event" in params) {
-      console.log("got here 1");
+      const {event, ...rest} = params;
       opts = {
         ...rest,
-        event: tandaPayEventAliasToAbiEvent(params.event),
+        event: tandaPayEventAliasToAbiEvent(event),
       }
-
     } else {
-      console.log("got here 2");
-      if (params.events === undefined)
-        params.events = Object.keys(AliasToRawEventNameMapping) as TandaPayEventAlias[];
+      let {events, ...rest} = params;
+      if (events === undefined)
+        events = Object.keys(AliasToRawEventNameMapping) as TandaPayEventAlias[];
 
       opts = {
         ...rest,
-        events: tandaPayEventAliasesToAbiEvents(params.events),
+        events: tandaPayEventAliasesToAbiEvents(events),
       }
     }
 
