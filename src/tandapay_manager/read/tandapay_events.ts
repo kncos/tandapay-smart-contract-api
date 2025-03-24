@@ -114,26 +114,43 @@ export class TandaPayEvents {
     })) as GetLogsReturnType<AbiEvent>;
   }
 
+  /**
+   * watches for the specified event or events on the TandaPay smart contract instance. When events occur, the
+   * `onLogs` callback is invoked. 
+   * @param params event or events to watch, an `onLogs` callback which accepts `TandaPayLog[]`, and others. See `WatchTandaPayEventParameters`
+   * @returns a method which can be called to stop watching for events.
+   */
   watchEvent(params: WatchTandaPayEventParameters) {
     let opts = {};
 
+    // build opts based on whether we have event or events
     if ("event" in params) {
+      // if we have `event`, we just need to convert the alias to
+      // a tandapay ABI event
       const {event, ...rest} = params;
       opts = {
         ...rest,
         event: tandaPayEventAliasToAbiEvent(event),
       }
     } else {
+      // otherwise, we have events. `events` is optional, so if neither `event`
+      // or `events` is defined, it defaults to this branch where we'll fill it out
+      // with every TandaPay event by default
       let {events, ...rest} = params;
+      // fill out with every tandapay event by default, if left undefined
       if (events === undefined)
         events = Object.keys(AliasToRawEventNameMapping) as TandaPayEventAlias[];
 
+      // convert the events into raw abi events
       opts = {
         ...rest,
         events: tandaPayEventAliasesToAbiEvents(events),
       }
     }
 
+    // invoke underlying watchEvent method, with our custom `onLogs` function that converts the
+    // viem log into a more specific TandaPayLog. We also use the address we already know here rather
+    // than requiring it to be supplemented by the programmer again
     return this.client.watchEvent({
       ...opts,
       onLogs: (logs) => params.onLogs(toTandaPayLogs(logs as GetLogsReturnType<AbiEvent>)),
