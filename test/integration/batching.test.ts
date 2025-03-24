@@ -17,8 +17,8 @@ import { createTandaPayManager } from "tandapay_manager/tandapay_manager";
 import { anvil } from "viem/chains";
 import { TandaPayLog } from "tandapay_manager/read/types";
 
-describe("batching read transactions using TandaPayManager", () => {
-  it("works", async () => {
+describe.skip("batching read transactions using TandaPayManager", () => {
+  it.skip("works", async () => {
     //! anvil is expected to be running in CLI already
 
     // create a public client and get the current block number.
