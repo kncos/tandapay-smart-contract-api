@@ -1,7 +1,7 @@
 import { ChildProcess } from "child_process";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
 import { deployFaucetToken, deployTandaPay, spawnAnvil } from "../helpers/tandapay_test_helpers";
-import { getAvailableMethods } from "method_filter/tandapay_available_methods";
+import { getAvailableMethods } from "tandapay_macros/tandapay_available_methods";
 
 
 let suite: TandaPayTestSuite;
