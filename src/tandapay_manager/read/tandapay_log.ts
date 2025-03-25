@@ -5,7 +5,7 @@ import {
   isRawTandaPayEventName,
   isValidEventArgs,
   RawEventNameToAliasMapping,
-} from "tandapay_interface/event_types";
+} from "tandapay_manager/read/event_types";
 import { Address, Hash, BlockNumber, AbiEvent, GetLogsReturnType } from "viem";
 
 /** Represents one log for a given TandaPayEvent */
@@ -74,3 +74,4 @@ export function toTandaPayLogs(
   }
   return tandaPayLogs;
 }
+

@@ -44,35 +44,25 @@ export class TandaPayReadMethods {
 
   /** @returns A promise that resolves to the contract address of the payment token being used in this TandaPay instance, in hexadecimal string format. */
   getPaymentTokenAddress = async (): Promise<Hex> =>
-    await this.read.getPaymentToken();
+    await this.read.getPaymentTokenAddress();
 
   /** @returns A promise that resolves to the total number of members in the TandaPay community. */
-  getCurrentMemberCount = async () => await this.read.getCurrentMemberId();
+  getCurrentMemberCount = async () => await this.read.getCurrentMemberCount();
 
   /** @returns A promise that resolves to the total number of subgroups in the TandaPay community. */
-  getCurrentSubgroupCount = async () => await this.read.getCurrentSubGroupId();
+  getCurrentSubgroupCount = async () => await this.read.getCurrentSubgroupCount();
 
   /** @returns A promise that resolves to the total number of claims that have occurred in the TandaPay community. This will also be the ID of the next claim */
   getCurrentClaimId = async () => await this.read.getCurrentClaimId();
 
   /** @returns A promise that resolves to the current period ID, which is just the total number of periods that have elapsed since the community's inception */
-  getCurrentPeriodId = async () => await this.read.getPeriodId();
+  getCurrentPeriodId = async () => await this.read.getCurrentPeriodId();
 
   /** @returns A promise that resolves to the total coverage amount the community has, i.e. how much must collectively go into the community escrow each period */
-  getTotalCoverageAmount = async () => await this.read.getTotalCoverage();
+  getTotalCoverageAmount = async () => await this.read.getTotalCoverageAmount();
 
   /** @returns A promise that resolves to the base premium, a.k.a. the community escrow contribution each individual member must make. Calculated as `(total coverage) / (member count)` */
   getBasePremium = async () => await this.read.getBasePremium();
-
-  // 8. getManuallyCollapsedPeriod =>
-  // Use case -- if manually collapsed then, this function will return the manually collapsed period Id.
-  //? is this needed for now? read SC code and find out how this actually works later
-  // TODO: implement
-
-  // 9. getIsManuallyCollapsed =>
-  // Use case -- This function will return if the manual collapse happened or not.
-  //? is this needed for now? find out how this actually works later
-  // TODO: implement
 
   /** @returns A promise that resolves to an enum value representing the state the TandaPay community is in. (e.g. initialization, default, fractured, collapsed) */
   getCommunityState = async () =>
@@ -84,7 +74,7 @@ export class TandaPayReadMethods {
    * @returns A promise resolving to an object containing information about the subgroup
    */
   getSubgroupInfo = async (subgroupId: ApiNumericType | number): Promise<SubgroupInfo> =>
-    await this.read.getSubGroupIdToSubGroupInfo([BigInt(subgroupId)]);
+    await this.read.getSubgroupInfo([BigInt(subgroupId)]);
 
   //! add integration test
   /**
@@ -97,7 +87,7 @@ export class TandaPayReadMethods {
     periodId: ApiNumericType,
     claimId: ApiNumericType,
   ): Promise<ClaimInfo> => {
-    const claimInformation = await this.read.getPeriodIdToClaimIdToClaimInfo([
+    const claimInformation = await this.read.getClaimInfo([
       BigInt(periodId),
       BigInt(claimId),
     ]);
@@ -121,7 +111,7 @@ export class TandaPayReadMethods {
    * @returns A promise resolving to an array of claim IDs in the given period
    */
   getClaimIdsInPeriod = async (periodId: ApiNumericType) =>
-    await this.read.getPeriodIdToClaimIds([BigInt(periodId)]);
+    await this.read.getClaimIdsInPeriod([BigInt(periodId)]);
 
   //! add integration test
   /**
@@ -130,13 +120,7 @@ export class TandaPayReadMethods {
    * @returns A promise resolving to an array of member IDs for members who defected in the given period
    */
   getDefectorMemberIdsInPeriod = async (periodId: ApiNumericType) =>
-    await this.read.getPeriodIdToDefectorsId([BigInt(periodId)]);
-
-  // 15. getPeriodIdToManualCollapse =>
-  // Use case -- This function will return the manual collapse information.
-  // Arguments --- The caller will have to provide the period Id.
-  //? is this needed for now? find out how this actually works later.
-  // TODO: implement
+    await this.read.getDefectorMemberIdsInPeriod([BigInt(periodId)]);
 
   /**
    * Retrieve a member ID given the member's wallet address
@@ -144,7 +128,7 @@ export class TandaPayReadMethods {
    * @returns A promise resolving to the member's ID number within the community
    */
   getMemberIdFromAddress = async (walletAddress: Hex) =>
-    await this.read.getMemberToMemberId([walletAddress]);
+    await this.read.getMemberIdFromAddress([walletAddress]);
 
   //! add integration test
   /**
@@ -153,7 +137,7 @@ export class TandaPayReadMethods {
    * @returns A promise resolving to an array of claim IDs for whitelisted claims in the given period
    */
   getWhitelistedClaimIdsInPeriod = async (periodId: ApiNumericType) =>
-    await this.read.getPeriodIdWhiteListedClaims([BigInt(periodId)]);
+    await this.read.getWhitelistedClaimIdsInPeriod([BigInt(periodId)]);
 
   /**
    * Retrieve information about a member given their wallet address and a period Id.
@@ -166,14 +150,14 @@ export class TandaPayReadMethods {
     memberWalletAddress: Hex,
     periodId: ApiNumericType = 0n,
   ): Promise<MemberInfo> => {
-    const memberInfo = await this.read.getMemberToMemberInfo([
+    const memberInfo = await this.read.getMemberInfoFromAddress([
       memberWalletAddress,
       BigInt(periodId),
     ]);
 
     // if 0 was passed, let's get the actual period that this information is going to be associated with
     let curPeriod = BigInt(periodId);
-    if (periodId === 0n) curPeriod = await this.read.getPeriodId();
+    if (periodId === 0n) curPeriod = await this.getCurrentPeriodId();
 
     // Mapping the object returned by the smart contract to an internal object in this code
     // base that has better naming conventions and works with everything else. In theory, the
@@ -198,7 +182,7 @@ export class TandaPayReadMethods {
   //! Docs weren't provided for following functions, i'll have to write them myself and inspect SC code to use
 
   /** @returns A promise resolving to a hexadecimal string, which is the wallet address of the community's secretary */
-  getSecretaryAddress = async () => await this.read.secretary();
+  getSecretaryAddress = async () => await this.read.getSecretaryAddress();
 
   /** temp: this is an experimental method */
   // TODO: figure out why this doesn't work?
@@ -229,7 +213,7 @@ export class TandaPayReadMethods {
 
   /** Returns a list of the secretary successors */
   getSecretarySuccessorList = async () =>
-    await this.read.getSecretarySuccessors();
+    await this.read.getSecretarySuccessorList();
 
   //! Methods below are custom methods added by me
 

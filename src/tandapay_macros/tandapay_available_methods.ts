@@ -1,4 +1,4 @@
-import { TandaPayWriteMethodAliases } from "tandapay_interface/write_method_types";
+import { TandaPayWriteMethodAliases } from "tandapay_manager/write/write_method_types";
 import { MemberStatus, TandaPayRole, TandaPayState } from "types";
 import { canAcceptSecretaryRole, canAdvancePeriod, canApproveNewSubgroupMember, canApproveSugroupAssignment, canDefectFromCommunity, canJoinCommunity, canRequestEmergencySecretaryHandoff, canSubmitClaim, CustomFilterParameters, CustomFilterReturnType } from "./custom_filter_procedures";
 import { daysToSeconds } from "utils";

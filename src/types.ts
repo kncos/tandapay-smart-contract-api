@@ -45,6 +45,10 @@ export type WriteableClient = WalletClient & {
   chain: Chain;
 };
 
+/** 
+ * A numeric type that is used with some `TandaPayManager` method abstractions. Allows for the 
+ * use of both number and bigint, instead of requiring bigint, mainly to improve the DX for TandaPayManager
+*/
 export type ApiNumericType = bigint | number;
 
 /**
@@ -142,16 +146,6 @@ export type PeriodInfo = {
   /** an array contianing the IDs of each claim that occurred this period */
   claimIds: readonly bigint[];
 };
-
-export type ManualCollapseInfo =
-  | {
-      isManuallyCollapsed: false;
-    }
-  | {
-      isManuallyCollapsed: true;
-      initiatedTimestamp: bigint;
-      cancelDeadlineTimestamp: bigint;
-    };
 
 /** enum type representing the different states the TandaPay community can be in */
 export enum TandaPayState {

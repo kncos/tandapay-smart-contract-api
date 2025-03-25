@@ -1,5 +1,5 @@
 import { TandaPayInfo } from "_contracts/TandaPay";
-import { TandaPayLog } from "tandapay_manager/read/types";
+import { TandaPayLog } from "tandapay_manager/read/tandapay_log";
 import { GetLogsReturnType, AbiEvent, GetEventArgs } from "viem";
 
 //! note, this seems redundant but it was here because I was using `Exclude` and some other

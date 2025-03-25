@@ -31,8 +31,8 @@ import {
   DEFAULT_COVERAGE_REQUIREMENT,
   DEFAULT_CLAIMANT_INDEX,
 } from "../test_config";
-import { toTandaPayLogs } from "tandapay_manager/read/types";
-import { TandaPayLog } from "tandapay_manager/read/types";
+import { toTandaPayLogs } from "tandapay_manager/read/tandapay_log";
+import { TandaPayLog } from "tandapay_manager/read/tandapay_log";
 
 export type TestClientWithPublicActions = TestClient & PublicClient;
 export type DoActionForEachManagerParams = {

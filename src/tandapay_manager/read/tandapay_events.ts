@@ -4,7 +4,7 @@ import {
   TandaPayEventAlias,
   tandaPayEventAliasesToAbiEvents,
   tandaPayEventAliasToAbiEvent,
-} from "tandapay_interface/event_types";
+} from "tandapay_manager/read/event_types";
 import {
   AbiEvent,
   Address,
@@ -14,7 +14,7 @@ import {
   Hash,
   WatchEventParameters,
 } from "viem";
-import { TandaPayLog, toTandaPayLogs } from "./types";
+import { TandaPayLog, toTandaPayLogs } from "./tandapay_log";
 
 /** Parameters passed to the constructor of `TandaPayEvents` */
 export interface TandaPayEventsParameters {
@@ -34,7 +34,7 @@ export type GetTandaPayEventLogParameters = (
     | { blockHash: Hash }
   ) & { strict?: boolean };
 
-
+/** argument for `watchEvent` in TandaPayEvents */
 export type WatchTandaPayEventParameters = (
   | ({ event: TandaPayEventAlias } & Omit<WatchEventParameters<AbiEvent>, 'event' | 'events' | 'address' | 'onLogs'>)
   | ({ events?: TandaPayEventAlias[] } & Omit<WatchEventParameters<undefined, AbiEvent[]>, 'event' | 'events' | 'address' | 'onLogs'>)
