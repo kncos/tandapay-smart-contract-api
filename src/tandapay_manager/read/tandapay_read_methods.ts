@@ -329,25 +329,22 @@ export class TandaPayReadMethods {
 // - [x] this.read.getCurrentClaimId
 // - [x] this.read.getCommunityState
 // - [x] this.read.getBasePremium
-// - [ ] this.read.getManuallyCollapsedPeriod
-// - [ ] this.read.getIsManuallyCollapsed
-// - [ ] this.read.getPeriodIdToManualCollapse
 
 //! these weren't documented by MD.
 //TODO: figure out why these weren't documented, such as:
 //TODO: - if any of them were supposed to be private/internal use only
 //TODO: - if any of them are unused or have no utility to us here
 // - [x] this.read.secretary                                (no clue why it wasn't documented)
-// - [ ] this.read.getUpcomingSecretary
+// - [ ] this.read.getUpcomingSecretary                       
 // - [x] this.read.getSecretarySuccessors                   (definitely needed for filters)
 // - [x] this.read.getPeriodIdToPeriodInfo                  (I think this is necessary, not sure why MD didn't document it)
-// - [ ] this.read.getIsHandingOver
+// - [ ] this.read.getIsHandingOver                         
 // - [x] this.read.getIsAllMemberNotPaidInPeriod            (not sure why MD didn't document it, we'll need to test it though)
-// - [ ] this.read.getIsAMemberDefectedInPeriod
-// - [ ] this.read.getHandoverStartedAt
-// - [ ] this.read.getEmergencySecretaries
-// - [ ] this.read.getEmergencyHandoverStartedAt
-// - [ ] this.read.getEmergencyHandOverStartedPeriod
-// - [ ] this.read.EmergencyStartTime
+// - [ ] this.read.getIsAMemberDefectedInPeriod             
+// - [ ] this.read.getHandoverStartedAt                     
+// - [ ] this.read.getEmergencySecretaries                  (if there is an emergency handover, this fetches the 2 successors that triggered it)
+// - [ ] this.read.getEmergencyHandoverStartedAt            
+// - [ ] this.read.getEmergencyHandOverStartedPeriod        
+// - [ ] this.read.EmergencyStartTime                       
 
 //! I added these to the smart contract source
