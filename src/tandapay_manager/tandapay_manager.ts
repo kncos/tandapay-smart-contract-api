@@ -6,7 +6,7 @@ import { SecretaryWriteMethods } from "./write/secretary_write_methods";
 import { PublicWriteMethods } from "./write/public_write_methods";
 import { TandaPayEvents } from "./read/tandapay_events";
 import { TandaPayReader } from "tandapay_interface/read_interface";
-import { readActions } from "tandapay_interface/read_actions";
+import { getTandaPayReadActions } from "tandapay_interface/read_actions";
 
 /** Possible types of TandaPayManager */
 export type TandaPayManagerKind =
@@ -101,7 +101,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
       wallet: walletClient,
     },
     tpAddress,
-    read: readActions({ contractAddress: tpAddress, client: publicClient }),
+    read: getTandaPayReadActions({ contractAddress: tpAddress, client: publicClient }),
     events: new TandaPayEvents({ address: tpAddress, client: publicClient }),
   };
 

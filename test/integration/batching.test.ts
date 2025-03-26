@@ -71,7 +71,7 @@ describe.skip("batching read transactions using TandaPayManager", () => {
 
     const accs = makeAccounts(90);
     for (let i = 0; i < 15; i++)
-      await tpm.write.secretary.addMemberToCommunity(accs[i].address);
+      await tpm.write.secretary.addMemberToCommunity({memberWalletAddress: accs[i].address});
 
     for (let i = 0; i < 3; i++) await tpm.write.secretary.createSubgroup();
 

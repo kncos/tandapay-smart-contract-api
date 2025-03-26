@@ -336,7 +336,7 @@ export const getMemberInfoFromId = async (
   };
 }
 
-export function readActions(params: ClientAndAddress): TandaPayReader {
+export function getTandaPayReadActions(params: ClientAndAddress): TandaPayReader {
   const {client, contractAddress: address} = params;
   return {
     getPaymentTokenAddress: async () => getPaymentTokenAddress({client, contractAddress: address}),

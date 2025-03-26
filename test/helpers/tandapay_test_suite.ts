@@ -169,27 +169,27 @@ export class TandaPayTestSuite {
         const walletIndex = i * 5 + j;
         const subgroupId = BigInt(i + 1);
         // add this member to the community
-        await this.secretary.write.secretary.addMemberToCommunity(
-          this.accounts[walletIndex].address,
-        );
+        await this.secretary.write.secretary.addMemberToCommunity({
+          memberWalletAddress: this.accounts[walletIndex].address,
+        });
         // assign them to their subgroup
-        await this.secretary.write.secretary.assignMemberToSubgroup(
-          this.accounts[walletIndex].address,
-          subgroupId,
-        );
+        await this.secretary.write.secretary.assignMemberToSubgroup({
+          memberWalletAddress: this.accounts[walletIndex].address,
+          subgroupID: subgroupId,
+        });
       }
     }
 
     // initiate default state
-    await this.secretary.write.secretary.initiateDefaultState(
-      DEFAULT_COVERAGE_REQUIREMENT,
-    );
+    await this.secretary.write.secretary.initiateDefaultState({
+      totalCoverage: DEFAULT_COVERAGE_REQUIREMENT,
+    });
 
     // have every member (including the secretary) join the community and
     // approve their subgroup assignment
     for (const m of this.managers) {
       await m.write.member.joinCommunity();
-      await m.write.member.approveSubgroupAssignment(true);
+      await m.write.member.approveSubgroupAssignment({approve: true});
       await m.write.member.payPremium();
     }
     await this.secretary.write.secretary.advancePeriod();
@@ -384,11 +384,11 @@ export class TandaPayTestSuite {
       }
 
       // have secretary assign them to a new subgroup ID
-      await this.secretary.write.secretary.assignMemberToSubgroup(
-        address,
-        newSubgroupId,
-        true,
-      );
+      await this.secretary.write.secretary.assignMemberToSubgroup({
+        memberWalletAddress: address,
+        subgroupID: newSubgroupId,
+        isReorging: true,
+      });
       memberInfo = await m.read.getMemberInfoFromAddress({
         walletAddress: address,
       });
@@ -397,7 +397,7 @@ export class TandaPayTestSuite {
 
       //console.log(`before self-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // they approve their own subgroup assignment
-      await m.write.member.approveSubgroupAssignment(true);
+      await m.write.member.approveSubgroupAssignment({approve: true});
 
       // finally, a peer in their new subgroup approves their joining
       const peer = subgroupPeers.get(newSubgroupId);
@@ -410,11 +410,11 @@ export class TandaPayTestSuite {
       //memberInfo = await m.read.getMemberInfoFromAddress(address);
       //console.log(`before peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       //TODO: end removal
-      await peer.write.member.approveNewSubgroupMember(
-        newSubgroupId,
-        memberInfo.id,
-        true,
-      );
+      await peer.write.member.approveNewSubgroupMember({
+        subgroupId: newSubgroupId,
+        newMemberId: memberInfo.id,
+        approve: true,
+      });
       memberInfo = await m.read.getMemberInfoFromAddress({
         walletAddress: address,
       });
@@ -575,7 +575,7 @@ export class TandaPayTestSuite {
 
         // Whitelist all the filtered and validated claims
         for (const c of claimsToWhitelist) {
-          await this.secretary.write.secretary.whitelistClaim(c);
+          await this.secretary.write.secretary.whitelistClaim({claimId: c});
         }
       },
     );
@@ -618,9 +618,9 @@ export class TandaPayTestSuite {
 
         // Have each one submit a claim
         for (const c of uniqueClaimants) {
-          await this.managers[c].write.member.withdrawClaimFund(
-            forfeit !== undefined ? forfeit : false,
-          );
+          await this.managers[c].write.member.withdrawClaimFund({
+            forfeit: forfeit !== undefined ? forfeit : false,
+          });
         }
       },
     );
