@@ -2,6 +2,7 @@ import {
   InitializationStateConstants,
   SubgroupConstants,
 } from "tandapay_constants";
+import { TandaPayBatchReader, TandaPayReader } from "tandapay_interface/read_interface";
 import { TandaPayManager } from "tandapay_manager/tandapay_manager";
 import { TandaPayState } from "types";
 
@@ -43,20 +44,21 @@ export type InitializationStateInfo =
  * can exit it (and if not, why the community can't exit it)
  */
 export async function getInitializationStateInfo(
-  manager: TandaPayManager,
+  reader: TandaPayReader,
+  batchReader: TandaPayBatchReader
 ): Promise<InitializationStateInfo> {
   // constants for later use
   const minMembers = InitializationStateConstants.minCommunitySizeToExit;
   const minSubgroups = InitializationStateConstants.minSubgroupCountToExit;
 
   // get current community state. if it's not initialization, we can just exit here
-  const state = await manager.read.getCommunityState();
+  const state = await reader.getCommunityState();
   if (state !== TandaPayState.Initialization)
     return { isInitializationState: false };
 
   // get a list of all of the members in the community. If we have that, it's all we need to determine
   // what we need to do to exit the initialization state
-  const allMembers = await manager.read.getBatchMemberInfo();
+  const allMembers = await batchReader.getBatchMemberInfo();
 
   // store the count we find in each subgroup
   const subgroups = new Map<bigint, number>();

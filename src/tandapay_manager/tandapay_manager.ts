@@ -6,7 +6,7 @@ import { SecretaryWriteMethods } from "./write/secretary_write_methods";
 import { PublicWriteMethods } from "./write/public_write_methods";
 import { TandaPayEvents } from "./read/tandapay_events";
 import { TandaPayReader } from "tandapay_interface/read_interface";
-import { getTandaPayReadActions } from "tandapay_interface/read_actions";
+import { getTandaPayReadActions } from "tandapay_actions/read_actions";
 
 /** Possible types of TandaPayManager */
 export type TandaPayManagerKind =

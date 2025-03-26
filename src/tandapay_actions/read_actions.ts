@@ -1,14 +1,10 @@
 import { TandaPayInfo } from "_contracts/TandaPay";
-import { AssignmentStatus, ClaimInfo, MemberInfo, MemberStatus, PeriodInfo, ReadableClient, SubgroupInfo, TandaPayState, WriteableClient } from "types";
+import { GetSubgroupInfoParameters, GetClaimInfoParameters, GetClaimIdsInPeriodParameters, GetDefectorMemberIdsInPeriodParameters, GetMemberIdFromAddressParameters, GetWhitelistedClaimIdsInPeriodParameters, GetMemberInfoFromAddressParameters, GetPeriodInfoParameters, GetMemberInfoFromIdParameters, TandaPayReader } from "tandapay_interface/read_interface";
+import { TandaPayState, SubgroupInfo, ClaimInfo, MemberInfo, MemberStatus, AssignmentStatus, PeriodInfo } from "types";
 import { Address } from "viem";
-import { GetClaimIdsInPeriodParameters, GetClaimInfoParameters, GetDefectorMemberIdsInPeriodParameters, GetMemberIdFromAddressParameters, GetMemberInfoFromAddressParameters, GetMemberInfoFromIdParameters, GetPeriodInfoParameters, GetSubgroupInfoParameters, GetWhitelistedClaimIdsInPeriodParameters, TandaPayReader } from "./read_interface";
+import { ReadableClientAndAddress } from "./types";
 
-export type ClientAndAddress<TClient extends ReadableClient | WriteableClient = ReadableClient> = {
-  client: TClient,
-  contractAddress: Address,
-}
-
-export const getPaymentTokenAddress = async (params: ClientAndAddress): Promise<Address> => {
+export const getPaymentTokenAddress = async (params: ReadableClientAndAddress): Promise<Address> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -18,7 +14,7 @@ export const getPaymentTokenAddress = async (params: ClientAndAddress): Promise<
 }
 
 /** @returns A promise that resolves to the total number of members in the TandaPay community. */
-export const getCurrentMemberCount = async (params: ClientAndAddress): Promise<bigint> => {
+export const getCurrentMemberCount = async (params: ReadableClientAndAddress): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -28,7 +24,7 @@ export const getCurrentMemberCount = async (params: ClientAndAddress): Promise<b
 }
 
 /** @returns A promise that resolves to the total number of subgroups in the TandaPay community. */
-export const getCurrentSubgroupCount = async (params: ClientAndAddress): Promise<bigint> => {
+export const getCurrentSubgroupCount = async (params: ReadableClientAndAddress): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -38,7 +34,7 @@ export const getCurrentSubgroupCount = async (params: ClientAndAddress): Promise
 }
 
 /** @returns A promise that resolves to the total number of claims that have occurred in the TandaPay community. This will also be the ID of the next claim */
-export const getCurrentClaimId = async (params: ClientAndAddress): Promise<bigint> => {
+export const getCurrentClaimId = async (params: ReadableClientAndAddress): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -48,7 +44,7 @@ export const getCurrentClaimId = async (params: ClientAndAddress): Promise<bigin
 }
 
 /** @returns A promise that resolves to the current period ID, which is just the total number of periods that have elapsed since the community's inception */
-export const getCurrentPeriodId = async (params: ClientAndAddress): Promise<bigint> => {
+export const getCurrentPeriodId = async (params: ReadableClientAndAddress): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -58,7 +54,7 @@ export const getCurrentPeriodId = async (params: ClientAndAddress): Promise<bigi
 }
 
 /** @returns A promise that resolves to the total coverage amount the community has, i.e. how much must collectively go into the community escrow each period */
-export const getTotalCoverageAmount = async (params: ClientAndAddress): Promise<bigint> => {
+export const getTotalCoverageAmount = async (params: ReadableClientAndAddress): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -68,7 +64,7 @@ export const getTotalCoverageAmount = async (params: ClientAndAddress): Promise<
 }
 
 /** @returns A promise that resolves to the base premium, a.k.a. the community escrow contribution each individual member must make. Calculated as `(total coverage) / (member count)` */
-export const getBasePremium = async (params: ClientAndAddress): Promise<bigint> => {
+export const getBasePremium = async (params: ReadableClientAndAddress): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -78,7 +74,7 @@ export const getBasePremium = async (params: ClientAndAddress): Promise<bigint> 
 }
 
 /** @returns A promise that resolves to an enum value representing the state the TandaPay community is in. (e.g. initialization, default, fractured, collapsed) */
-export const getCommunityState = async (params: ClientAndAddress): Promise<TandaPayState> => {
+export const getCommunityState = async (params: ReadableClientAndAddress): Promise<TandaPayState> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -92,7 +88,7 @@ export const getCommunityState = async (params: ClientAndAddress): Promise<Tanda
  * @param subgroupId Subgroup ID you want information about
  * @returns A promise resolving to an object containing information about the subgroup
  */
-export const getSubgroupInfo = async (params: ClientAndAddress & GetSubgroupInfoParameters): Promise<SubgroupInfo> => {
+export const getSubgroupInfo = async (params: ReadableClientAndAddress & GetSubgroupInfoParameters): Promise<SubgroupInfo> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -108,7 +104,7 @@ export const getSubgroupInfo = async (params: ClientAndAddress & GetSubgroupInfo
  * @param claimId claim Id for the claim you want information about
  * @returns A promise that resolves to an object containing information about the claim
  */
-export const getClaimInfo = async (params: ClientAndAddress & GetClaimInfoParameters): Promise<ClaimInfo> => {
+export const getClaimInfo = async (params: ReadableClientAndAddress & GetClaimInfoParameters): Promise<ClaimInfo> => {
   const {client, contractAddress: address} = params;
   const res = await client.readContract({
     address,
@@ -133,7 +129,7 @@ export const getClaimInfo = async (params: ClientAndAddress & GetClaimInfoParame
  * @returns A promise resolving to an array of claim IDs in the given period
  */
 export const getClaimIdsInPeriod = async (
-  params: ClientAndAddress & GetClaimIdsInPeriodParameters,
+  params: ReadableClientAndAddress & GetClaimIdsInPeriodParameters,
 ): Promise<readonly bigint[]> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
@@ -150,7 +146,7 @@ export const getClaimIdsInPeriod = async (
  * @returns A promise resolving to an array of member IDs for members who defected in the given period
  */
 export const getDefectorMemberIdsInPeriod = async (
-  params: ClientAndAddress & GetDefectorMemberIdsInPeriodParameters,
+  params: ReadableClientAndAddress & GetDefectorMemberIdsInPeriodParameters,
 ): Promise<readonly bigint[]> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
@@ -167,7 +163,7 @@ export const getDefectorMemberIdsInPeriod = async (
  * @returns A promise resolving to the member's ID number within the community
  */
 export const getMemberIdFromAddress = async (
-  params: ClientAndAddress & GetMemberIdFromAddressParameters,
+  params: ReadableClientAndAddress & GetMemberIdFromAddressParameters,
 ): Promise<bigint> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
@@ -184,7 +180,7 @@ export const getMemberIdFromAddress = async (
  * @returns A promise resolving to an array of claim IDs for whitelisted claims in the given period
  */
 export const getWhitelistedClaimIdsInPeriod = async (
-  params: ClientAndAddress & GetWhitelistedClaimIdsInPeriodParameters,
+  params: ReadableClientAndAddress & GetWhitelistedClaimIdsInPeriodParameters,
 ): Promise<readonly bigint[]> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
@@ -203,7 +199,7 @@ export const getWhitelistedClaimIdsInPeriod = async (
  * @returns A promise resolving to an object containing information about the given member in the given period ID
  */
 export const getMemberInfoFromAddress = async (
-  params: ClientAndAddress & GetMemberInfoFromAddressParameters,
+  params: ReadableClientAndAddress & GetMemberInfoFromAddressParameters,
 ): Promise<MemberInfo> => {
   const {client, contractAddress: address} = params;
   const memberInfo = await client.readContract({
@@ -229,7 +225,7 @@ export const getMemberInfoFromAddress = async (
 }
 
 /** @returns A promise resolving to a hexadecimal string, which is the wallet address of the community's secretary */
-export const getSecretaryAddress = async (params: ClientAndAddress): Promise<Address> => {
+export const getSecretaryAddress = async (params: ReadableClientAndAddress): Promise<Address> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -243,7 +239,7 @@ export const getSecretaryAddress = async (params: ClientAndAddress): Promise<Add
  * @param periodId period ID to query
  * @returns A promise resolving to an object containing information about the given period
  */
-export const getPeriodInfo = async (params: ClientAndAddress & GetPeriodInfoParameters): Promise<PeriodInfo> => {
+export const getPeriodInfo = async (params: ReadableClientAndAddress & GetPeriodInfoParameters): Promise<PeriodInfo> => {
   const {client, contractAddress: address} = params;
   const periodInfo = await client.readContract({
     address,
@@ -261,7 +257,7 @@ export const getPeriodInfo = async (params: ClientAndAddress & GetPeriodInfoPara
 }
 
 /** Returns a list of the secretary successors */
-export const getSecretarySuccessorList = async (params: ClientAndAddress): Promise<readonly Address[]> => {
+export const getSecretarySuccessorList = async (params: ReadableClientAndAddress): Promise<readonly Address[]> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -271,7 +267,7 @@ export const getSecretarySuccessorList = async (params: ClientAndAddress): Promi
 }
 
 /** Returns whether or not the secretary has initiated a voluntary handover */
-export const isVoluntaryHandoverInProgress = async (params: ClientAndAddress): Promise<boolean> => {
+export const isVoluntaryHandoverInProgress = async (params: ReadableClientAndAddress): Promise<boolean> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -281,7 +277,7 @@ export const isVoluntaryHandoverInProgress = async (params: ClientAndAddress): P
 }
 
 /** If the secretary has initiated a voluntary handover, this returns the address of the nominee */
-export const getVoluntaryHandoverNominee = async (params: ClientAndAddress): Promise<Address> => {
+export const getVoluntaryHandoverNominee = async (params: ReadableClientAndAddress): Promise<Address> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -294,7 +290,7 @@ export const getVoluntaryHandoverNominee = async (params: ClientAndAddress): Pro
  * Gets the members who have been nominated by secretary successors to take on the role of
  * secretary in the event of an emergency handover
  */
-export const getEmergencyHandoverNominees = async (params: ClientAndAddress): Promise<readonly Address[]> => {
+export const getEmergencyHandoverNominees = async (params: ReadableClientAndAddress): Promise<readonly Address[]> => {
   const {client, contractAddress: address} = params;
   return await client.readContract({
     address,
@@ -310,7 +306,7 @@ export const getEmergencyHandoverNominees = async (params: ClientAndAddress): Pr
  * @returns information about a member given their Id and an optional periodID
  */
 export const getMemberInfoFromId = async (
-  params: ClientAndAddress & GetMemberInfoFromIdParameters,
+  params: ReadableClientAndAddress & GetMemberInfoFromIdParameters,
 ): Promise<MemberInfo> => {
   const {client, contractAddress: address} = params;
   const memberInfo = await client.readContract({
@@ -336,7 +332,7 @@ export const getMemberInfoFromId = async (
   };
 }
 
-export function getTandaPayReadActions(params: ClientAndAddress): TandaPayReader {
+export function getTandaPayReadActions(params: ReadableClientAndAddress): TandaPayReader {
   const {client, contractAddress: address} = params;
   return {
     getPaymentTokenAddress: async () => getPaymentTokenAddress({client, contractAddress: address}),
