@@ -5,6 +5,8 @@ import { MemberWriteMethods } from "./write/member_write_methods";
 import { SecretaryWriteMethods } from "./write/secretary_write_methods";
 import { PublicWriteMethods } from "./write/public_write_methods";
 import { TandaPayEvents } from "./read/tandapay_events";
+import { TandaPayReader } from "tandapay_interface/read_interface";
+import { readActions } from "tandapay_interface/read_actions";
 
 /** Possible types of TandaPayManager */
 export type TandaPayManagerKind =
@@ -53,7 +55,7 @@ export type TandaPayManager<
   kind_ extends TandaPayManagerKind = TandaPayManagerKind,
 > = {
   kind: kind_;
-  read: TandaPayReadMethods;
+  read: TandaPayReader;
   events: TandaPayEvents;
   client: kind_ extends "readonly"
     ? KeyedClient
@@ -99,7 +101,7 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
       wallet: walletClient,
     },
     tpAddress,
-    read: new TandaPayReadMethods({ address: tpAddress, client: publicClient }),
+    read: readActions({ contractAddress: tpAddress, client: publicClient }),
     events: new TandaPayEvents({ address: tpAddress, client: publicClient }),
   };
 

@@ -9,9 +9,10 @@ import { TestClientWithPublicActions } from "./tandapay_test_suite";
 import { DAYS_IN_SECONDS } from "../test_config";
 import { Address, publicActions } from "viem";
 import { TandaPayReadMethods } from "tandapay_manager/read/tandapay_read_methods";
+import { TandaPayReader } from "tandapay_interface/read_interface";
 
 export class TandaPayTimeline {
-  read: TandaPayReadMethods;
+  read: TandaPayReader;
   testClient: TestClientWithPublicActions;
 
   public readonly DEFECT_DAY = 1.5;
