@@ -56,7 +56,7 @@ export async function getInitializationStateInfo(
 
   // get a list of all of the members in the community. If we have that, it's all we need to determine
   // what we need to do to exit the initialization state
-  const allMembers = await manager.read.getAllMemberInfo();
+  const allMembers = await manager.read.getBatchMemberInfo();
 
   // store the count we find in each subgroup
   const subgroups = new Map<bigint, number>();

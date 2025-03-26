@@ -1,6 +1,5 @@
 import { Address, getContract, Hex } from "viem";
 import {
-  ApiNumericType,
   AssignmentStatus,
   ClaimInfo,
   MemberInfo,
@@ -9,10 +8,12 @@ import {
   ReadableClient,
   SubgroupInfo,
   TandaPayContract,
-  TandaPayState,
+  TandaPayState
 } from "types";
 import { TandaPayInfo } from "../../_contracts/TandaPay";
 import {
+  GetBatchMemberInfoParameters,
+  GetBatchSubgroupInfoParameters,
   GetClaimIdsInPeriodParameters,
   GetClaimInfoParameters,
   GetDefectorMemberIdsInPeriodParameters,
@@ -174,14 +175,6 @@ export class TandaPayReadMethods
   getEmergencyHandoverNominees = async () =>
     await this.read.getEmergencySecretaries();
 
-  //! Methods below are custom methods added by me
-
-  /**
-   * Get information about a member based on their Id and a given period
-   * @param memberId member Id of the member you want to get information about
-   * @param periodId what period you want to get information from. Uses current period if 0 is passed. Default = 0
-   * @returns information about a member given their Id and an optional periodID
-   */
   getMemberInfoFromId = async (
     params: GetMemberInfoFromIdParameters,
   ): Promise<MemberInfo> => {
@@ -207,53 +200,46 @@ export class TandaPayReadMethods
     };
   };
 
-  /**
-   * Get information about every subgroup in the community all at once
-   * @param numSubgroups how many subgroups are there? optional, will request the subgroup count if
-   * no value is passed.
-   * @returns an array of subgroupInfo
-   */
-  getAllSubgroupInfo = async (
-    numSubgroups?: ApiNumericType,
-  ): Promise<SubgroupInfo[]> => {
-    if (!numSubgroups) numSubgroups = await this.getCurrentSubgroupCount();
+  getBatchMemberInfo = async (params?: GetBatchMemberInfoParameters): Promise<MemberInfo[]> => {
+    // extract memberIds from params and map to bigint, otherwise default to empty array
+    const memberIds: bigint[] = params?.memberIds?.map(v => BigInt(v)) ?? [];
 
-    // create an array of subgroup IDs given the number of subgroups that we have.
-    // subgroupIds go from 1...subgroupCount, inclusive
-    const subgroupIds = Array.from({ length: Number(numSubgroups) }, (_, i) =>
-      BigInt(i + 1),
+    // if we didn't have any members (e.g., empty array), we will simply fetch information about
+    // every member. Technically, the programmer could pass an empty array explicitly... but why?
+    // even so, this behavior can just be documented
+    if (memberIds.length === 0) {
+      // get total member count, map those to the member IDs for each member, and populate
+      // the memberIds array with each ID:
+      const memberCount: bigint = await this.getCurrentMemberCount();
+      const allMemberIds: bigint[] = Array.from({length: Number(memberCount)}, (_,i) => BigInt(i+1));
+      memberIds.push(...allMemberIds);
+    }
+
+    // if we don't have a periodId, just default to 0. The smart contract interprets a periodId of 0
+    // as being "get information wrt. the current period".
+    const periodId: bigint = BigInt(params?.periodId ?? 0);
+    // get information about all members as a batch
+    return await Promise.all(
+      memberIds.map(id => this.getMemberInfoFromId({memberId: id, periodId: periodId}))
     );
+  }
 
-    // get all subgroup info
-    const subgroupInfo = await Promise.all(
-      subgroupIds.map((v) => this.getSubgroupInfo({ subgroupId: v })),
-    );
+  getBatchSubgroupInfo = async (params?: GetBatchSubgroupInfoParameters): Promise<SubgroupInfo[]> => {
+    // extract subgroupIds from params and map to bigint, otherwise default to empty array
+    const subgroupIds: bigint[] = params?.subgroupIds?.map(v => BigInt(v)) ?? [];
 
-    return subgroupInfo;
-  };
-
-  /**
-   * Get information about all community members at once
-   * @param numMembers how many members in the community? optional, by default it looks this up
-   * @param periodId what period do you want to query for information? if none is passed, uses the current period
-   * @returns An array of MemberInfo
-   */
-  getAllMemberInfo = async (
-    numMembers?: ApiNumericType,
-    periodId?: ApiNumericType,
-  ): Promise<MemberInfo[]> => {
-    if (!numMembers) numMembers = await this.getCurrentMemberCount();
-    if (!periodId) periodId = await this.getCurrentPeriodId();
-
-    const memberIds = Array.from({ length: Number(numMembers) }, (_, i) =>
-      BigInt(i + 1),
-    );
-    const memberInfo = await Promise.all(
-      memberIds.map((id) =>
-        this.getMemberInfoFromId({ memberId: id, periodId: periodId }),
-      ),
-    );
-
-    return memberInfo;
-  };
+    // if we didn't have any subgroup IDs defined, we will simply fetch information
+    // about every subgroup
+    if (subgroupIds.length === 0) {
+      // get the total number of subgroups, map that to every subgroup ID, and populate
+      // the subgroupIds array with that information
+      const subgroupCount: bigint = await this.getCurrentSubgroupCount();
+      const allIds: bigint[] = Array.from({length: Number(subgroupCount)}, (_,i) => BigInt(i+1));
+      subgroupIds.push(...allIds);
+    }
+    // get information about all subgroups in a batch
+    return await Promise.all(
+      subgroupIds.map(id => this.getSubgroupInfo({subgroupId: id}))
+    )
+  }
 }
