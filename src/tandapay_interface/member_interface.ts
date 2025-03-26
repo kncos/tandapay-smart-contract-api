@@ -5,29 +5,29 @@ import { Hex } from "viem";
 export type ApproveSubgroupAssignmentParameters = {
   /** whether or not to approve the subgroup assignment */
   approve?: boolean;
-}
+};
 
 export type ApproveNewSubgroupMemberParameters = {
   /** subgroup Id of the subgroup you want to approve the assignment in */
-  subgroupId: ApiNumericType,
+  subgroupId: ApiNumericType;
   /** member Id of the member you want to assign */
-  newMemberId: ApiNumericType,
+  newMemberId: ApiNumericType;
   /** boolean value indicating whether or not to approve the member */
-  approve: boolean,
-}
+  approve: boolean;
+};
 
 export type PayPremiumParameters = {
   /** Use withdrawable balance to pay premium or not */
   useAvailableBalance?: boolean;
-}
+};
 
 export type EmergencySecretaryHandoffParameters = {
   newSecretaryWalletAddress: Hex;
-}
+};
 
 export type WithdrawClaimFundParameters = {
   forfeit?: boolean;
-}
+};
 
 export interface TandaPayMemberWriter {
   /** Use case -- The user will join the community and transfer the 11/12th of the individual savings amount's fund.*/
@@ -37,13 +37,17 @@ export interface TandaPayMemberWriter {
    * Use case -- This function will be used to approve the SubGroup assignment of the member
    * @param {ApproveSubgroupAssignmentParameters} params
    */
-  approveSubgroupAssignment(params?: ApproveSubgroupAssignmentParameters): TandaPayWriteMethodReturnType<"approveSubgroupAssignment">;
+  approveSubgroupAssignment(
+    params?: ApproveSubgroupAssignmentParameters,
+  ): TandaPayWriteMethodReturnType<"approveSubgroupAssignment">;
 
   /**
    * Use case -- This function will be used to approve a new SubGroup member by the existing SubGroup member if the new member is being re-orged.
    * @param {ApproveNewSubgroupMemberParameters} params
    */
-  approveNewSubgroupMember(params: ApproveNewSubgroupMemberParameters): TandaPayWriteMethodReturnType<"approveNewSubgroupMember">;
+  approveNewSubgroupMember(
+    params: ApproveNewSubgroupMemberParameters,
+  ): TandaPayWriteMethodReturnType<"approveNewSubgroupMember">;
 
   /**
    * Use case -- Member will be able to exit from a SubGroup using this function.
@@ -61,7 +65,9 @@ export interface TandaPayMemberWriter {
    * Use case -- The Valid members will be able to pay the upcoming period's premium using this function
    * @param {PayPremiumParameters} params
    */
-  payPremium(params?: PayPremiumParameters): TandaPayWriteMethodReturnType<"payPremium">;
+  payPremium(
+    params?: PayPremiumParameters,
+  ): TandaPayWriteMethodReturnType<"payPremium">;
 
   /**
    * Use case -- The valid members who are in line of the secretary successors list and are being voted for the secretary can accept the secretary using this function.
@@ -74,7 +80,9 @@ export interface TandaPayMemberWriter {
    * emergency. For it to actually work, multiple successors have to send this while specifying the same new secretary
    * @param {EmergencySecretaryHandoffParameters} params
    */
-  emergencySecretaryHandoff(params: EmergencySecretaryHandoffParameters): TandaPayWriteMethodReturnType<"emergencySecretaryHandoff">;
+  emergencySecretaryHandoff(
+    params: EmergencySecretaryHandoffParameters,
+  ): TandaPayWriteMethodReturnType<"emergencySecretaryHandoff">;
 
   /**
    * Use case -- The member will be able to withdraw their available fund by calling this function.
@@ -91,5 +99,7 @@ export interface TandaPayMemberWriter {
    * Use case -- The whitelisted claimant will be able to withdraw the claim amount by calling this function
    * @param {WithdrawClaimFundParameters} params
    */
-  withdrawClaimFund(params?: WithdrawClaimFundParameters): TandaPayWriteMethodReturnType<"withdrawClaimFund">;
+  withdrawClaimFund(
+    params?: WithdrawClaimFundParameters,
+  ): TandaPayWriteMethodReturnType<"withdrawClaimFund">;
 }

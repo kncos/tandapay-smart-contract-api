@@ -1,15 +1,32 @@
-import { AddMemberToCommunityParameters, AssignMemberToSubgroupParameters, DefineSecretarySuccesorListParameters, HandoverSecretaryRoleToSuccessorParameters, InitiateDefaultStateParameters, TandaPaySecretaryWriter, UpdateCoverageAmountParameters, WhitelistClaimParameters } from "tandapay_interface/secretary_interface";
-import { TandaPayWriteMethodReturnType, TandaPayWriteMethods } from "./tandapay_write_methods";
+import {
+  AddMemberToCommunityParameters,
+  AssignMemberToSubgroupParameters,
+  DefineSecretarySuccesorListParameters,
+  HandoverSecretaryRoleToSuccessorParameters,
+  InitiateDefaultStateParameters,
+  TandaPaySecretaryWriter,
+  UpdateCoverageAmountParameters,
+  WhitelistClaimParameters,
+} from "tandapay_interface/secretary_interface";
+import {
+  TandaPayWriteMethodReturnType,
+  TandaPayWriteMethods,
+} from "./tandapay_write_methods";
 
 /** methods within the TandaPay smart contract that only the secretary may call */
-export class SecretaryWriteMethods extends TandaPayWriteMethods implements TandaPaySecretaryWriter {
+export class SecretaryWriteMethods
+  extends TandaPayWriteMethods
+  implements TandaPaySecretaryWriter
+{
   /**
    * Add a member to the TandaPay community (as the secretary)
    * @param {AddMemberToCommunityParameters} params
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async addMemberToCommunity(params: AddMemberToCommunityParameters): TandaPayWriteMethodReturnType<"addMemberToCommunity"> {
+  async addMemberToCommunity(
+    params: AddMemberToCommunityParameters,
+  ): TandaPayWriteMethodReturnType<"addMemberToCommunity"> {
     const { memberWalletAddress } = params;
     const simulate = async () =>
       this.simulate.addMemberToCommunity([memberWalletAddress]);
@@ -35,7 +52,9 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods implements Tanda
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async assignMemberToSubgroup(params: AssignMemberToSubgroupParameters): TandaPayWriteMethodReturnType<"assignMemberToSubgroup"> {
+  async assignMemberToSubgroup(
+    params: AssignMemberToSubgroupParameters,
+  ): TandaPayWriteMethodReturnType<"assignMemberToSubgroup"> {
     const { memberWalletAddress, subgroupID, isReorging = false } = params;
     const simulate = async () =>
       await this.simulate.assignMemberToSubgroup([
@@ -58,7 +77,9 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods implements Tanda
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async initiateDefaultState(params: InitiateDefaultStateParameters): TandaPayWriteMethodReturnType<"initiateDefaultState"> {
+  async initiateDefaultState(
+    params: InitiateDefaultStateParameters,
+  ): TandaPayWriteMethodReturnType<"initiateDefaultState"> {
     const { totalCoverage } = params;
     const simulate = async () =>
       await this.simulate.initiateDefaultState([totalCoverage]);
@@ -73,7 +94,9 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods implements Tanda
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async whitelistClaim(params: WhitelistClaimParameters): TandaPayWriteMethodReturnType<"whitelistClaim"> {
+  async whitelistClaim(
+    params: WhitelistClaimParameters,
+  ): TandaPayWriteMethodReturnType<"whitelistClaim"> {
     const { claimId } = params;
     const simulate = async () =>
       await this.simulate.whitelistClaim([BigInt(claimId)]);
@@ -89,7 +112,9 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods implements Tanda
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async updateCoverageAmount(params: UpdateCoverageAmountParameters): TandaPayWriteMethodReturnType<"updateCoverageAmount"> {
+  async updateCoverageAmount(
+    params: UpdateCoverageAmountParameters,
+  ): TandaPayWriteMethodReturnType<"updateCoverageAmount"> {
     const { totalCoverage } = params;
     const simulate = async () =>
       await this.simulate.updateCoverageAmount([totalCoverage]);
@@ -108,7 +133,9 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods implements Tanda
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async defineSecretarySuccesorList(params: DefineSecretarySuccesorListParameters): TandaPayWriteMethodReturnType<"defineSecretarySuccessorList"> {
+  async defineSecretarySuccesorList(
+    params: DefineSecretarySuccesorListParameters,
+  ): TandaPayWriteMethodReturnType<"defineSecretarySuccessorList"> {
     const { successorListWalletAddresses } = params;
     const simulate = async () =>
       await this.simulate.defineSecretarySuccessorList([
@@ -127,7 +154,9 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods implements Tanda
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async handoverSecretaryRoleToSuccessor(params: HandoverSecretaryRoleToSuccessorParameters): TandaPayWriteMethodReturnType<"handoverSecretaryRoleToSuccessor"> {
+  async handoverSecretaryRoleToSuccessor(
+    params: HandoverSecretaryRoleToSuccessorParameters,
+  ): TandaPayWriteMethodReturnType<"handoverSecretaryRoleToSuccessor"> {
     const { successorWalletAddress } = params;
     const simulate = async () =>
       await this.simulate.handoverSecretaryRoleToSuccessor([

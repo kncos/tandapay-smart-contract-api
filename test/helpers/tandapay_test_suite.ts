@@ -189,7 +189,7 @@ export class TandaPayTestSuite {
     // approve their subgroup assignment
     for (const m of this.managers) {
       await m.write.member.joinCommunity();
-      await m.write.member.approveSubgroupAssignment({approve: true});
+      await m.write.member.approveSubgroupAssignment({ approve: true });
       await m.write.member.payPremium();
     }
     await this.secretary.write.secretary.advancePeriod();
@@ -397,7 +397,7 @@ export class TandaPayTestSuite {
 
       //console.log(`before self-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // they approve their own subgroup assignment
-      await m.write.member.approveSubgroupAssignment({approve: true});
+      await m.write.member.approveSubgroupAssignment({ approve: true });
 
       // finally, a peer in their new subgroup approves their joining
       const peer = subgroupPeers.get(newSubgroupId);
@@ -575,7 +575,7 @@ export class TandaPayTestSuite {
 
         // Whitelist all the filtered and validated claims
         for (const c of claimsToWhitelist) {
-          await this.secretary.write.secretary.whitelistClaim({claimId: c});
+          await this.secretary.write.secretary.whitelistClaim({ claimId: c });
         }
       },
     );

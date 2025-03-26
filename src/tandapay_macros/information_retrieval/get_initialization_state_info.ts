@@ -2,8 +2,8 @@ import {
   InitializationStateConstants,
   SubgroupConstants,
 } from "tandapay_constants";
-import { TandaPayBatchReader, TandaPayReader } from "tandapay_interface/read_interface";
-import { TandaPayManager } from "tandapay_manager/tandapay_manager";
+import { TandaPayReader } from "tandapay_interface/read_interface";
+import { TandaPayBatchReader } from "tandapay_interface/batch_read_interface";
 import { TandaPayState } from "types";
 
 /**
@@ -45,7 +45,7 @@ export type InitializationStateInfo =
  */
 export async function getInitializationStateInfo(
   reader: TandaPayReader,
-  batchReader: TandaPayBatchReader
+  batchReader: TandaPayBatchReader,
 ): Promise<InitializationStateInfo> {
   // constants for later use
   const minMembers = InitializationStateConstants.minCommunitySizeToExit;

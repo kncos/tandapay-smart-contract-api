@@ -5,7 +5,7 @@ import { TandaPayWriteMethodReturnType } from "tandapay_manager/write/tandapay_w
 export type AddMemberToCommunityParameters = {
   /** Wallet address of the member to add to the community */
   memberWalletAddress: Hex;
-}
+};
 
 export type AssignMemberToSubgroupParameters = {
   /** wallet address of the member you want to assign to a subgroup */
@@ -14,36 +14,36 @@ export type AssignMemberToSubgroupParameters = {
   subgroupID: ApiNumericType;
   /** whether or not the member is PAID-INVALID and now reorging to a new subgroup */
   isReorging?: boolean;
-}
+};
 
 export type InitiateDefaultStateParameters = {
   /** Total coverage for the TandaPay community. Basically, what should the community's combined contribution to the community escrow be each month? Base monthly premiums are calculated as a function of `(total coverage) / (num members)`. */
   totalCoverage: bigint;
-}
+};
 
 export type WhitelistClaimParameters = {
   /** unique identifier for the claim that the secretary wants to whitelist */
   claimId: ApiNumericType;
-}
+};
 
 export type UpdateCoverageAmountParameters = {
   /** New total coverage amount the community will use. */
   totalCoverage: bigint;
-}
+};
 
 export type DefineSecretarySuccesorListParameters = {
-    /**
+  /**
    *  An array of wallet addresses for individuals who will be secretary successors
    *  @todo The smart contract does not require that the secretary define any successors before exiting the
    *  initialization state. Perhaps on L2 we include this as business logic?
    */
   successorListWalletAddresses: [Hex];
-}
+};
 
 export type HandoverSecretaryRoleToSuccessorParameters = {
-   /** Wallet address of the individual the secretary would like to give their role to */
+  /** Wallet address of the individual the secretary would like to give their role to */
   successorWalletAddress: Hex;
-}
+};
 
 export interface TandaPaySecretaryWriter {
   /**
@@ -52,7 +52,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  addMemberToCommunity(params: AddMemberToCommunityParameters): TandaPayWriteMethodReturnType<"addMemberToCommunity">;
+  addMemberToCommunity(
+    params: AddMemberToCommunityParameters,
+  ): TandaPayWriteMethodReturnType<"addMemberToCommunity">;
 
   /**
    * This function is used to create a new subgroup for the TandaPay community.
@@ -67,7 +69,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  assignMemberToSubgroup(params: AssignMemberToSubgroupParameters): TandaPayWriteMethodReturnType<"assignMemberToSubgroup">;
+  assignMemberToSubgroup(
+    params: AssignMemberToSubgroupParameters,
+  ): TandaPayWriteMethodReturnType<"assignMemberToSubgroup">;
 
   /**
    * This function is used to set the default coverage and initiate the default state of the community.
@@ -75,7 +79,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  initiateDefaultState(params: InitiateDefaultStateParameters): TandaPayWriteMethodReturnType<"initiateDefaultState">;
+  initiateDefaultState(
+    params: InitiateDefaultStateParameters,
+  ): TandaPayWriteMethodReturnType<"initiateDefaultState">;
 
   /**
    * This function is used to whitelist a claim submitted by the claimants.
@@ -83,7 +89,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  whitelistClaim(params: WhitelistClaimParameters): TandaPayWriteMethodReturnType<"whitelistClaim">;
+  whitelistClaim(
+    params: WhitelistClaimParameters,
+  ): TandaPayWriteMethodReturnType<"whitelistClaim">;
 
   /**
    * This function is used to update the current total coverage amount. This can only be done if the
@@ -92,7 +100,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  updateCoverageAmount(params: UpdateCoverageAmountParameters): TandaPayWriteMethodReturnType<"updateCoverageAmount">;
+  updateCoverageAmount(
+    params: UpdateCoverageAmountParameters,
+  ): TandaPayWriteMethodReturnType<"updateCoverageAmount">;
 
   /**
    * Defines a list of successor candidates for the Secretary role. If `12 <= (community size) <= 35`,
@@ -104,7 +114,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  defineSecretarySuccesorList(params: DefineSecretarySuccesorListParameters): TandaPayWriteMethodReturnType<"defineSecretarySuccessorList">;
+  defineSecretarySuccesorList(
+    params: DefineSecretarySuccesorListParameters,
+  ): TandaPayWriteMethodReturnType<"defineSecretarySuccessorList">;
 
   /**
    * Allows the secretary to give their position to one of their successors
@@ -112,7 +124,9 @@ export interface TandaPaySecretaryWriter {
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  handoverSecretaryRoleToSuccessor(params: HandoverSecretaryRoleToSuccessorParameters): TandaPayWriteMethodReturnType<"handoverSecretaryRoleToSuccessor">;
+  handoverSecretaryRoleToSuccessor(
+    params: HandoverSecretaryRoleToSuccessorParameters,
+  ): TandaPayWriteMethodReturnType<"handoverSecretaryRoleToSuccessor">;
 
   /**
    * This function is used to inject funds into the community by the secretary. Basically, this is a way

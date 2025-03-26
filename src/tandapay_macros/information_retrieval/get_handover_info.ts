@@ -1,4 +1,4 @@
-import { TandaPayManager } from "tandapay_manager/tandapay_manager";
+import { TandaPayReader } from "tandapay_interface/read_interface";
 import { Address } from "viem";
 
 /**
@@ -22,6 +22,16 @@ export type SecretaryHandoverInfo =
       status: "not-in-progress";
     };
 
+export type getHandoverInfoDeps = {
+  reader: Pick<
+    TandaPayReader,
+    | "isVoluntaryHandoverInProgress"
+    | "getVoluntaryHandoverNominee"
+    | "getEmergencyHandoverNominees"
+    | "getMemberInfoFromAddress"
+  >;
+};
+
 /**
  * Gets information about an in-progress secretary handover. Secretary handovers are events
  * within TandaPay that result in the secretary role being transferred to a new member of the
@@ -30,12 +40,13 @@ export type SecretaryHandoverInfo =
  * potential successors) both signing an "emergency handover" transaction.
  */
 export async function getHandoverInfo(
-  manager: TandaPayManager,
+  params: getHandoverInfoDeps,
 ): Promise<SecretaryHandoverInfo> {
+  const { reader } = params;
   // we can easily just check to see if a voluntary handover is in progress
-  const isVoluntary = await manager.read.isVoluntaryHandoverInProgress();
+  const isVoluntary = await reader.isVoluntaryHandoverInProgress();
   if (isVoluntary) {
-    const nominee = await manager.read.getVoluntaryHandoverNominee();
+    const nominee = await reader.getVoluntaryHandoverNominee();
     return {
       status: "in-progress",
       reason: "voluntary",
@@ -44,10 +55,10 @@ export async function getHandoverInfo(
   }
 
   // if voluntary isn't in progress, see if anyone has been nominated for an emergency hanooff
-  const [n1, n2] = await manager.read.getEmergencyHandoverNominees();
+  const [n1, n2] = await reader.getEmergencyHandoverNominees();
   const [nominee1, nominee2] = await Promise.all([
-    manager.read.getMemberInfoFromAddress({ walletAddress: n1 }),
-    manager.read.getMemberInfoFromAddress({ walletAddress: n2 }),
+    reader.getMemberInfoFromAddress({ walletAddress: n1 }),
+    reader.getMemberInfoFromAddress({ walletAddress: n2 }),
   ]);
 
   // if nobody has been nominated for emergency handoff, then no successor has initated

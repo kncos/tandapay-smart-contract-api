@@ -1,12 +1,13 @@
 import { Address } from "viem";
 import { WriteableClient, ReadableClient } from "types";
-import { TandaPayReadMethods } from "./read/tandapay_read_methods";
 import { MemberWriteMethods } from "./write/member_write_methods";
 import { SecretaryWriteMethods } from "./write/secretary_write_methods";
 import { PublicWriteMethods } from "./write/public_write_methods";
 import { TandaPayEvents } from "./read/tandapay_events";
 import { TandaPayReader } from "tandapay_interface/read_interface";
 import { getTandaPayReadActions } from "tandapay_actions/read_actions";
+import { TandaPayBatchReader } from "tandapay_interface/batch_read_interface";
+import { getTandaPayBatchReadActions } from "tandapay_actions/batch_read_actions";
 
 /** Possible types of TandaPayManager */
 export type TandaPayManagerKind =
@@ -56,6 +57,7 @@ export type TandaPayManager<
 > = {
   kind: kind_;
   read: TandaPayReader;
+  batchRead: TandaPayBatchReader;
   events: TandaPayEvents;
   client: kind_ extends "readonly"
     ? KeyedClient
@@ -93,6 +95,12 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
   const publicClient = "public" in client ? client.public : client;
   const walletClient = "wallet" in client ? client.wallet : undefined;
 
+  const reader = getTandaPayReadActions({
+    contractAddress: tpAddress,
+    client: publicClient,
+  });
+  const batchReader = getTandaPayBatchReadActions({ reader: reader });
+
   // every tandapay manager will have these properties
   const baseManager = {
     kind,
@@ -101,7 +109,8 @@ export function createTandaPayManager<kind_ extends TandaPayManagerKind>(
       wallet: walletClient,
     },
     tpAddress,
-    read: getTandaPayReadActions({ contractAddress: tpAddress, client: publicClient }),
+    read: reader,
+    batchRead: batchReader,
     events: new TandaPayEvents({ address: tpAddress, client: publicClient }),
   };
 

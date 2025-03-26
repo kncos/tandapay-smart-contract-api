@@ -1,4 +1,3 @@
-import { Hex } from "viem";
 import {
   ApproveNewSubgroupMemberParameters,
   ApproveSubgroupAssignmentParameters,
@@ -7,9 +6,15 @@ import {
   TandaPayMemberWriter,
   WithdrawClaimFundParameters,
 } from "tandapay_interface/member_interface";
-import { TandaPayWriteMethodReturnType, TandaPayWriteMethods } from "./tandapay_write_methods";
+import {
+  TandaPayWriteMethodReturnType,
+  TandaPayWriteMethods,
+} from "./tandapay_write_methods";
 
-export class MemberWriteMethods extends TandaPayWriteMethods implements TandaPayMemberWriter {
+export class MemberWriteMethods
+  extends TandaPayWriteMethods
+  implements TandaPayMemberWriter
+{
   async joinCommunity(): TandaPayWriteMethodReturnType<"joinCommunity"> {
     const simulate = async () => await this.simulate.joinCommunity();
     const write = async () => await this.write.joinCommunity();

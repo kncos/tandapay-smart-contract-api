@@ -6,3 +6,14 @@ const readMethodNames = TandaPayInfo.abi
   )
   .map((func) => func.name);
 console.log(readMethodNames.join("\n"));
+
+//const client = {
+//  public: createPublicClient({transport: http(), chain: anvil }),
+//  wallet: createWalletClient({transport: http(), chain: anvil, account: mnemonicToAccount("j")})
+//}
+//
+//const tpm = createTandaPayManager({
+//  tpAddress: '0x0',
+//  client,
+//  kind: 'secretary',
+//});
