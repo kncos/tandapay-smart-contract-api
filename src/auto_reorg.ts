@@ -1,8 +1,5 @@
+import { SubgroupConstants } from "tandapay_constants";
 import { Address } from "viem";
-
-// constants
-const MIN_SUBGROUP_SIZE = 4;
-const MAX_SUBGROUP_SIZE = 7;
 
 // types
 type SubgroupId = number;
@@ -48,7 +45,7 @@ function filterSubgroups({
     const finalMembers = [...validMembers];
 
     // ensure that the subgroup is not too large
-    while (finalMembers.length > MAX_SUBGROUP_SIZE) {
+    while (finalMembers.length > SubgroupConstants.maxSize) {
       const member = finalMembers.pop();
       if (member === undefined) throw new Error(ErrorMessages.UNDEFINED_MEMBER);
 
@@ -96,9 +93,9 @@ function getValidCapacity(sortedSubgroups: SizeToSubgroupId) {
 
   // find subgroups that are at least the minimum size, and
   // less than the maximum size
-  for (let i = MIN_SUBGROUP_SIZE; i < MAX_SUBGROUP_SIZE; i++) {
+  for (let i = SubgroupConstants.minSize; i < SubgroupConstants.maxSize; i++) {
     // this is the capacity of subgroups this size
-    const capacity = MAX_SUBGROUP_SIZE - i;
+    const capacity = SubgroupConstants.maxSize - i;
     // this is how many of them we have
     const numGroupsThisSize = sortedSubgroups.get(i)?.length;
     // this can be undefined if there were no subgroups of this size
@@ -115,12 +112,12 @@ function getValidCapacity(sortedSubgroups: SizeToSubgroupId) {
  * Accepts a list of members that need to be divided into new valid subgroups, and
  * returns a 2D array of addresses, where each subarray represents a list of members
  * that can make up a valid subgroup. Every subarray is guaranteed to be at least
- * MIN_SUBGROUP_SIZE and to not exceed MAX_SUBGROUP_SIZE
+ * SubgroupConstants.minSize and to not exceed SubgroupConstants.maxSize
  */
 function makeNewGroups(needsAssigned: Address[]) {
   // if we don't have enough members to make new subgroups out of,
   // then we can't make any valid subgroups. throw an error.
-  if (needsAssigned.length < MIN_SUBGROUP_SIZE)
+  if (needsAssigned.length < SubgroupConstants.minSize)
     throw new Error(ErrorMessages.MIN_SIZE_VIOLATION);
 
   // we'll store a list of members-lists, where each members-list
@@ -139,7 +136,7 @@ function makeNewGroups(needsAssigned: Address[]) {
     curSubgroup.push(m);
     // if it reaches te min size, add this to the list of new
     // subgroups we're making and start building the next subgroup
-    if (curSubgroup.length === MIN_SUBGROUP_SIZE) {
+    if (curSubgroup.length === SubgroupConstants.minSize) {
       newSubgroups.push([...curSubgroup]);
       curSubgroup = new Array<Address>();
     }
@@ -147,7 +144,7 @@ function makeNewGroups(needsAssigned: Address[]) {
 
   // if there were any stragglers, that means the last group we
   // were building did not have enough members to make a complete subgroup.
-  // Given that `(MIN_SUBGROUP_SIZE) + (MIN_SUBGROUP_SIZE-1) === MAX_SUBGROUP_SIZE`,
+  // Given that `(SubgroupConstants.minSize) + (SubgroupConstants.minSize-1) === SubgroupConstants.maxSize`,
   // that means it can never make a subgroup too large to simply add these
   // stragglers to one of the subgroups we just made. So, one of them will be larger
   // than the minimum size, but that's fine.
@@ -211,10 +208,19 @@ function assignToEmptyGroups(params: SubroutineParameters) {
  * within existing valid subgroups to add them to.
  */
 function distributeToExistingSubgroups(params: SubroutineParameters) {
-  let { subgroups, needsAssigned, sizeSortedGroups } = params;
+  const {
+    subgroups,
+    needsAssigned,
+    sizeSortedGroups: initialSizeSortedSubgroups,
+  } = params;
+  let sizeSortedGroups = initialSizeSortedSubgroups;
 
   // go through every valid subgroup size that is not max capacity
-  for (let i = MIN_SUBGROUP_SIZE; i < MAX_SUBGROUP_SIZE; i += 1) {
+  for (
+    let i = SubgroupConstants.minSize;
+    i < SubgroupConstants.maxSize;
+    i += 1
+  ) {
     // get all of the subgroup ids at this size
     const groups = sizeSortedGroups.get(i);
 
@@ -250,12 +256,17 @@ function distributeToExistingSubgroups(params: SubroutineParameters) {
  * can make a valid subgroup of their own
  */
 function rebalanceGroupsForNewFormation(params: SubroutineParameters) {
-  let { subgroups, needsAssigned, sizeSortedGroups } = params;
+  const {
+    subgroups,
+    needsAssigned,
+    sizeSortedGroups: initialSizeSortedSubgroups,
+  } = params;
+  let sizeSortedGroups = initialSizeSortedSubgroups;
 
   // we'll start with the biggest subgroups and work our way down through
   // each valid subgroup that is big enough that removing a member won't
   // cause it to become invalid
-  for (let i = MAX_SUBGROUP_SIZE; i > MIN_SUBGROUP_SIZE; i--) {
+  for (let i = SubgroupConstants.maxSize; i > SubgroupConstants.minSize; i--) {
     // get all of the groups of this size
     const groups = sizeSortedGroups.get(i);
     // if there are none, just continue to the next smallest size
@@ -269,8 +280,8 @@ function rebalanceGroupsForNewFormation(params: SubroutineParameters) {
       // enough needing assignment to make a valid subgroup yet, then remove members and
       // mark them as needing assignment
       while (
-        members.length > MIN_SUBGROUP_SIZE &&
-        needsAssigned.length < MIN_SUBGROUP_SIZE
+        members.length > SubgroupConstants.minSize &&
+        needsAssigned.length < SubgroupConstants.minSize
       ) {
         const removedMember = members.pop();
         // should never happen but if it does throw an error
@@ -295,7 +306,7 @@ function ar(params: SubroutineParameters): Map<SubgroupId, Members> {
   const validCapacity = getValidCapacity(params.sizeSortedGroups);
 
   // case 1: make new subgroups
-  if (params.needsAssigned.length >= MIN_SUBGROUP_SIZE) {
+  if (params.needsAssigned.length >= SubgroupConstants.minSize) {
     params = assignToEmptyGroups(params);
     // case 2: assign to existing subgroups
   } else if (validCapacity >= params.needsAssigned.length) {

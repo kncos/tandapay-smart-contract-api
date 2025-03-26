@@ -64,7 +64,9 @@ describe("TandaPay Read Methods", () => {
   });
 
   it("Get subgroup info for a subgroup id", async () => {
-    const subgroupInfo = await suite.secretary.read.getSubgroupInfo(1n);
+    const subgroupInfo = await suite.secretary.read.getSubgroupInfo({
+      subgroupId: 1n,
+    });
     expect(subgroupInfo.members.length).toBe(5);
   });
 
@@ -73,9 +75,9 @@ describe("TandaPay Read Methods", () => {
   // getDefectorMemberIdsInPeriod
 
   it("get Member ID from address", async () => {
-    const memberId = await suite.secretary.read.getMemberIdFromAddress(
-      suite.secretaryAccount.address,
-    );
+    const memberId = await suite.secretary.read.getMemberIdFromAddress({
+      walletAddress: suite.secretaryAccount.address,
+    });
     // member IDs start at 1 in TandaPay's smart contract
     expect(memberId).toBe(1n);
   });
@@ -83,10 +85,12 @@ describe("TandaPay Read Methods", () => {
   // getWhitelistedClaimIdsInPeriod
 
   it("get member info from both address and id", async () => {
-    const memberInfo1 = await suite.secretary.read.getMemberInfoFromAddress(
-      suite.secretaryAccount.address,
-    );
-    const memberInfo2 = await suite.secretary.read.getMemberInfoFromId(1n);
+    const memberInfo1 = await suite.secretary.read.getMemberInfoFromAddress({
+      walletAddress: suite.secretaryAccount.address,
+    });
+    const memberInfo2 = await suite.secretary.read.getMemberInfoFromId({
+      memberId: 1,
+    });
     expect(memberInfo1.id).toBe(memberInfo2.id);
   });
 
@@ -96,7 +100,7 @@ describe("TandaPay Read Methods", () => {
   });
 
   it("can get period info", async () => {
-    const periodInfo = await suite.secretary.read.getPeriodInfo(0n);
-    expect(periodInfo.id).toBe(0n);
+    const periodInfo = await suite.secretary.read.getPeriodInfo();
+    expect(periodInfo.claimIds.length).toBe(0);
   });
 });

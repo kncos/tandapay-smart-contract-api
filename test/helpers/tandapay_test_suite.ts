@@ -1,6 +1,5 @@
 import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import {
-  AssignmentStatus,
   memberInfoJsonReplacer,
   MemberStatus,
   subgroupInfoJsonReplacer,
@@ -170,27 +169,27 @@ export class TandaPayTestSuite {
         const walletIndex = i * 5 + j;
         const subgroupId = BigInt(i + 1);
         // add this member to the community
-        await this.secretary.write.secretary.addMemberToCommunity(
-          this.accounts[walletIndex].address,
-        );
+        await this.secretary.write.secretary.addMemberToCommunity({
+          memberWalletAddress: this.accounts[walletIndex].address,
+        });
         // assign them to their subgroup
-        await this.secretary.write.secretary.assignMemberToSubgroup(
-          this.accounts[walletIndex].address,
-          subgroupId,
-        );
+        await this.secretary.write.secretary.assignMemberToSubgroup({
+          memberWalletAddress: this.accounts[walletIndex].address,
+          subgroupID: subgroupId,
+        });
       }
     }
 
     // initiate default state
-    await this.secretary.write.secretary.initiateDefaultState(
-      DEFAULT_COVERAGE_REQUIREMENT,
-    );
+    await this.secretary.write.secretary.initiateDefaultState({
+      totalCoverage: DEFAULT_COVERAGE_REQUIREMENT,
+    });
 
     // have every member (including the secretary) join the community and
     // approve their subgroup assignment
     for (const m of this.managers) {
       await m.write.member.joinCommunity();
-      await m.write.member.approveSubgroupAssignment(true);
+      await m.write.member.approveSubgroupAssignment({ approve: true });
       await m.write.member.payPremium();
     }
     await this.secretary.write.secretary.advancePeriod();
@@ -269,9 +268,9 @@ export class TandaPayTestSuite {
     // we'll also get a list of the defector IDs
     const currentPeriod = await this.secretary.read.getCurrentPeriodId();
     const defectorIdsArr =
-      await this.secretary.read.getDefectorMemberIdsInPeriod(
-        currentPeriod - 1n,
-      );
+      await this.secretary.read.getDefectorMemberIdsInPeriod({
+        periodId: currentPeriod - 1n,
+      });
 
     // one log should be emitted for each defector
     expect(defectorIdsArr.length).toBe(tandaPayLogs.length);
@@ -294,8 +293,9 @@ export class TandaPayTestSuite {
       // get info about the defector described in this log
       const defectorAddress =
         l.args.member ?? fail("defectorAddress was undefined");
-      const defectorInfo =
-        await this.secretary.read.getMemberInfoFromAddress(defectorAddress);
+      const defectorInfo = await this.secretary.read.getMemberInfoFromAddress({
+        walletAddress: defectorAddress,
+      });
 
       // remove the defector's ID from the set to keep track of which ones have been seen
       defectorIds.delete(defectorInfo.id);
@@ -335,7 +335,9 @@ export class TandaPayTestSuite {
     // build up the map for each unique subgroup id
     for (const id of allUniqueNewSubgroupIds) {
       // get the subgroup info
-      const peerSubgroupInfo = await this.secretary.read.getSubgroupInfo(id);
+      const peerSubgroupInfo = await this.secretary.read.getSubgroupInfo({
+        subgroupId: id,
+      });
       // verify that we actually have a peer to use
       if (peerSubgroupInfo.members.length === 0) {
         console.warn(
@@ -367,7 +369,9 @@ export class TandaPayTestSuite {
         fail("failed to get manager from address");
       // they need to leave from their own subgroup
       await m.write.member.leaveSubgroup();
-      let memberInfo = await m.read.getMemberInfoFromAddress(address);
+      let memberInfo = await m.read.getMemberInfoFromAddress({
+        walletAddress: address,
+      });
       // they should be Paid Invalid now
       expect(memberInfo.memberStatus).toBe(MemberStatus.PaidInvalid);
 
@@ -380,18 +384,20 @@ export class TandaPayTestSuite {
       }
 
       // have secretary assign them to a new subgroup ID
-      await this.secretary.write.secretary.assignMemberToSubgroup(
-        address,
-        newSubgroupId,
-        true,
-      );
-      memberInfo = await m.read.getMemberInfoFromAddress(address);
+      await this.secretary.write.secretary.assignMemberToSubgroup({
+        memberWalletAddress: address,
+        subgroupID: newSubgroupId,
+        isReorging: true,
+      });
+      memberInfo = await m.read.getMemberInfoFromAddress({
+        walletAddress: address,
+      });
       // they should become reorged at this time
       expect(memberInfo.memberStatus).toBe(MemberStatus.Reorged);
 
       //console.log(`before self-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // they approve their own subgroup assignment
-      await m.write.member.approveSubgroupAssignment(true);
+      await m.write.member.approveSubgroupAssignment({ approve: true });
 
       // finally, a peer in their new subgroup approves their joining
       const peer = subgroupPeers.get(newSubgroupId);
@@ -404,12 +410,14 @@ export class TandaPayTestSuite {
       //memberInfo = await m.read.getMemberInfoFromAddress(address);
       //console.log(`before peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       //TODO: end removal
-      await peer.write.member.approveNewSubgroupMember(
-        newSubgroupId,
-        memberInfo.id,
-        true,
-      );
-      memberInfo = await m.read.getMemberInfoFromAddress(address);
+      await peer.write.member.approveNewSubgroupMember({
+        subgroupId: newSubgroupId,
+        newMemberId: memberInfo.id,
+        approve: true,
+      });
+      memberInfo = await m.read.getMemberInfoFromAddress({
+        walletAddress: address,
+      });
       //console.log(`after peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // now they should go back to being valid, since they've been assigned to a new subgroup successfully
       expect(memberInfo.memberStatus).toBe(MemberStatus.Valid);
@@ -417,8 +425,9 @@ export class TandaPayTestSuite {
 
     // now, go through each subgroup and ensure the members were properly added
     for (const [address, newSubgroupId] of paidInvalidNewSubgroups) {
-      const subgroupInfo =
-        await this.secretary.read.getSubgroupInfo(newSubgroupId);
+      const subgroupInfo = await this.secretary.read.getSubgroupInfo({
+        subgroupId: newSubgroupId,
+      });
       const includesAddress = subgroupInfo.members.some((addr) =>
         isAddressEqual(addr, address),
       );
@@ -435,7 +444,9 @@ export class TandaPayTestSuite {
     try {
       await advanceTimeFunc();
     } catch (error) {
-      log.push(`aborting action, advance time failed: ${error}`);
+      log.push(
+        `aborting action, advance time failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       doAction = false;
     }
 
@@ -443,7 +454,9 @@ export class TandaPayTestSuite {
       try {
         await actionFunc();
       } catch (error) {
-        log.push(`action failed: ${error}`);
+        log.push(
+          `action failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
 
@@ -554,7 +567,7 @@ export class TandaPayTestSuite {
         // Get all submitted claims
         const periodId = await this.secretary.read.getCurrentPeriodId();
         const allClaimIds = new Set<bigint>(
-          await this.secretary.read.getClaimIdsInPeriod(periodId),
+          await this.secretary.read.getClaimIdsInPeriod({ periodId }),
         );
 
         // Filter and validate the claims
@@ -562,7 +575,7 @@ export class TandaPayTestSuite {
 
         // Whitelist all the filtered and validated claims
         for (const c of claimsToWhitelist) {
-          await this.secretary.write.secretary.whitelistClaim(c);
+          await this.secretary.write.secretary.whitelistClaim({ claimId: c });
         }
       },
     );
@@ -605,9 +618,9 @@ export class TandaPayTestSuite {
 
         // Have each one submit a claim
         for (const c of uniqueClaimants) {
-          await this.managers[c].write.member.withdrawClaimFund(
-            forfeit !== undefined ? forfeit : false,
-          );
+          await this.managers[c].write.member.withdrawClaimFund({
+            forfeit: forfeit !== undefined ? forfeit : false,
+          });
         }
       },
     );

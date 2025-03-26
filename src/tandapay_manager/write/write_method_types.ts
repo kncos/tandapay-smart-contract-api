@@ -83,12 +83,16 @@ export const AliasToRawWriteMethodMapping = {
 } as const;
 
 // extracts all write method names from an ABI
-type ExtractWriteMethodNames<T extends readonly any[]> = {
+type ExtractWriteMethodNames<T extends readonly unknown[]> = {
   [K in keyof T]: T[K] extends {
     type: "function";
     name: infer N;
     stateMutability: infer S;
-  } ? S extends "view" ? never : N : never;
+  }
+    ? S extends "view"
+      ? never
+      : N
+    : never;
 }[number];
 
 /** All raw write method names from TandaPay's smart contract ABI */
@@ -97,37 +101,48 @@ export type RawTandaPayWriteMethodNames = ExtractWriteMethodNames<
 >;
 
 /** All tandapay write method aliases used in this codebase */
-export type TandaPayWriteMethodAliases = keyof typeof AliasToRawWriteMethodMapping;
+export type TandaPayWriteMethodAliases =
+  keyof typeof AliasToRawWriteMethodMapping;
 
 // check that all write methods have an alias
-type AllWriteMethodsMappedCheck = Exclude<
-  RawTandaPayWriteMethodNames, keyof typeof RawWriteMethodToAliasMapping
-> extends never ? true : { error: "Missing write methods in RawWriteMethodToAliasMapping"; };
+type AllWriteMethodsMappedCheck =
+  Exclude<
+    RawTandaPayWriteMethodNames,
+    keyof typeof RawWriteMethodToAliasMapping
+  > extends never
+    ? true
+    : { error: "Missing write methods in RawWriteMethodToAliasMapping" };
 
 // ensure that all raw-alias mappings have a corresponding alias-raw mapping
 type ForwardToBackwardCheck = {
-  [K in keyof typeof RawWriteMethodToAliasMapping]: (typeof RawWriteMethodToAliasMapping)[K] extends keyof typeof AliasToRawWriteMethodMapping ? (typeof AliasToRawWriteMethodMapping)[(typeof RawWriteMethodToAliasMapping)[K]] extends K ? true : {
-    error: "Mismatch in mapping";
-    key: K;
-    forward: (typeof RawWriteMethodToAliasMapping)[K];
-    backward: (typeof AliasToRawWriteMethodMapping)[(typeof RawWriteMethodToAliasMapping)[K]];
-  } : {
-    error: "Missing in AliasToRawWriteMethodMapping";
-    key: K;
-    value: (typeof RawWriteMethodToAliasMapping)[K];
-  };
+  [K in keyof typeof RawWriteMethodToAliasMapping]: (typeof RawWriteMethodToAliasMapping)[K] extends keyof typeof AliasToRawWriteMethodMapping
+    ? (typeof AliasToRawWriteMethodMapping)[(typeof RawWriteMethodToAliasMapping)[K]] extends K
+      ? true
+      : {
+          error: "Mismatch in mapping";
+          key: K;
+          forward: (typeof RawWriteMethodToAliasMapping)[K];
+          backward: (typeof AliasToRawWriteMethodMapping)[(typeof RawWriteMethodToAliasMapping)[K]];
+        }
+    : {
+        error: "Missing in AliasToRawWriteMethodMapping";
+        key: K;
+        value: (typeof RawWriteMethodToAliasMapping)[K];
+      };
 };
 
 // collect any missing mappings
 type ForwardToBackwardError = {
-  [K in keyof ForwardToBackwardCheck]: ForwardToBackwardCheck[K] extends true ? never : ForwardToBackwardCheck[K];
+  [K in keyof ForwardToBackwardCheck]: ForwardToBackwardCheck[K] extends true
+    ? never
+    : ForwardToBackwardCheck[K];
 }[keyof ForwardToBackwardCheck];
 
 // this is the final check. Both should extend true if there are no issues
 type VerifyMappings = [
   AllWriteMethodsMappedCheck extends true ? true : never,
-  ForwardToBackwardError extends never ? true : never
+  ForwardToBackwardError extends never ? true : never,
 ];
 
 // create a dummy variable that will cause an error if all methods aren't properly mapped
-const allMapped: VerifyMappings = [true, true] as const;
+export const allMapped: VerifyMappings = [true, true] as const;

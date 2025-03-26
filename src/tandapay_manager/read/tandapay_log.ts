@@ -74,4 +74,3 @@ export function toTandaPayLogs(
   }
   return tandaPayLogs;
 }
-

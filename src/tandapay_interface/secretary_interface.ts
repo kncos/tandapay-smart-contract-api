@@ -1,50 +1,67 @@
-import {
-  AddMemberToCommunityParameters,
-  AssignMemberToSubgroupParameters,
-  DefineSecretarySuccesorListParameters,
-  HandoverSecretaryRoleToSuccessorParameters,
-  InitiateDefaultStateParameters,
-  TandaPaySecretaryWriter,
-  UpdateCoverageAmountParameters,
-  WhitelistClaimParameters,
-} from "tandapay_interface/secretary_interface";
-import {
-  TandaPayWriteMethodReturnType,
-  TandaPayWriteMethods,
-} from "./tandapay_write_methods";
+import { Hex } from "viem";
+import { ApiNumericType } from "types";
+import { TandaPayWriteMethodReturnType } from "tandapay_manager/write/tandapay_write_methods";
 
-/** methods within the TandaPay smart contract that only the secretary may call */
-export class SecretaryWriteMethods
-  extends TandaPayWriteMethods
-  implements TandaPaySecretaryWriter
-{
+export type AddMemberToCommunityParameters = {
+  /** Wallet address of the member to add to the community */
+  memberWalletAddress: Hex;
+};
+
+export type AssignMemberToSubgroupParameters = {
+  /** wallet address of the member you want to assign to a subgroup */
+  memberWalletAddress: Hex;
+  /** which subgroup to assign the member to */
+  subgroupID: ApiNumericType;
+  /** whether or not the member is PAID-INVALID and now reorging to a new subgroup */
+  isReorging?: boolean;
+};
+
+export type InitiateDefaultStateParameters = {
+  /** Total coverage for the TandaPay community. Basically, what should the community's combined contribution to the community escrow be each month? Base monthly premiums are calculated as a function of `(total coverage) / (num members)`. */
+  totalCoverage: bigint;
+};
+
+export type WhitelistClaimParameters = {
+  /** unique identifier for the claim that the secretary wants to whitelist */
+  claimId: ApiNumericType;
+};
+
+export type UpdateCoverageAmountParameters = {
+  /** New total coverage amount the community will use. */
+  totalCoverage: bigint;
+};
+
+export type DefineSecretarySuccesorListParameters = {
+  /**
+   *  An array of wallet addresses for individuals who will be secretary successors
+   *  @todo The smart contract does not require that the secretary define any successors before exiting the
+   *  initialization state. Perhaps on L2 we include this as business logic?
+   */
+  successorListWalletAddresses: [Hex];
+};
+
+export type HandoverSecretaryRoleToSuccessorParameters = {
+  /** Wallet address of the individual the secretary would like to give their role to */
+  successorWalletAddress: Hex;
+};
+
+export interface TandaPaySecretaryWriter {
   /**
    * Add a member to the TandaPay community (as the secretary)
    * @param {AddMemberToCommunityParameters} params
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async addMemberToCommunity(
+  addMemberToCommunity(
     params: AddMemberToCommunityParameters,
-  ): TandaPayWriteMethodReturnType<"addMemberToCommunity"> {
-    const { memberWalletAddress } = params;
-    const simulate = async () =>
-      this.simulate.addMemberToCommunity([memberWalletAddress]);
-    const write = async () =>
-      this.write.addMemberToCommunity([memberWalletAddress]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"addMemberToCommunity">;
 
   /**
    * This function is used to create a new subgroup for the TandaPay community.
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async createSubgroup(): TandaPayWriteMethodReturnType<"createSubgroup"> {
-    const simulate = async () => await this.simulate.createSubgroup();
-    const write = async () => this.write.createSubgroup();
-    return this.performOperation({ simulate, write });
-  }
+  createSubgroup(): TandaPayWriteMethodReturnType<"createSubgroup">;
 
   /**
    * This function is used to assign a member to a SubGroup.
@@ -52,24 +69,9 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async assignMemberToSubgroup(
+  assignMemberToSubgroup(
     params: AssignMemberToSubgroupParameters,
-  ): TandaPayWriteMethodReturnType<"assignMemberToSubgroup"> {
-    const { memberWalletAddress, subgroupID, isReorging = false } = params;
-    const simulate = async () =>
-      await this.simulate.assignMemberToSubgroup([
-        memberWalletAddress,
-        BigInt(subgroupID),
-        isReorging,
-      ]);
-    const write = async () =>
-      await this.write.assignMemberToSubgroup([
-        memberWalletAddress,
-        BigInt(subgroupID),
-        isReorging,
-      ]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"assignMemberToSubgroup">;
 
   /**
    * This function is used to set the default coverage and initiate the default state of the community.
@@ -77,16 +79,9 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async initiateDefaultState(
+  initiateDefaultState(
     params: InitiateDefaultStateParameters,
-  ): TandaPayWriteMethodReturnType<"initiateDefaultState"> {
-    const { totalCoverage } = params;
-    const simulate = async () =>
-      await this.simulate.initiateDefaultState([totalCoverage]);
-    const write = async () =>
-      await this.write.initiateDefaultState([totalCoverage]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"initiateDefaultState">;
 
   /**
    * This function is used to whitelist a claim submitted by the claimants.
@@ -94,16 +89,9 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async whitelistClaim(
+  whitelistClaim(
     params: WhitelistClaimParameters,
-  ): TandaPayWriteMethodReturnType<"whitelistClaim"> {
-    const { claimId } = params;
-    const simulate = async () =>
-      await this.simulate.whitelistClaim([BigInt(claimId)]);
-    const write = async () =>
-      await this.write.whitelistClaim([BigInt(claimId)]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"whitelistClaim">;
 
   /**
    * This function is used to update the current total coverage amount. This can only be done if the
@@ -112,16 +100,9 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async updateCoverageAmount(
+  updateCoverageAmount(
     params: UpdateCoverageAmountParameters,
-  ): TandaPayWriteMethodReturnType<"updateCoverageAmount"> {
-    const { totalCoverage } = params;
-    const simulate = async () =>
-      await this.simulate.updateCoverageAmount([totalCoverage]);
-    const write = async () =>
-      await this.write.updateCoverageAmount([totalCoverage]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"updateCoverageAmount">;
 
   /**
    * Defines a list of successor candidates for the Secretary role. If `12 <= (community size) <= 35`,
@@ -133,20 +114,9 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async defineSecretarySuccesorList(
+  defineSecretarySuccesorList(
     params: DefineSecretarySuccesorListParameters,
-  ): TandaPayWriteMethodReturnType<"defineSecretarySuccessorList"> {
-    const { successorListWalletAddresses } = params;
-    const simulate = async () =>
-      await this.simulate.defineSecretarySuccessorList([
-        successorListWalletAddresses,
-      ]);
-    const write = async () =>
-      await this.write.defineSecretarySuccessorList([
-        successorListWalletAddresses,
-      ]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"defineSecretarySuccessorList">;
 
   /**
    * Allows the secretary to give their position to one of their successors
@@ -154,20 +124,9 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async handoverSecretaryRoleToSuccessor(
+  handoverSecretaryRoleToSuccessor(
     params: HandoverSecretaryRoleToSuccessorParameters,
-  ): TandaPayWriteMethodReturnType<"handoverSecretaryRoleToSuccessor"> {
-    const { successorWalletAddress } = params;
-    const simulate = async () =>
-      await this.simulate.handoverSecretaryRoleToSuccessor([
-        successorWalletAddress,
-      ]);
-    const write = async () =>
-      await this.write.handoverSecretaryRoleToSuccessor([
-        successorWalletAddress,
-      ]);
-    return this.performOperation({ simulate, write });
-  }
+  ): TandaPayWriteMethodReturnType<"handoverSecretaryRoleToSuccessor">;
 
   /**
    * This function is used to inject funds into the community by the secretary. Basically, this is a way
@@ -179,11 +138,7 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async injectFunds(): TandaPayWriteMethodReturnType<"injectFunds"> {
-    const simulate = async () => await this.simulate.injectFunds();
-    const write = async () => await this.write.injectFunds();
-    return this.performOperation({ simulate, write });
-  }
+  injectFunds(): TandaPayWriteMethodReturnType<"injectFunds">;
 
   /**
    * If there is a shortfall in the coverage requirement, but every member of the community has enough
@@ -192,11 +147,7 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async divideShortfall(): TandaPayWriteMethodReturnType<"divideShortfall"> {
-    const simulate = async () => await this.simulate.divideShortfall();
-    const write = async () => await this.write.divideShortfall();
-    return this.performOperation({ simulate, write });
-  }
+  divideShortfall(): TandaPayWriteMethodReturnType<"divideShortfall">;
 
   /**
    * Introduces an additional day before the period will end. This gives members more time to pay
@@ -204,11 +155,7 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async extendPeriodByOneDay(): TandaPayWriteMethodReturnType<"extendPeriodByOneDay"> {
-    const simulate = async () => await this.simulate.extendPeriodByOneDay();
-    const write = async () => await this.write.extendPeriodByOneDay();
-    return this.performOperation({ simulate, write });
-  }
+  extendPeriodByOneDay(): TandaPayWriteMethodReturnType<"extendPeriodByOneDay">;
 
   /**
    * This method is used to advance to the next period. Must be called after the previous period has
@@ -216,9 +163,5 @@ export class SecretaryWriteMethods
    * @returns A transaction receipt after the transaction has been included on a block, or the
    * transaction hash, depending on what `waitForTransactionReceipts` is set to.
    */
-  async advancePeriod(): TandaPayWriteMethodReturnType<"advancePeriod"> {
-    const simulate = async () => await this.simulate.advancePeriod();
-    const write = async () => await this.write.advancePeriod();
-    return this.performOperation({ simulate, write });
-  }
+  advancePeriod(): TandaPayWriteMethodReturnType<"advancePeriod">;
 }
