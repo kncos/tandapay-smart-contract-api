@@ -12,7 +12,7 @@ export async function getAllSubgroupInfo(
 
   const subgroupInfoArray = await Promise.all(
     subgroupIds.map(async (id) => {
-      const info = await manager.read.getSubgroupInfo(id);
+      const info = await manager.read.getSubgroupInfo({ subgroupId: id });
       return { id, info };
     }),
   );

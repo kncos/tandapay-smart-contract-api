@@ -17,7 +17,7 @@ export async function canAdvancePeriod(
   params: CustomFilterParameters,
 ): Promise<CustomFilterReturnType> {
   const { manager } = params;
-  const curPeriodInfo = await manager.read.getCurrentPeriodInfo();
+  const curPeriodInfo = await manager.read.getPeriodInfo();
   const curBlock = await manager.client.public.getBlock();
 
   if (curPeriodInfo.endTimestamp < curBlock.timestamp) {
@@ -43,7 +43,9 @@ export async function canApproveNewSubgroupMember(
   // get own info. we'll need this to both verify that we can actually approve a new member,
   // and to determine what the relevant subgroup is
   const address = manager.client.wallet.account.address;
-  const ownInfo = await manager.read.getMemberInfoFromAddress(address);
+  const ownInfo = await manager.read.getMemberInfoFromAddress({
+    walletAddress: address,
+  });
   const baseErr = "cannot approve a new subgroup peer: ";
 
   // if we aren't a valid member of a subgroup, we can't approve a new peer
@@ -61,12 +63,12 @@ export async function canApproveNewSubgroupMember(
   }
 
   // check that there are actually members being reorged into this subgroup
-  const ownSubgroupInfo = await manager.read.getSubgroupInfo(
-    ownInfo.subgroupId,
-  );
+  const ownSubgroupInfo = await manager.read.getSubgroupInfo({
+    subgroupId: ownInfo.subgroupId,
+  });
   const allPeers = await Promise.all(
     ownSubgroupInfo.members.map((addr) =>
-      manager.read.getMemberInfoFromAddress(addr),
+      manager.read.getMemberInfoFromAddress({ walletAddress: addr }),
     ),
   );
   // if not, then there is no peer to approve
@@ -88,7 +90,9 @@ export async function canApproveSugroupAssignment(
 ): Promise<CustomFilterReturnType> {
   const { manager } = params;
   const address = manager.client.wallet.account.address;
-  const ownInfo = await manager.read.getMemberInfoFromAddress(address);
+  const ownInfo = await manager.read.getMemberInfoFromAddress({
+    walletAddress: address,
+  });
   const baseErr = "Cannot approve own subgroup assignment: ";
 
   // must be assigned to a subgroup in order to approve that assignment
@@ -130,7 +134,9 @@ export async function canDefectFromCommunity(
   }
 
   // if there were no claims, there is no reason to defect
-  const claims = await manager.read.getClaimIdsInPeriod(periodId - 1n);
+  const claims = await manager.read.getClaimIdsInPeriod({
+    periodId: periodId - 1n,
+  });
   if (claims.length === 0) {
     return {
       result: false,
@@ -154,7 +160,9 @@ export async function canRequestEmergencySecretaryHandoff(
   const baseErr = "Cannot request emergency secretary handoff: ";
 
   const address = manager.client.wallet.account.address;
-  const memberInfo = await manager.read.getMemberInfoFromAddress(address);
+  const memberInfo = await manager.read.getMemberInfoFromAddress({
+    walletAddress: address,
+  });
 
   // the smart contract checks if they are valid
   if (memberInfo.memberStatus !== MemberStatus.Valid) {
@@ -193,7 +201,9 @@ export async function canJoinCommunity(
   const address = manager.client.wallet.account.address;
   const baseErr = "Cannot join community:";
 
-  const memberInfo = await manager.read.getMemberInfoFromAddress(address);
+  const memberInfo = await manager.read.getMemberInfoFromAddress({
+    walletAddress: address,
+  });
   if (memberInfo.memberStatus !== MemberStatus.Added) {
     return {
       result: false,
@@ -246,7 +256,10 @@ export async function canSubmitClaim(
   const baseErr = "Cannot submit a claim:";
 
   const address = manager.client.wallet.account.address;
-  const memberInfo = await manager.read.getMemberInfoFromAddress(address);
+  const curPeriod = await manager.read.getCurrentPeriodId();
+  const memberInfo = await manager.read.getMemberInfoFromAddress({
+    walletAddress: address,
+  });
   // ensure they are eligible for coverage this period
   if (!memberInfo.isEligibleForCoverageThisPeriod) {
     return {
@@ -255,11 +268,16 @@ export async function canSubmitClaim(
     };
   }
 
-  // we can use this because memberInfo will contain the current period by default
-  const claimIds = await manager.read.getClaimIdsInPeriod(memberInfo.periodId);
-  // get all claim info for this period
+  const claimIds = await manager.read.getClaimIdsInPeriod({
+    periodId: curPeriod,
+  });
   const claims = await Promise.all(
-    claimIds.map((id) => manager.read.getClaimInfo(memberInfo.periodId, id)),
+    claimIds.map((id) =>
+      manager.read.getClaimInfo({
+        periodId: curPeriod,
+        claimId: id,
+      }),
+    ),
   );
 
   // ensure they haven't already submitted a claim this period

@@ -7,12 +7,12 @@ function validateSubgroups(
   expectedMemberCount: number,
 ): boolean {
   const uniqueMembers = new Set<Address>();
-  for (const [id, members] of subgroups) {
-    if (members.length > 0 && members.length < 4) return false;
-    if (members.length > 7) return false;
-    if (countEmpty && members.length === 0) return false;
+  for (const memberList of subgroups.values()) {
+    if (memberList.length > 0 && memberList.length < 4) return false;
+    if (memberList.length > 7) return false;
+    if (countEmpty && memberList.length === 0) return false;
 
-    for (const m of members) {
+    for (const m of memberList) {
       if (uniqueMembers.has(m.toLowerCase() as Address)) return false;
       else uniqueMembers.add(m.toLowerCase() as Address);
     }
@@ -24,9 +24,9 @@ function validateSubgroups(
 }
 
 function generateAddress(): Address {
-  return `0x${[...Array(40)]
-    .map(() => Math.floor(Math.random() * 16).toString(16))
-    .join("")}`;
+  return `0x${Array.from({ length: 40 }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join("")}`;
 }
 
 function makeSubgroup(size: number) {
@@ -47,8 +47,8 @@ function makeSubgroups(sizes: number[]) {
 function doTest(subgroupSizes: number[]) {
   const subgroups = makeSubgroups(subgroupSizes);
   const needsAssigned: Address[] = [];
-  for (const [id, members] of subgroups) {
-    if (members.length < 4) needsAssigned.push(...members);
+  for (const memberList of subgroups.values()) {
+    if (memberList.length < 4) needsAssigned.push(...memberList);
   }
   const sol = autoReorg({ subgroups, needsAssigned });
   expect(
@@ -82,7 +82,7 @@ describe("auto reorg", () => {
   });
 
   it("random tests? let's see if they work", () => {
-    let totalTests = 0;
+    //let totalTests = 0;
     for (let i = 0; i < 100; i++) {
       const numSubgroups = 3 + Math.ceil(Math.random() * 20);
       const subgroupSizes: number[] = [];
@@ -93,7 +93,7 @@ describe("auto reorg", () => {
       if (totalMembers < 4) continue;
 
       doTest(subgroupSizes);
-      totalTests += 1;
+      //totalTests += 1;
     }
   });
 });

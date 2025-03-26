@@ -99,10 +99,10 @@ describe("testing claims, defectors, etc.", () => {
     // get the claim info for this specific claim. We'll use the whitelisted claim Id from
     // the event that was fetched earlier
     const lastperiod = (await suite.secretary.read.getCurrentPeriodId()) - 1n;
-    const claimInfo = await suite.secretary.read.getClaimInfo(
-      lastperiod,
-      whitelisted.args.cId!,
-    );
+    const claimInfo = await suite.secretary.read.getClaimInfo({
+      periodId: lastperiod,
+      claimId: whitelisted.args.cId!,
+    });
 
     // we expect the difference to be the claim amount
     expect(afterBalance - claimInfo.amount).toBe(beforeBalance);
@@ -178,8 +178,9 @@ describe("testing claims, defectors, etc.", () => {
       forfeit: false,
     });
 
-    const subgroup1Members = (await suite.secretary.read.getSubgroupInfo(1n))
-      .members;
+    const subgroup1Members = (
+      await suite.secretary.read.getSubgroupInfo({ subgroupId: 1n })
+    ).members;
     const paidInvalidNewSubgroups = new Map<Address, bigint>();
     for (const addr of subgroup1Members) {
       paidInvalidNewSubgroups.set(addr, 2n);

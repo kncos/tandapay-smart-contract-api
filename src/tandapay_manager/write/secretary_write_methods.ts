@@ -89,8 +89,10 @@ export class SecretaryWriteMethods extends TandaPayWriteMethods {
   async whitelistClaim(
     claimId: ApiNumericType,
   ): TandaPayWriteMethodReturnType<"whitelistClaim"> {
-    const simulate = async () => await this.simulate.whitelistClaim([BigInt(claimId)]);
-    const write = async () => await this.write.whitelistClaim([BigInt(claimId)]);
+    const simulate = async () =>
+      await this.simulate.whitelistClaim([BigInt(claimId)]);
+    const write = async () =>
+      await this.write.whitelistClaim([BigInt(claimId)]);
     return this.performOperation({ simulate, write });
   }
 

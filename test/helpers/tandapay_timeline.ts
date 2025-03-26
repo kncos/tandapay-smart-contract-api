@@ -43,8 +43,7 @@ export class TandaPayTimeline {
 
   /** Get info about the current period */
   async getCurrentPeriodInfo(): Promise<PeriodInfo> {
-    const periodId = await this.read.getCurrentPeriodId();
-    const periodInfo = await this.read.getPeriodInfo(periodId);
+    const periodInfo = await this.read.getPeriodInfo();
     return periodInfo;
   }
 

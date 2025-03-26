@@ -4,7 +4,7 @@
  * anvil to ensure that only one eth_call request was sent.
  */
 
-import { createPublicClient, defineChain, http } from "viem";
+import { createPublicClient, defineChain } from "viem";
 import {
   deployFaucetToken,
   deployMulticall,
@@ -23,10 +23,10 @@ describe.skip("batching read transactions using TandaPayManager", () => {
     // create a public client and get the current block number.
     // this is needed to define a new chain, which will be anvil
     // but just with an MC3 address
-    const pc_ = createPublicClient({
-      transport: http(),
-      chain: anvil,
-    });
+    //const pc_ = createPublicClient({
+    //  transport: http(),
+    //  chain: anvil,
+    //});
 
     // new chain we will use for clients going forward, since it
     // has mc3 defined batching should work
@@ -66,19 +66,18 @@ describe.skip("batching read transactions using TandaPayManager", () => {
     });
 
     const unwatch = tpm.events.watchEvent({
-      onLogs: (l) => console.log(`${l.map(log => log.alias)}`),
+      onLogs: (l) => console.log(`${l.map((log) => log.alias).join(", ")}`),
     });
 
     const accs = makeAccounts(90);
     for (let i = 0; i < 15; i++)
       await tpm.write.secretary.addMemberToCommunity(accs[i].address);
 
-    for (let i = 0; i < 3; i++)
-      await tpm.write.secretary.createSubgroup();
+    for (let i = 0; i < 3; i++) await tpm.write.secretary.createSubgroup();
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    const memberInfoArr = await tpm.read.getAllMemberInfo(15, 0);
+    //const memberInfoArr = await tpm.read.getAllMemberInfo(15, 0);
     //console.log(memberInfoArr);
 
     unwatch();

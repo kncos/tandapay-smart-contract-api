@@ -1,6 +1,5 @@
 import { WriteableTandaPayManager } from "tandapay_manager/tandapay_manager";
 import {
-  AssignmentStatus,
   memberInfoJsonReplacer,
   MemberStatus,
   subgroupInfoJsonReplacer,
@@ -269,9 +268,9 @@ export class TandaPayTestSuite {
     // we'll also get a list of the defector IDs
     const currentPeriod = await this.secretary.read.getCurrentPeriodId();
     const defectorIdsArr =
-      await this.secretary.read.getDefectorMemberIdsInPeriod(
-        currentPeriod - 1n,
-      );
+      await this.secretary.read.getDefectorMemberIdsInPeriod({
+        periodId: currentPeriod - 1n,
+      });
 
     // one log should be emitted for each defector
     expect(defectorIdsArr.length).toBe(tandaPayLogs.length);
@@ -294,8 +293,9 @@ export class TandaPayTestSuite {
       // get info about the defector described in this log
       const defectorAddress =
         l.args.member ?? fail("defectorAddress was undefined");
-      const defectorInfo =
-        await this.secretary.read.getMemberInfoFromAddress(defectorAddress);
+      const defectorInfo = await this.secretary.read.getMemberInfoFromAddress({
+        walletAddress: defectorAddress,
+      });
 
       // remove the defector's ID from the set to keep track of which ones have been seen
       defectorIds.delete(defectorInfo.id);
@@ -335,7 +335,9 @@ export class TandaPayTestSuite {
     // build up the map for each unique subgroup id
     for (const id of allUniqueNewSubgroupIds) {
       // get the subgroup info
-      const peerSubgroupInfo = await this.secretary.read.getSubgroupInfo(id);
+      const peerSubgroupInfo = await this.secretary.read.getSubgroupInfo({
+        subgroupId: id,
+      });
       // verify that we actually have a peer to use
       if (peerSubgroupInfo.members.length === 0) {
         console.warn(
@@ -367,7 +369,9 @@ export class TandaPayTestSuite {
         fail("failed to get manager from address");
       // they need to leave from their own subgroup
       await m.write.member.leaveSubgroup();
-      let memberInfo = await m.read.getMemberInfoFromAddress(address);
+      let memberInfo = await m.read.getMemberInfoFromAddress({
+        walletAddress: address,
+      });
       // they should be Paid Invalid now
       expect(memberInfo.memberStatus).toBe(MemberStatus.PaidInvalid);
 
@@ -385,7 +389,9 @@ export class TandaPayTestSuite {
         newSubgroupId,
         true,
       );
-      memberInfo = await m.read.getMemberInfoFromAddress(address);
+      memberInfo = await m.read.getMemberInfoFromAddress({
+        walletAddress: address,
+      });
       // they should become reorged at this time
       expect(memberInfo.memberStatus).toBe(MemberStatus.Reorged);
 
@@ -409,7 +415,9 @@ export class TandaPayTestSuite {
         memberInfo.id,
         true,
       );
-      memberInfo = await m.read.getMemberInfoFromAddress(address);
+      memberInfo = await m.read.getMemberInfoFromAddress({
+        walletAddress: address,
+      });
       //console.log(`after peer-approval:\n\tmember status: ${MemberStatus[memberInfo.memberStatus]}\n\tassignment status: ${AssignmentStatus[memberInfo.assignmentStatus]}`);
       // now they should go back to being valid, since they've been assigned to a new subgroup successfully
       expect(memberInfo.memberStatus).toBe(MemberStatus.Valid);
@@ -417,8 +425,9 @@ export class TandaPayTestSuite {
 
     // now, go through each subgroup and ensure the members were properly added
     for (const [address, newSubgroupId] of paidInvalidNewSubgroups) {
-      const subgroupInfo =
-        await this.secretary.read.getSubgroupInfo(newSubgroupId);
+      const subgroupInfo = await this.secretary.read.getSubgroupInfo({
+        subgroupId: newSubgroupId,
+      });
       const includesAddress = subgroupInfo.members.some((addr) =>
         isAddressEqual(addr, address),
       );
@@ -435,7 +444,9 @@ export class TandaPayTestSuite {
     try {
       await advanceTimeFunc();
     } catch (error) {
-      log.push(`aborting action, advance time failed: ${error}`);
+      log.push(
+        `aborting action, advance time failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       doAction = false;
     }
 
@@ -443,7 +454,9 @@ export class TandaPayTestSuite {
       try {
         await actionFunc();
       } catch (error) {
-        log.push(`action failed: ${error}`);
+        log.push(
+          `action failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
 
@@ -554,7 +567,7 @@ export class TandaPayTestSuite {
         // Get all submitted claims
         const periodId = await this.secretary.read.getCurrentPeriodId();
         const allClaimIds = new Set<bigint>(
-          await this.secretary.read.getClaimIdsInPeriod(periodId),
+          await this.secretary.read.getClaimIdsInPeriod({ periodId }),
         );
 
         // Filter and validate the claims

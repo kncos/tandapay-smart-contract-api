@@ -55,7 +55,9 @@ export type TandaPayManager<
   kind: kind_;
   read: TandaPayReadMethods;
   events: TandaPayEvents;
-  client: kind_ extends "readonly" ? KeyedClient : (KeyedClient & { wallet: WriteableClient });
+  client: kind_ extends "readonly"
+    ? KeyedClient
+    : KeyedClient & { wallet: WriteableClient };
   tpAddress: Address;
 } & (kind_ extends "readonly"
   ? unknown

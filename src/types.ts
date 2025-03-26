@@ -45,10 +45,10 @@ export type WriteableClient = WalletClient & {
   chain: Chain;
 };
 
-/** 
- * A numeric type that is used with some `TandaPayManager` method abstractions. Allows for the 
+/**
+ * A numeric type that is used with some `TandaPayManager` method abstractions. Allows for the
  * use of both number and bigint, instead of requiring bigint, mainly to improve the DX for TandaPayManager
-*/
+ */
 export type ApiNumericType = bigint | number;
 
 /**
@@ -107,8 +107,6 @@ export type ClaimInfo = {
 export type MemberInfo = {
   /** Member ID */
   id: bigint;
-  /** Period ID the member info is associated with */
-  periodId: bigint;
   /** ID of the subgroup this member belongs to */
   subgroupId: bigint;
   /** This member's wallet address */
@@ -134,7 +132,8 @@ export type MemberInfo = {
 /** contains information about the period, including it's ID, start/end times, total coverage, total premiums paid, and all claim IDs */
 export type PeriodInfo = {
   /** this is the ID of the period */
-  id: bigint;
+  //! not included in the smart contract return type. poor design imo but omitted here for convenience
+  //id: bigint;
   /** The timestamp when the period begins */
   startTimestamp: bigint;
   /** This is the timestamp that the period ended at, or is currently scheduled to end at. Warning: for current periods, the secretary can push this back. */
@@ -287,7 +286,7 @@ export function memberInfoJsonReplacer(key: string, value: unknown): unknown {
 export type MethodNames<T> = {
   [K in keyof T]: K extends "constructor"
     ? never
-    : T[K] extends Function
+    : T[K] extends (...args: unknown[]) => unknown
       ? K extends `_${string}`
         ? never
         : K
