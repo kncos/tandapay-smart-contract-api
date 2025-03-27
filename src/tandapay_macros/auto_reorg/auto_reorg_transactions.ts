@@ -12,13 +12,15 @@ export interface GetAutoReorgTransactionsParameters {
 }
 
 export type GetAutoReorgTransactionsReturnType = {
-  status: 'all-valid' | 'needs-reorged' | 'too-few-members';
+  status: "all-valid" | "needs-reorged" | "too-few-members";
   transactions?: string[];
-}
+};
 
-export async function getAutoReorgTransactions(params: GetAutoReorgTransactionsParameters): Promise<GetAutoReorgTransactionsReturnType> {
-  const {reader, batchReader} = params;
- 
+export async function getAutoReorgTransactions(
+  params: GetAutoReorgTransactionsParameters,
+): Promise<GetAutoReorgTransactionsReturnType> {
+  const { reader, batchReader } = params;
+
   const allMembers = await batchReader.getBatchMemberInfo();
 
   // k-v pairs that store each subgroups
@@ -33,13 +35,14 @@ export async function getAutoReorgTransactions(params: GetAutoReorgTransactionsP
   if (params.newMembersToAdd) {
     // we use toLowerCase for addresses in the set because addresses are not case
     // sensitive, and casing can be random when fetched from the API
-    const alreadyAddedAddresses = new Set(allMembers.map(m => m.walletAddress.toLowerCase()));
+    const alreadyAddedAddresses = new Set(
+      allMembers.map((m) => m.walletAddress.toLowerCase()),
+    );
 
     // check if any of the new members are already added here
     for (const newMemberAddr of params.newMembersToAdd) {
       // if they're already in, skip them
-      if (alreadyAddedAddresses.has(newMemberAddr.toLowerCase()))
-        continue
+      if (alreadyAddedAddresses.has(newMemberAddr.toLowerCase())) continue;
 
       // otherwise, add them to needsAssigned
       needsAssigned.push(newMemberAddr);
@@ -56,7 +59,7 @@ export async function getAutoReorgTransactions(params: GetAutoReorgTransactionsP
     const subgroupId = Number(member.subgroupId);
     const address = member.walletAddress;
 
-    // if they don't have a subgroup, we won't add them to the map. the smart 
+    // if they don't have a subgroup, we won't add them to the map. the smart
     // contract uses a placeholder value (0) to represent no subgroup.
     if (subgroupId === SubgroupConstants.noSubgroupIdPlaceholder) {
       needsAssigned.push(address);
@@ -86,16 +89,16 @@ export async function getAutoReorgTransactions(params: GetAutoReorgTransactionsP
     needsAssigned,
   });
 
-  // list of transactions the secretary needs to send to 
+  // list of transactions the secretary needs to send to
   const transactions: string[] = [];
   for (const member of needsAdded)
-    transactions.push(`add member: ${member.slice(0,8)}`);
+    transactions.push(`add member: ${member.slice(0, 8)}`);
 
   // if we need to make new subgroups to fit all of the members,
   // we will do that here:
   const newMaxSubgroupId = Math.max(...newSubgroups.keys());
   for (let i = maxSubgroupId; i < newMaxSubgroupId; i++) {
-    transactions.push('createSubgroup');
+    transactions.push("createSubgroup");
   }
 
   // now, go through each new subgroup, compare it with the old subgroup,
@@ -105,21 +108,21 @@ export async function getAutoReorgTransactions(params: GetAutoReorgTransactionsP
     const oldMembers = subgroups.get(id);
     for (const member of newMembers) {
       if (!oldMembers) {
-        transactions.push(`assign: ${member.slice(0,8)} -> ${id}`);
-      } else if (!oldMembers.some(m => isAddressEqual(m, member))) {
-        transactions.push(`assign: ${member.slice(0,8)} -> ${id}`);
+        transactions.push(`assign: ${member.slice(0, 8)} -> ${id}`);
+      } else if (!oldMembers.some((m) => isAddressEqual(m, member))) {
+        transactions.push(`assign: ${member.slice(0, 8)} -> ${id}`);
       }
     }
   }
 
   if (transactions.length === 0) {
     return {
-      status: 'all-valid',
+      status: "all-valid",
     };
   } else {
     return {
-      status: 'needs-reorged',
+      status: "needs-reorged",
       transactions,
-    }
+    };
   }
 }
