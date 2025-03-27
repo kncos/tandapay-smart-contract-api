@@ -1,4 +1,4 @@
-import { autoReorg } from "auto_reorg";
+import { autoReorg } from "tandapay_macros/auto_reorg/auto_reorg";
 import { Address } from "viem";
 
 function validateSubgroups(
