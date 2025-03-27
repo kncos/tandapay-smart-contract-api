@@ -3,10 +3,10 @@ import {
   spawnAnvil,
   deployFaucetToken,
   deployTandaPay,
-} from "../helpers/tandapay_test_helpers";
-import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
+} from "../../helpers/tandapay_test_helpers";
+import { TandaPayTestSuite } from "../../helpers/tandapay_test_suite";
 import { getAutoReorgTransactions } from "tandapay_macros/auto_reorg/auto_reorg_transactions";
-import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
+import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../../test_config";
 import { memberInfoJsonReplacer } from "types";
 
 let anvil: ChildProcess;
@@ -37,18 +37,18 @@ describe.skip("auto reorg transactions macro", () => {
       });
     }
 
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
     });
 
     print(autoReorgResult);
   });
 
   it("telling auto reorg what members we want to add, but not adding them", async () => {
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
       newMembersToAdd: suite.accounts.map((acc) => acc.address),
     });
 
@@ -65,9 +65,9 @@ describe.skip("auto reorg transactions macro", () => {
 
     const newMembersToAdd = suite.accounts.slice(5).map((acc) => acc.address);
 
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
       newMembersToAdd,
     });
 
@@ -87,9 +87,9 @@ describe.skip("auto reorg transactions macro", () => {
 
     const newMembersToAdd = suite.accounts.slice(5).map((acc) => acc.address);
 
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
       newMembersToAdd,
     });
 
@@ -109,9 +109,9 @@ describe.skip("auto reorg transactions macro", () => {
 
     const newMembersToAdd = suite.accounts.slice(5).map((acc) => acc.address);
 
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
       newMembersToAdd,
     });
 
@@ -128,9 +128,9 @@ describe.skip("auto reorg transactions macro", () => {
     for (let i = 0; i < 3; i++)
       await suite.secretary.write.secretary.createSubgroup();
 
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
       newMembersToAdd: suite.accounts.map((acc) => acc.address),
     });
 
@@ -174,10 +174,11 @@ describe.skip("auto reorg transactions macro", () => {
 
     print(`startP: ${startP} endP: ${endP}`);
 
-    const autoReorgResult = await getAutoReorgTransactions({
-      reader: suite.secretary.read,
-      batchReader: suite.secretary.batchRead,
+    const autoReorgResult = getAutoReorgTransactions({
+      allMemberInfo: await suite.secretary.batchRead.getBatchMemberInfo(),
+      subgroupCount: await suite.secretary.read.getCurrentSubgroupCount(),
     });
+
     print(autoReorgResult);
   });
 });

@@ -3,13 +3,12 @@ import { TandaPayBatchReader } from "tandapay_interface/batch_read_interface";
 import { TandaPayReader } from "tandapay_interface/read_interface";
 import { Address, isAddressEqual } from "viem";
 import { autoReorg } from "./auto_reorg";
-import { MemberStatus } from "types";
+import { ApiNumericType, MemberInfo, MemberStatus } from "types";
 
 export interface GetAutoReorgTransactionsParameters {
-  reader: TandaPayReader;
-  //writer: TandaPayWriter;
-  batchReader: TandaPayBatchReader;
   newMembersToAdd?: Address[];
+  allMemberInfo: MemberInfo[];
+  subgroupCount: ApiNumericType;
 }
 
 export type GetAutoReorgTransactionsReturnType = {
@@ -17,12 +16,10 @@ export type GetAutoReorgTransactionsReturnType = {
   transactions?: string[];
 };
 
-export async function getAutoReorgTransactions(
+export function getAutoReorgTransactions(
   params: GetAutoReorgTransactionsParameters,
-): Promise<GetAutoReorgTransactionsReturnType> {
-  const { reader, batchReader } = params;
-
-  const allMembers = await batchReader.getBatchMemberInfo();
+): GetAutoReorgTransactionsReturnType {
+  const allMembers = params.allMemberInfo;
 
   // k-v pairs that store each subgroups
   const subgroups = new Map<number, Address[]>();
@@ -52,7 +49,7 @@ export async function getAutoReorgTransactions(
   }
 
   // we need to know this to determine whether subgroups have to be created
-  const maxSubgroupId = await reader.getCurrentSubgroupCount();
+  const maxSubgroupId = params.subgroupCount;
 
   // build up a map of subgroupId: Members, adding members who
   // don't have a subgroup to needsAssigned
