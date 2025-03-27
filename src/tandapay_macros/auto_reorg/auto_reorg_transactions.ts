@@ -3,6 +3,7 @@ import { TandaPayBatchReader } from "tandapay_interface/batch_read_interface";
 import { TandaPayReader } from "tandapay_interface/read_interface";
 import { Address, isAddressEqual } from "viem";
 import { autoReorg } from "./auto_reorg";
+import { MemberStatus } from "types";
 
 export interface GetAutoReorgTransactionsParameters {
   reader: TandaPayReader;
@@ -58,6 +59,11 @@ export async function getAutoReorgTransactions(
   for (const member of allMembers) {
     const subgroupId = Number(member.subgroupId);
     const address = member.walletAddress;
+
+    // if the defected, quit, or left, don't reorg them
+    if (member.memberStatus === MemberStatus.Defected) continue;
+    if (member.memberStatus === MemberStatus.UserQuit) continue;
+    if (member.memberStatus === MemberStatus.UserLeft) continue;
 
     // if they don't have a subgroup, we won't add them to the map. the smart
     // contract uses a placeholder value (0) to represent no subgroup.

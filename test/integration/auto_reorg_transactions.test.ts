@@ -6,6 +6,8 @@ import {
 } from "../helpers/tandapay_test_helpers";
 import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
 import { getAutoReorgTransactions } from "tandapay_macros/auto_reorg/auto_reorg_transactions";
+import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
+import { memberInfoJsonReplacer } from "types";
 
 let anvil: ChildProcess;
 let suite: TandaPayTestSuite;
@@ -21,6 +23,12 @@ afterEach(() => {
   anvil.kill();
 });
 
+// did this so i could just do a quick find+replace on console.log cause i'm lazy
+const shouldPrint = false;
+function print(message: unknown) {
+  if (shouldPrint) console.log(message);
+}
+
 describe.skip("auto reorg transactions macro", () => {
   it("adding members to a fresh community, then using auto reorg", async () => {
     for (const acc of suite.accounts) {
@@ -34,7 +42,7 @@ describe.skip("auto reorg transactions macro", () => {
       batchReader: suite.secretary.batchRead,
     });
 
-    console.log(autoReorgResult);
+    print(autoReorgResult);
   });
 
   it("telling auto reorg what members we want to add, but not adding them", async () => {
@@ -44,7 +52,7 @@ describe.skip("auto reorg transactions macro", () => {
       newMembersToAdd: suite.accounts.map((acc) => acc.address),
     });
 
-    console.log(autoReorgResult);
+    print(autoReorgResult);
   });
 
   it("adding a few members, and specifying a few to be added", async () => {
@@ -52,7 +60,7 @@ describe.skip("auto reorg transactions macro", () => {
       await suite.secretary.write.secretary.addMemberToCommunity({
         memberWalletAddress: acc.address,
       });
-      //console.log(`ADDED: ${acc.address.slice(0,8)}`);
+      //print(`ADDED: ${acc.address.slice(0,8)}`);
     }
 
     const newMembersToAdd = suite.accounts.slice(5).map((acc) => acc.address);
@@ -63,7 +71,7 @@ describe.skip("auto reorg transactions macro", () => {
       newMembersToAdd,
     });
 
-    console.log(autoReorgResult);
+    print(autoReorgResult);
   });
 
   it("adding a few members, creating some subgroups, specifying a few to be added", async () => {
@@ -71,7 +79,7 @@ describe.skip("auto reorg transactions macro", () => {
       await suite.secretary.write.secretary.addMemberToCommunity({
         memberWalletAddress: acc.address,
       });
-      //console.log(`ADDED: ${acc.address.slice(0,8)}`);
+      //print(`ADDED: ${acc.address.slice(0,8)}`);
     }
 
     // create 1 subgroup. we should only witness auto-reorg making 2
@@ -85,7 +93,7 @@ describe.skip("auto reorg transactions macro", () => {
       newMembersToAdd,
     });
 
-    console.log(autoReorgResult);
+    print(autoReorgResult);
   });
 
   it("adding a few members, creating too many subgroups, specifying a few to be added", async () => {
@@ -93,7 +101,7 @@ describe.skip("auto reorg transactions macro", () => {
       await suite.secretary.write.secretary.addMemberToCommunity({
         memberWalletAddress: acc.address,
       });
-      //console.log(`ADDED: ${acc.address.slice(0,8)}`);
+      //print(`ADDED: ${acc.address.slice(0,8)}`);
     }
 
     for (let i = 0; i < 5; i++)
@@ -107,7 +115,7 @@ describe.skip("auto reorg transactions macro", () => {
       newMembersToAdd,
     });
 
-    console.log(autoReorgResult);
+    print(autoReorgResult);
   });
 
   it("specifying members who are already in the community as needsAdded", async () => {
@@ -126,6 +134,50 @@ describe.skip("auto reorg transactions macro", () => {
       newMembersToAdd: suite.accounts.map((acc) => acc.address),
     });
 
-    console.log(autoReorgResult);
+    print(autoReorgResult);
+  });
+
+  it("should not try to reorg a defector", async () => {
+    await suite.toPeriodAfterDefectors({
+      alreadyInDefault: false,
+      defectors: [DEFAULT_DEFECTOR],
+      claimants: [DEFAULT_CLAIMANT_INDEX],
+    });
+
+    const startP = await suite.secretary.read.getCurrentPeriodId();
+    await suite.advanceTimeAndIssueRefunds();
+    await suite.advanceTimeAndPayPremiums();
+    await suite.advanceTimeAndAdvancePeriod();
+    await suite.advanceTimeAndIssueRefunds();
+    await suite.advanceTimeAndPayPremiums();
+    await suite.advanceTimeAndAdvancePeriod();
+    await suite.advanceTimeAndIssueRefunds();
+    await suite.advanceTimeAndPayPremiums();
+    await suite.advanceTimeAndAdvancePeriod();
+    const endP = await suite.secretary.read.getCurrentPeriodId();
+
+    const defectorAddr = suite.accounts[DEFAULT_DEFECTOR].address;
+    const defectorInfo = await suite.secretary.read.getMemberInfoFromAddress({
+      walletAddress: defectorAddr,
+    });
+    print(
+      `defector:\n${JSON.stringify(defectorInfo, memberInfoJsonReplacer, 2)}`,
+    );
+
+    const someOtherAddr = suite.accounts[0].address;
+    const someOtherInfo = await suite.secretary.read.getMemberInfoFromAddress({
+      walletAddress: someOtherAddr,
+    });
+    print(
+      `someOther:\n${JSON.stringify(someOtherInfo, memberInfoJsonReplacer, 2)}`,
+    );
+
+    print(`startP: ${startP} endP: ${endP}`);
+
+    const autoReorgResult = await getAutoReorgTransactions({
+      reader: suite.secretary.read,
+      batchReader: suite.secretary.batchRead,
+    });
+    print(autoReorgResult);
   });
 });
