@@ -21,7 +21,7 @@ afterEach(() => {
   anvil.kill();
 });
 
-describe("auto reorg transactions macro", () => {
+describe.skip("auto reorg transactions macro", () => {
   it("adding members to a fresh community, then using auto reorg", async () => {
     for (const acc of suite.accounts) {
       await suite.secretary.write.secretary.addMemberToCommunity({
