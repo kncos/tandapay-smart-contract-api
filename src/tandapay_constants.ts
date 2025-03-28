@@ -12,5 +12,6 @@ export const InitializationStateConstants = {
 export const ExpectedSuccessorCounts = {
   communitySmallerThan35: 2,
   communityLargerThan35: 6,
-  getExpectedSuccessorCount: (communitySize: number) => communitySize >= 35 ? 6 : 2,
-}
+  getExpectedSuccessorCount: (communitySize: number | bigint) =>
+    communitySize >= 35 ? 6 : 2,
+};

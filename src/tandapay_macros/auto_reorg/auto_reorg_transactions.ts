@@ -6,9 +6,9 @@ import { autoReorg } from "./auto_reorg";
 import { ApiNumericType, MemberInfo, MemberStatus } from "types";
 
 export interface GetAutoReorgTransactionsParameters {
-  newMembersToAdd?: Address[];
-  allMemberInfo: MemberInfo[];
-  subgroupCount: ApiNumericType;
+  reader: TandaPayReader;
+  batchReader: TandaPayBatchReader;
+  newMembers?: Address[];
 }
 
 export type GetAutoReorgTransactionsReturnType = {
@@ -16,10 +16,11 @@ export type GetAutoReorgTransactionsReturnType = {
   transactions?: string[];
 };
 
-export function getAutoReorgTransactions(
+export async function getAutoReorgTransactions(
   params: GetAutoReorgTransactionsParameters,
-): GetAutoReorgTransactionsReturnType {
-  const allMembers = params.allMemberInfo;
+): Promise<GetAutoReorgTransactionsReturnType> {
+  const { reader, batchReader, newMembers } = params;
+  const allMembers = await batchReader.getBatchMemberInfo();
 
   // k-v pairs that store each subgroups
   const subgroups = new Map<number, Address[]>();
@@ -30,7 +31,7 @@ export function getAutoReorgTransactions(
 
   // if new members were specified, we'll make sure they aren't
   // already in the community
-  if (params.newMembersToAdd) {
+  if (newMembers) {
     // we use toLowerCase for addresses in the set because addresses are not case
     // sensitive, and casing can be random when fetched from the API
     const alreadyAddedAddresses = new Set(
@@ -38,7 +39,7 @@ export function getAutoReorgTransactions(
     );
 
     // check if any of the new members are already added here
-    for (const newMemberAddr of params.newMembersToAdd) {
+    for (const newMemberAddr of newMembers) {
       // if they're already in, skip them
       if (alreadyAddedAddresses.has(newMemberAddr.toLowerCase())) continue;
 
@@ -49,7 +50,7 @@ export function getAutoReorgTransactions(
   }
 
   // we need to know this to determine whether subgroups have to be created
-  const maxSubgroupId = params.subgroupCount;
+  const maxSubgroupId = await reader.getCurrentSubgroupCount();
 
   // build up a map of subgroupId: Members, adding members who
   // don't have a subgroup to needsAssigned
@@ -118,10 +119,12 @@ export function getAutoReorgTransactions(
     }
   }
 
+  // if no transactions populted, nothing needs to be done
   if (transactions.length === 0) {
     return {
       status: "all-valid",
     };
+    // otherwise, we need reorganization
   } else {
     return {
       status: "needs-reorged",

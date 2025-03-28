@@ -39,14 +39,19 @@ export type InitializationStateInfo =
       reorgNeeded: boolean;
     };
 
+export type GetInitializationStateInfoParams = {
+  reader: TandaPayReader;
+  batchReader: TandaPayBatchReader;
+};
+
 /**
  * Returns information about the initialization state. If the community is in it, whether the community
  * can exit it (and if not, why the community can't exit it)
  */
 export async function getInitializationStateInfo(
-  reader: TandaPayReader,
-  batchReader: TandaPayBatchReader,
+  params: GetInitializationStateInfoParams,
 ): Promise<InitializationStateInfo> {
+  const { reader, batchReader } = params;
   // constants for later use
   const minMembers = InitializationStateConstants.minCommunitySizeToExit;
   const minSubgroups = InitializationStateConstants.minSubgroupCountToExit;
