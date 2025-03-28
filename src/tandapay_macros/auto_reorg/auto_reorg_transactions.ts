@@ -3,7 +3,7 @@ import { TandaPayBatchReader } from "tandapay_interface/batch_read_interface";
 import { TandaPayReader } from "tandapay_interface/read_interface";
 import { Address, isAddressEqual } from "viem";
 import { autoReorg } from "./auto_reorg";
-import { ApiNumericType, MemberInfo, MemberStatus } from "types";
+import { MemberStatus } from "types";
 
 export interface GetAutoReorgTransactionsParameters {
   reader: TandaPayReader;
@@ -19,7 +19,7 @@ export type GetAutoReorgTransactionsReturnType = {
 export async function getAutoReorgTransactions(
   params: GetAutoReorgTransactionsParameters,
 ): Promise<GetAutoReorgTransactionsReturnType> {
-  const { reader, batchReader, newMembers } = params;
+  const {reader, batchReader, newMembers} = params;
   const allMembers = await batchReader.getBatchMemberInfo();
 
   // k-v pairs that store each subgroups
@@ -124,7 +124,7 @@ export async function getAutoReorgTransactions(
     return {
       status: "all-valid",
     };
-    // otherwise, we need reorganization
+  // otherwise, we need reorganization
   } else {
     return {
       status: "needs-reorged",
