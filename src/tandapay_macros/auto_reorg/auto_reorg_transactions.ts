@@ -7,9 +7,8 @@ import { MemberStatus } from "types";
 
 export interface GetAutoReorgTransactionsParameters {
   reader: TandaPayReader;
-  //writer: TandaPayWriter;
   batchReader: TandaPayBatchReader;
-  newMembersToAdd?: Address[];
+  newMembers?: Address[];
 }
 
 export type GetAutoReorgTransactionsReturnType = {
@@ -20,8 +19,7 @@ export type GetAutoReorgTransactionsReturnType = {
 export async function getAutoReorgTransactions(
   params: GetAutoReorgTransactionsParameters,
 ): Promise<GetAutoReorgTransactionsReturnType> {
-  const { reader, batchReader } = params;
-
+  const {reader, batchReader, newMembers} = params;
   const allMembers = await batchReader.getBatchMemberInfo();
 
   // k-v pairs that store each subgroups
@@ -33,7 +31,7 @@ export async function getAutoReorgTransactions(
 
   // if new members were specified, we'll make sure they aren't
   // already in the community
-  if (params.newMembersToAdd) {
+  if (newMembers) {
     // we use toLowerCase for addresses in the set because addresses are not case
     // sensitive, and casing can be random when fetched from the API
     const alreadyAddedAddresses = new Set(
@@ -41,7 +39,7 @@ export async function getAutoReorgTransactions(
     );
 
     // check if any of the new members are already added here
-    for (const newMemberAddr of params.newMembersToAdd) {
+    for (const newMemberAddr of newMembers) {
       // if they're already in, skip them
       if (alreadyAddedAddresses.has(newMemberAddr.toLowerCase())) continue;
 
@@ -121,10 +119,12 @@ export async function getAutoReorgTransactions(
     }
   }
 
+  // if no transactions populted, nothing needs to be done
   if (transactions.length === 0) {
     return {
       status: "all-valid",
     };
+  // otherwise, we need reorganization
   } else {
     return {
       status: "needs-reorged",

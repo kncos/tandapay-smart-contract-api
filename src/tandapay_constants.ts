@@ -8,3 +8,10 @@ export const InitializationStateConstants = {
   minCommunitySizeToExit: 12,
   minSubgroupCountToExit: 3,
 };
+
+export const ExpectedSuccessorCounts = {
+  communitySmallerThan35: 2,
+  communityLargerThan35: 6,
+  getExpectedSuccessorCount: (communitySize: number | bigint) =>
+    communitySize >= 35 ? 6 : 2,
+};

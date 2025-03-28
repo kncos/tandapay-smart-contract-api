@@ -3,10 +3,10 @@ import {
   spawnAnvil,
   deployFaucetToken,
   deployTandaPay,
-} from "../helpers/tandapay_test_helpers";
-import { TandaPayTestSuite } from "../helpers/tandapay_test_suite";
+} from "../../helpers/tandapay_test_helpers";
+import { TandaPayTestSuite } from "../../helpers/tandapay_test_suite";
 import { getAutoReorgTransactions } from "tandapay_macros/auto_reorg/auto_reorg_transactions";
-import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../test_config";
+import { DEFAULT_CLAIMANT_INDEX, DEFAULT_DEFECTOR } from "../../test_config";
 import { memberInfoJsonReplacer } from "types";
 
 let anvil: ChildProcess;
@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 // did this so i could just do a quick find+replace on console.log cause i'm lazy
-const shouldPrint = false;
+const shouldPrint = true;
 function print(message: unknown) {
   if (shouldPrint) console.log(message);
 }
@@ -49,7 +49,7 @@ describe.skip("auto reorg transactions macro", () => {
     const autoReorgResult = await getAutoReorgTransactions({
       reader: suite.secretary.read,
       batchReader: suite.secretary.batchRead,
-      newMembersToAdd: suite.accounts.map((acc) => acc.address),
+      newMembers: suite.accounts.map((acc) => acc.address),
     });
 
     print(autoReorgResult);
@@ -68,7 +68,7 @@ describe.skip("auto reorg transactions macro", () => {
     const autoReorgResult = await getAutoReorgTransactions({
       reader: suite.secretary.read,
       batchReader: suite.secretary.batchRead,
-      newMembersToAdd,
+      newMembers: newMembersToAdd,
     });
 
     print(autoReorgResult);
@@ -90,7 +90,7 @@ describe.skip("auto reorg transactions macro", () => {
     const autoReorgResult = await getAutoReorgTransactions({
       reader: suite.secretary.read,
       batchReader: suite.secretary.batchRead,
-      newMembersToAdd,
+      newMembers: newMembersToAdd,
     });
 
     print(autoReorgResult);
@@ -112,7 +112,7 @@ describe.skip("auto reorg transactions macro", () => {
     const autoReorgResult = await getAutoReorgTransactions({
       reader: suite.secretary.read,
       batchReader: suite.secretary.batchRead,
-      newMembersToAdd,
+      newMembers: newMembersToAdd,
     });
 
     print(autoReorgResult);
@@ -131,7 +131,7 @@ describe.skip("auto reorg transactions macro", () => {
     const autoReorgResult = await getAutoReorgTransactions({
       reader: suite.secretary.read,
       batchReader: suite.secretary.batchRead,
-      newMembersToAdd: suite.accounts.map((acc) => acc.address),
+      newMembers: suite.accounts.map((acc) => acc.address),
     });
 
     print(autoReorgResult);
@@ -178,6 +178,7 @@ describe.skip("auto reorg transactions macro", () => {
       reader: suite.secretary.read,
       batchReader: suite.secretary.batchRead,
     });
+
     print(autoReorgResult);
   });
 });
