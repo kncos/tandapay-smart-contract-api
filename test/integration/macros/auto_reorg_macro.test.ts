@@ -23,13 +23,12 @@ afterEach(() => {
   anvil.kill();
 });
 
-// did this so i could just do a quick find+replace on console.log cause i'm lazy
 const shouldPrint = true;
 function print(message: unknown) {
   if (shouldPrint) console.log(message);
 }
 
-describe.skip("auto reorg transactions macro", () => {
+describe("auto reorg transactions macro", () => {
   it("adding members to a fresh community, then using auto reorg", async () => {
     for (const acc of suite.accounts) {
       await suite.secretary.write.secretary.addMemberToCommunity({

@@ -19,13 +19,12 @@ afterEach(() => {
   anvil.kill();
 });
 
-// did this so i could just do a quick find+replace on console.log cause i'm lazy
 const shouldPrint = true;
 function print(message: unknown) {
   if (shouldPrint) console.log(message);
 }
 
-describe.skip('exit initialization state macro tests', () => {
+describe('exit initialization state macro tests', () => {
   it('basic case, fresh community with no members, assigning members and specifying successors', async () => {
     const exitInitializationStateResult = await exitInitializationState({
       reader: suite.secretary.read,
